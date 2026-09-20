@@ -1,21 +1,448 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#C9302C">
+<title>Momo Mama - Order from your table</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F4F6F5;
+    --surface: #FFFFFF;
+    --ink: #182226;
+    --muted: #5B6A6E;
+    --line: #DDE3E1;
+    --chili: #C9302C;
+    --chili-dark: #A82420;
+    --flag-blue: #2E6FBA;
+    --flag-white: #F7F7F7;
+    --flag-red: #C9302C;
+    --flag-green: #3C8D5A;
+    --flag-yellow: #F0B429;
+    --veg: #2E8B57;
+    --nonveg: #B3261E;
+    --radius: 14px;
+    --head: "Bricolage Grotesque", system-ui, sans-serif;
+    --body: "Hind Siliguri", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.45;
+    color: var(--ink);
+    background: var(--bg);
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--flag-blue); outline-offset: 2px; }
+  .wrap { max-width: 560px; margin: 0 auto; }
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyB2s_LZL6lLuWieNh-8O3aHWiUuFcEzfK0",
-  authDomain: "momo-mama.firebaseapp.com",
-  projectId: "momo-mama",
-  storageBucket: "momo-mama.firebasestorage.app",
-  messagingSenderId: "429400485602",
-  appId: "1:429400485602:web:88b8f0a34fc0f4c44d78bb",
-  measurementId: "G-2T8XTGHDR4"
-};
+  /* Header */
+  .flags { display: flex; height: 10px; }
+  .flags i { flex: 1; }
+  .flags i:nth-child(5n+1) { background: var(--flag-blue); }
+  .flags i:nth-child(5n+2) { background: var(--flag-white); }
+  .flags i:nth-child(5n+3) { background: var(--flag-red); }
+  .flags i:nth-child(5n+4) { background: var(--flag-green); }
+  .flags i:nth-child(5n+5) { background: var(--flag-yellow); }
+  header { background: var(--surface); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
+  .head-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 18px 20px 16px; }
+  .brand { font-family: var(--head); font-weight: 800; font-size: 34px; line-height: 1; letter-spacing: -0.02em; }
+  .brand small { display: block; font-family: var(--body); font-weight: 500; font-size: 14px; letter-spacing: 0; color: var(--muted); margin-top: 6px; }
+  .table-chip { text-align: right; }
+  .table-chip span { display: block; font-size: 13px; color: var(--muted); }
+  .table-chip strong { font-family: var(--head); font-weight: 800; font-size: 22px; line-height: 1.1; }
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+  /* Category filter */
+  .cats { display: flex; gap: 8px; overflow-x: auto; padding: 14px 20px; scrollbar-width: none; position: sticky; top: 0; background: var(--bg); z-index: 5; }
+  .cats::-webkit-scrollbar { display: none; }
+  .cats button { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 16px; font-weight: 500; }
+  .cats button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+  /* Menu list */
+  .menu { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .item { display: flex; gap: 14px; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+  .item:last-child { border-bottom: 0; }
+  .item-text { flex: 1; min-width: 0; }
+  .item-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .vdot { width: 16px; height: 16px; border: 2px solid var(--veg); border-radius: 3px; display: grid; place-items: center; flex: none; }
+  .vdot::after { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--veg); }
+  .vdot.nv { border-color: var(--nonveg); }
+  .vdot.nv::after { background: var(--nonveg); }
+  .special { background: var(--flag-yellow); color: #3a2a00; font-size: 12.5px; font-weight: 600; padding: 1px 9px; border-radius: 999px; }
+  .item h3 { font-family: var(--head); font-weight: 600; font-size: 18px; line-height: 1.25; }
+  .price { font-weight: 600; margin-top: 2px; }
+  .desc { color: var(--muted); font-size: 14.5px; margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .meta { color: var(--muted); font-size: 13.5px; margin-top: 6px; }
+  .item-side { width: 104px; flex: none; text-align: center; }
+  .photo { width: 104px; height: 104px; border-radius: 16px; background: #E6EBE9 center / cover no-repeat; }
+  .stepper { margin: -16px auto 0; position: relative; width: 88px; height: 36px; }
+  .add-btn, .stepper-ctl { width: 100%; height: 36px; border-radius: 10px; border: 1px solid var(--chili); background: var(--surface); color: var(--chili); font-weight: 600; box-shadow: 0 2px 6px rgba(24,34,38,.12); }
+  .stepper-ctl { display: flex; align-items: center; justify-content: space-between; background: var(--chili); color: #fff; padding: 0; overflow: hidden; }
+  .stepper-ctl button { width: 30px; height: 100%; border: 0; background: transparent; color: #fff; font-size: 20px; line-height: 1; }
+  .stepper-ctl output { font-weight: 600; }
+  .empty { padding: 40px 20px; text-align: center; color: var(--muted); }
+
+  /* Cart bar */
+  .cart-bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(to top, var(--bg) 70%, rgba(244,246,245,0)); z-index: 10; }
+  .cart-bar button { display: flex; width: 100%; max-width: 528px; margin: 0 auto; justify-content: space-between; align-items: center; border: 0; background: var(--chili); color: #fff; border-radius: 14px; padding: 15px 20px; font-weight: 600; font-size: 17px; box-shadow: 0 6px 18px rgba(201,48,44,.35); }
+  .cart-bar button:active { background: var(--chili-dark); }
+  .hidden { display: none !important; }
+
+  /* Sheet */
+  .scrim { position: fixed; inset: 0; background: rgba(24,34,38,.5); z-index: 20; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--surface); border-radius: 22px 22px 0 0; max-height: 92vh; overflow-y: auto; transform: translateY(102%); transition: transform .28s cubic-bezier(.2,.8,.2,1); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .sheet.open { transform: none; }
+  .sheet-in { max-width: 560px; margin: 0 auto; padding: 20px 20px 24px; }
+  .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .sheet h2 { font-family: var(--head); font-weight: 800; font-size: 26px; letter-spacing: -0.01em; }
+  .close { border: 0; background: var(--bg); width: 36px; height: 36px; border-radius: 50%; font-size: 20px; }
+  .line-item { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .line-item b { font-weight: 600; }
+  .line-item small { display: block; color: var(--muted); }
+  .field { margin-top: 14px; }
+  .field label { display: block; font-weight: 600; font-size: 14.5px; margin-bottom: 5px; }
+  .field input, .field textarea { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; background: var(--surface); }
+  .pay { display: flex; gap: 8px; }
+  .pay button { flex: 1; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px; font-weight: 500; }
+  .pay button[aria-pressed="true"] { border-color: var(--chili); background: #FCEDEC; color: var(--chili-dark); font-weight: 600; }
+  .totals { margin-top: 18px; }
+  .totals div { display: flex; justify-content: space-between; padding: 3px 0; color: var(--muted); }
+  .totals .grand { color: var(--ink); font-weight: 600; font-size: 19px; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 10px; }
+  .place { display: block; width: 100%; margin-top: 18px; border: 0; background: var(--chili); color: #fff; border-radius: 14px; padding: 15px; font-weight: 600; font-size: 17px; }
+  .place:disabled { opacity: .6; }
+  .place:active { background: var(--chili-dark); }
+  .error { margin-top: 14px; background: #FCEDEC; border: 1px solid #E9B5B2; color: #7A1713; border-radius: 10px; padding: 11px 12px; font-size: 14.5px; }
+
+  /* Order tracking */
+  .track { padding: 28px 20px 20px; }
+  .token { font-family: var(--head); font-weight: 800; font-size: 56px; line-height: 1; letter-spacing: -0.03em; }
+  .track p.lead { color: var(--muted); margin-top: 8px; }
+  .steps { list-style: none; padding: 0; margin: 26px 0 0; }
+  .steps li { position: relative; padding: 0 0 22px 34px; color: var(--muted); }
+  .steps li::before { content: ""; position: absolute; left: 0; top: 3px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); }
+  .steps li::after { content: ""; position: absolute; left: 8px; top: 24px; bottom: -1px; width: 2px; background: var(--line); }
+  .steps li:last-child::after { display: none; }
+  .steps li.done { color: var(--ink); }
+  .steps li.done::before { background: var(--flag-green); border-color: var(--flag-green); }
+  .steps li.done::after { background: var(--flag-green); }
+  .steps li.now { color: var(--ink); font-weight: 600; }
+  .steps li.now::before { background: var(--flag-yellow); border-color: var(--flag-yellow); box-shadow: 0 0 0 5px rgba(240,180,41,.3); }
+  .cancelled { margin-top: 20px; }
+  .ghost { margin-top: 10px; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px 18px; font-weight: 600; }
+
+  /* Setup notice */
+  .notice { margin: 20px; padding: 16px; border: 1px solid var(--flag-yellow); background: #FFF7E0; border-radius: 12px; }
+  .notice b { display: block; margin-bottom: 4px; }
+  .debug { padding: 10px 20px; font-size: 13px; color: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) { .sheet, .scrim { transition: none; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="flags" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="wrap head-row">
+    <div class="brand">Momo Mama<small>Order from your seat</small></div>
+    <div class="table-chip"><span>Your order is for</span><strong id="tableLabel">Takeaway</strong></div>
+  </div>
+</header>
+
+<main class="wrap" id="app">
+  <div id="setupNotice" class="notice hidden"><b>One-time setup needed</b>Open index.html and paste your Firebase web app keys into the firebaseConfig block at the top of the script.</div>
+
+  <div id="menuView">
+    <nav class="cats" id="cats" aria-label="Menu categories"></nav>
+    <section class="menu" id="menuList" aria-live="polite"></section>
+    <div class="debug hidden" id="debug"></div>
+  </div>
+
+  <section id="trackView" class="track hidden" aria-live="polite">
+    <p class="lead" id="trackTable"></p>
+    <div class="token" id="trackToken">#MM-000</div>
+    <p class="lead" id="trackMsg">We got your order.</p>
+    <ol class="steps" id="steps"></ol>
+    <div id="trackCancelled" class="error cancelled hidden">This order was cancelled. Please talk to our staff at the counter.</div>
+    <button class="ghost" id="newOrder">Order something else</button>
+  </section>
+</main>
+
+<div class="cart-bar hidden" id="cartBar">
+  <button id="openCart"><span id="cartCount">0 items</span><span id="cartTotal">Rs 0</span></button>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet-in">
+    <div class="sheet-head"><h2 id="sheetTitle">Your order</h2><button class="close" id="closeCart" aria-label="Close">&times;</button></div>
+    <div id="cartLines"></div>
+    <div class="field"><label for="custName">Your name</label><input id="custName" autocomplete="given-name" placeholder="So we can call you"></div>
+    <div class="field"><label for="custPhone">Phone number (optional)</label><input id="custPhone" inputmode="tel" autocomplete="tel" placeholder="10-digit number"></div>
+    <div class="field"><label for="notes">Anything we should know?</label><textarea id="notes" rows="2" placeholder="Less spicy, extra chutney, no onion"></textarea></div>
+    <div class="field"><label>How will you pay?</label>
+      <div class="pay" id="pay"><button type="button" data-m="Cash" aria-pressed="true">Cash at counter</button><button type="button" data-m="UPI" aria-pressed="false">UPI at counter</button></div>
+    </div>
+    <div class="totals" id="totals"></div>
+    <div class="error hidden" id="orderError" role="alert"></div>
+    <button class="place" id="placeBtn">Place order</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { initializeFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  /* ------------------------------------------------------------------
+     STEP 1: paste your Firebase WEB app keys here.
+     Firebase Console > Project settings > General > Your apps > Web app
+     ------------------------------------------------------------------ */
+  const firebaseConfig = {
+    apiKey: "AIzaSyB2s_LZL6lLuWieNh-8O3aHWiUuFcEzfK0",
+    authDomain: "momo-mama.firebaseapp.com",
+    projectId: "momo-mama",
+    storageBucket: "momo-mama.firebasestorage.app",
+    messagingSenderId: "429400485602",
+    appId: "1:429400485602:web:88b8f0a34fc0f4c44d78bb"
+  };
+
+  const DEFAULT_MENU = [
+    { id: "M-01", name: "Himalayan Steamed Chicken Momo", category: "Chicken", description: "Juicy minced chicken with ginger, scallions and mountain spices. Served with fiery red sesame chutney.", price: 190, isAvailable: true, isTodaysSpecial: true, spiciness: "Medium", pieces: 6, imageUrl: "https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?w=400&auto=format&fit=crop" },
+    { id: "M-02", name: "Kurkure Paneer Crispy Momo", category: "Paneer", description: "Fresh cottage cheese filling with a crunchy panko coating, fried golden. Served with garlic mint mayo.", price: 180, isAvailable: true, isTodaysSpecial: false, spiciness: "Mild", pieces: 6, imageUrl: "https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?w=400&auto=format&fit=crop" },
+    { id: "M-03", name: "Schezwan Wok-Tossed Veg Momo", category: "Veg", description: "Crispy pan-fried cabbage and mushroom dumplings tossed in fiery Sichuan sauce with crushed peanuts.", price: 160, isAvailable: true, isTodaysSpecial: false, spiciness: "Fire", pieces: 6, imageUrl: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400&auto=format&fit=crop" },
+    { id: "M-04", name: "Smoky Tandoori Chicken Momo", category: "Chicken", description: "Char-grilled momos marinated in spiced yoghurt and mustard oil, with roasted onions and mint dip.", price: 220, isAvailable: true, isTodaysSpecial: true, spiciness: "Medium", pieces: 6, imageUrl: "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=400&auto=format&fit=crop" },
+    { id: "M-05", name: "Darjeeling Classic Veg Steamed", category: "Veg", description: "Thin-wrapper dumplings stuffed with hill greens, cabbage, paneer and crushed black pepper.", price: 140, isAvailable: true, isTodaysSpecial: false, spiciness: "Mild", pieces: 6, imageUrl: "https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=400&auto=format&fit=crop" },
+    { id: "M-06", name: "Afghani Malai Paneer Momo", category: "Paneer", description: "Coated in cashew cream, charred in the tandoor with cardamom and fresh coriander.", price: 210, isAvailable: true, isTodaysSpecial: false, spiciness: "Mild", pieces: 6, imageUrl: "https://images.unsplash.com/photo-1563245372-f21724e3856d?w=400&auto=format&fit=crop" },
+    { id: "M-07", name: "Momo Mama Chef's Platter (12 pcs)", category: "Specials", description: "Sampler of steamed chicken, kurkure paneer, fried veg and tandoori momos with 4 house dips.", price: 390, isAvailable: true, isTodaysSpecial: true, spiciness: "Medium", pieces: 12, imageUrl: "https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?w=400&auto=format&fit=crop" },
+    { id: "M-08", name: "Spicy Thukpa Mountain Noodle Soup", category: "Specials", description: "Slow-simmered aromatic broth with hand-pulled noodles, fresh greens and herbs.", price: 170, isAvailable: true, isTodaysSpecial: false, spiciness: "Medium", pieces: 1, imageUrl: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&auto=format&fit=crop" },
+    { id: "M-09", name: "Himalayan Peach Iced Tea", category: "Beverages", description: "Brewed Darjeeling black tea with sweet mountain peach and fresh mint.", price: 95, isAvailable: true, isTodaysSpecial: false, spiciness: "None", pieces: 1, imageUrl: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&auto=format&fit=crop" },
+    { id: "M-10", name: "Szechuan Spiced Lemonade", category: "Beverages", description: "Fresh lime soda with Sichuan pepper, roasted cumin and black rock salt.", price: 85, isAvailable: true, isTodaysSpecial: false, spiciness: "Mild", pieces: 1, imageUrl: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400&auto=format&fit=crop" }
+  ];
+
+  const STATUS_STEPS = [
+    { key: "NEW", label: "Order received", msg: "We got your order. The kitchen will pick it up shortly." },
+    { key: "ACCEPTED", label: "Accepted by the kitchen", msg: "The kitchen accepted your order." },
+    { key: "PREPARING", label: "Cooking now", msg: "Your momos are being cooked." },
+    { key: "READY", label: "Ready", msg: "Your order is ready." },
+    { key: "COMPLETED", label: "Served", msg: "Enjoy your meal!" }
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const money = (n) => "Rs " + (Math.round(n * 100) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+  const round2 = (n) => Math.round(n * 100) / 100;
+  const params = new URLSearchParams(location.search);
+  const debugOn = params.get("debug") === "1";
+
+  /* Table from the QR link: ?t=5 or ?table=5 */
+  const tableNum = parseInt(params.get("t") || params.get("table") || "", 10);
+  const isDineIn = Number.isFinite(tableNum) && tableNum > 0;
+  const tableName = isDineIn ? "Table " + String(tableNum).padStart(2, "0") : "Takeaway";
+  $("tableLabel").textContent = tableName;
+
+  const configured = !Object.values(firebaseConfig).some((v) => String(v).startsWith("PASTE"));
+  let db = null;
+  if (configured) {
+    const app = initializeApp(firebaseConfig);
+    db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+  } else {
+    $("setupNotice").classList.remove("hidden");
+  }
+
+  /* ---------------- Menu ---------------- */
+  let menu = DEFAULT_MENU.slice();
+  let activeCat = "All";
+  const cart = new Map(); // id -> qty
+  let menuSource = "built-in menu";
+
+  if (db) {
+    onSnapshot(collection(db, "menu_items"), (snap) => {
+      const byId = new Map(DEFAULT_MENU.map((m) => [m.id, m]));
+      snap.forEach((d) => { const m = d.data(); byId.set(d.id, { ...byId.get(d.id), ...m, id: d.id }); });
+      menu = [...byId.values()].filter((m) => m.isAvailable !== false);
+      menuSource = snap.size ? "live menu from Firestore" : "built-in menu";
+      renderMenu();
+    }, (err) => {
+      menuSource = "built-in menu (Firestore said: " + (err.code || err.message) + ")";
+      renderMenu();
+    });
+  }
+
+  const isVeg = (m) => m.category !== "Chicken";
+
+  function renderCats() {
+    const cats = ["All", ...new Set(menu.map((m) => m.category))];
+    $("cats").innerHTML = cats.map((c) => `<button type="button" data-c="${esc(c)}" aria-pressed="${c === activeCat}">${esc(c)}</button>`).join("");
+  }
+
+  function renderMenu() {
+    if (!menu.some((m) => m.category === activeCat) && activeCat !== "All") activeCat = "All";
+    renderCats();
+    const list = menu.filter((m) => activeCat === "All" || m.category === activeCat);
+    $("menuList").innerHTML = list.length ? list.map((m) => {
+      const q = cart.get(m.id) || 0;
+      const meta = [m.pieces > 1 ? m.pieces + " pieces" : "", m.spiciness && m.spiciness !== "None" ? m.spiciness + " spice" : ""].filter(Boolean).join(", ");
+      return `<article class="item">
+        <div class="item-text">
+          <div class="item-top"><span class="vdot ${isVeg(m) ? "" : "nv"}" title="${isVeg(m) ? "Vegetarian" : "Non-vegetarian"}"></span>${m.isTodaysSpecial ? '<span class="special">Today\'s special</span>' : ""}</div>
+          <h3>${esc(m.name)}</h3>
+          <div class="price">${money(m.price)}</div>
+          <p class="desc">${esc(m.description)}</p>
+          ${meta ? `<div class="meta">${esc(meta)}</div>` : ""}
+        </div>
+        <div class="item-side">
+          <div class="photo" style="background-image:url('${esc(m.imageUrl)}')" role="img" aria-label="${esc(m.name)}"></div>
+          <div class="stepper">${q === 0
+            ? `<button class="add-btn" data-add="${esc(m.id)}">Add</button>`
+            : `<div class="stepper-ctl"><button data-dec="${esc(m.id)}" aria-label="Remove one">&minus;</button><output>${q}</output><button data-add="${esc(m.id)}" aria-label="Add one">+</button></div>`}
+          </div>
+        </div>
+      </article>`;
+    }).join("") : `<div class="empty">Nothing in this category right now.</div>`;
+    const dbg = $("debug");
+    if (debugOn) { dbg.classList.remove("hidden"); dbg.textContent = "Showing: " + menuSource + ". Firestore " + (db ? "connected to project " + firebaseConfig.projectId : "not configured"); }
+    renderCartBar();
+  }
+
+  $("cats").addEventListener("click", (e) => { const b = e.target.closest("button[data-c]"); if (b) { activeCat = b.dataset.c; renderMenu(); } });
+  $("menuList").addEventListener("click", (e) => {
+    const a = e.target.closest("[data-add]"), d = e.target.closest("[data-dec]");
+    if (a) cart.set(a.dataset.add, (cart.get(a.dataset.add) || 0) + 1);
+    if (d) { const n = (cart.get(d.dataset.dec) || 0) - 1; n > 0 ? cart.set(d.dataset.dec, n) : cart.delete(d.dataset.dec); }
+    if (a || d) renderMenu();
+  });
+
+  /* ---------------- Cart ---------------- */
+  function cartLines() { return [...cart.entries()].map(([id, qty]) => ({ m: menu.find((x) => x.id === id), qty })).filter((l) => l.m); }
+  function calc() {
+    const subtotal = round2(cartLines().reduce((s, l) => s + l.m.price * l.qty, 0));
+    const gst = round2(subtotal * 0.05);
+    const service = isDineIn ? round2(subtotal * 0.05) : 0;
+    return { subtotal, gst, service, total: round2(subtotal + gst + service) };
+  }
+  function renderCartBar() {
+    const n = [...cart.values()].reduce((a, b) => a + b, 0);
+    $("cartBar").classList.toggle("hidden", n === 0 || !$("trackView").classList.contains("hidden"));
+    $("cartCount").textContent = n + (n === 1 ? " item" : " items") + " in your order";
+    $("cartTotal").textContent = money(calc().total);
+  }
+  function renderSheet() {
+    const c = calc();
+    $("cartLines").innerHTML = cartLines().map((l) => `<div class="line-item"><div><b>${esc(l.m.name)}</b><small>${l.qty} x ${money(l.m.price)}</small></div><div>${money(l.m.price * l.qty)}</div></div>`).join("");
+    $("totals").innerHTML = `<div><span>Items</span><span>${money(c.subtotal)}</span></div><div><span>GST (5%)</span><span>${money(c.gst)}</span></div>${isDineIn ? `<div><span>Service charge (5%)</span><span>${money(c.service)}</span></div>` : ""}<div class="grand"><span>Total</span><span>${money(c.total)}</span></div>`;
+  }
+  const openSheet = () => { renderSheet(); $("orderError").classList.add("hidden"); $("scrim").classList.add("open"); $("sheet").classList.add("open"); };
+  const closeSheet = () => { $("scrim").classList.remove("open"); $("sheet").classList.remove("open"); };
+  $("openCart").addEventListener("click", openSheet);
+  $("closeCart").addEventListener("click", closeSheet);
+  $("scrim").addEventListener("click", closeSheet);
+
+  let payMethod = "Cash";
+  $("pay").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-m]"); if (!b) return;
+    payMethod = b.dataset.m;
+    [...$("pay").children].forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  });
+
+  /* ---------------- Place order ---------------- */
+  let attemptId = null; // reused on retry so a slow write never creates a duplicate order
+  const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: "timeout" }), ms))]);
+
+  function showError(msg) { const el = $("orderError"); el.textContent = msg; el.classList.remove("hidden"); }
+
+  $("placeBtn").addEventListener("click", async () => {
+    if (!db) { showError("This page is not connected to Firebase yet. Add the web app keys to index.html first."); return; }
+    const lines = cartLines();
+    if (!lines.length) return;
+    const btn = $("placeBtn");
+    btn.disabled = true; btn.textContent = "Sending your order...";
+    $("orderError").classList.add("hidden");
+
+    attemptId = attemptId || "WEB-" + Date.now().toString(36).toUpperCase();
+    const token = "#MM-" + String(100 + Math.floor(Math.random() * 900));
+    const c = calc();
+    const items = lines.map((l) => ({ id: l.m.id, name: l.m.name, quantity: l.qty, price: l.m.price, category: l.m.category, addOns: [], specialNote: "" }));
+    const order = {
+      id: attemptId,
+      tokenNumber: token,
+      customerName: $("custName").value.trim() || "Guest",
+      customerPhone: $("custPhone").value.trim(),
+      tableNumber: tableName,
+      isDelivery: false,
+      itemsJson: JSON.stringify(items),
+      specialInstructions: $("notes").value.trim(),
+      status: "NEW",
+      paymentStatus: "PENDING",
+      paymentMethod: payMethod,
+      subtotal: c.subtotal,
+      gstAmount: c.gst,
+      serviceCharge: c.service,
+      discountAmount: 0,
+      totalAmount: c.total,
+      createdAt: Date.now(),
+      targetReadyMinutes: 15
+    };
+    try {
+      await withTimeout(setDoc(doc(db, "orders", attemptId), order), 12000);
+      try { localStorage.setItem("mm_order", JSON.stringify({ id: attemptId, token, table: tableName, at: Date.now() })); } catch (_) {}
+      const placedId = attemptId; attemptId = null;
+      cart.clear(); closeSheet(); openTracking(placedId, token, tableName);
+    } catch (err) {
+      const code = err && (err.code || err.message) || "unknown";
+      const help = code === "permission-denied" ? "Firestore rules are blocking this order. Check the Rules tab in Firebase." :
+        code === "timeout" ? "The order did not reach the server in time. Check your internet and tap Place order again. It will not create a duplicate." :
+        "Could not send the order. Please tap Place order again.";
+      showError(help + " (error: " + code + ")");
+    } finally { btn.disabled = false; btn.textContent = "Place order"; }
+  });
+
+  /* ---------------- Live order tracking ---------------- */
+  let unsub = null;
+  function openTracking(id, token, table) {
+    $("menuView").classList.add("hidden");
+    $("trackView").classList.remove("hidden");
+    $("cartBar").classList.add("hidden");
+    $("trackToken").textContent = token;
+    $("trackTable").textContent = table === "Takeaway" ? "Takeaway order" : "Order for " + table;
+    window.scrollTo(0, 0);
+    if (unsub) unsub();
+    if (!db) return;
+    unsub = onSnapshot(doc(db, "orders", id), (snap) => {
+      const s = snap.exists() ? snap.data().status : "NEW";
+      if (snap.exists() && snap.data().tokenNumber) $("trackToken").textContent = snap.data().tokenNumber;
+      renderSteps(s);
+    });
+  }
+  function renderSteps(status) {
+    const cancelled = status === "CANCELLED";
+    $("trackCancelled").classList.toggle("hidden", !cancelled);
+    const idx = Math.max(0, STATUS_STEPS.findIndex((x) => x.key === status));
+    $("steps").classList.toggle("hidden", cancelled);
+    $("steps").innerHTML = STATUS_STEPS.map((x, i) => `<li class="${i < idx ? "done" : i === idx ? "now" : ""}">${esc(x.label)}</li>`).join("");
+    $("trackMsg").textContent = cancelled ? "Order cancelled." : STATUS_STEPS[idx].msg;
+  }
+  $("newOrder").addEventListener("click", () => {
+    if (unsub) { unsub(); unsub = null; }
+    try { localStorage.removeItem("mm_order"); } catch (_) {}
+    $("trackView").classList.add("hidden");
+    $("menuView").classList.remove("hidden");
+    renderMenu();
+  });
+
+  /* Reopen tracking if the customer refreshes the page after ordering */
+  try {
+    const saved = JSON.parse(localStorage.getItem("mm_order") || "null");
+    if (saved && Date.now() - saved.at < 6 * 60 * 60 * 1000) openTracking(saved.id, saved.token, saved.table);
+  } catch (_) {}
+
+  renderMenu();
+</script>
+</body>
+</html>
