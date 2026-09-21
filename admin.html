@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#182226">
+<meta name="robots" content="noindex, nofollow">
+<title>Momo Mama Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F4F6F5; --surface: #FFFFFF; --ink: #182226; --muted: #5B6A6E; --line: #DDE3E1;
+    --chili: #C9302C; --chili-dark: #A82420; --chili-soft: #FCEDEC;
+    --blue: #2E6FBA; --green: #2E8B57; --yellow: #F0B429; --late: #B3261E; --late-soft: #FCEDEC;
+    --head: "Bricolage Grotesque", system-ui, sans-serif;
+    --body: "Hind Siliguri", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101719; --surface: #182226; --ink: #EEF2F1; --muted: #9AA9AD; --line: #2C3A3F;
+      --chili-soft: #3A1B1A; --late-soft: #3A1B1A; --late: #FF8A80;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { font-family: var(--body); font-size: 16px; line-height: 1.45; color: var(--ink); background: var(--bg); min-height: 100vh; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  .hidden { display: none !important; }
+  .flags { display: flex; height: 8px; }
+  .flags i { flex: 1; }
+  .flags i:nth-child(5n+1) { background: #2E6FBA; } .flags i:nth-child(5n+2) { background: #F7F7F7; }
+  .flags i:nth-child(5n+3) { background: #C9302C; } .flags i:nth-child(5n+4) { background: #3C8D5A; } .flags i:nth-child(5n+5) { background: #F0B429; }
+
+  /* Login */
+  .login { max-width: 400px; margin: 0 auto; padding: 56px 24px 40px; }
+  .brand { font-family: var(--head); font-weight: 800; font-size: 38px; line-height: 1; letter-spacing: -0.02em; }
+  .brand small { display: block; font-family: var(--body); font-weight: 500; font-size: 15px; letter-spacing: 0; color: var(--muted); margin-top: 8px; }
+  .login form { margin-top: 32px; }
+  .field { margin-top: 14px; }
+  .field label { display: block; font-weight: 600; font-size: 14.5px; margin-bottom: 5px; }
+  .field input { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface); }
+  .btn { display: block; width: 100%; margin-top: 20px; border: 0; border-radius: 12px; padding: 14px; background: var(--chili); color: #fff; font-weight: 600; font-size: 17px; }
+  .btn:active { background: var(--chili-dark); }
+  .btn:disabled { opacity: .6; }
+  .link { background: none; border: 0; color: var(--blue); margin-top: 14px; padding: 4px 0; font-weight: 500; }
+  .msg { margin-top: 14px; padding: 11px 12px; border-radius: 10px; font-size: 14.5px; }
+  .msg.err { background: var(--chili-soft); color: var(--late); border: 1px solid var(--late); }
+  .msg.ok { background: #E6F4EC; color: #1E6B3F; border: 1px solid #9AD1B0; }
+  @media (prefers-color-scheme: dark) { .msg.ok { background: #14301F; color: #8FD9AE; border-color: #2E6B47; } }
+
+  /* Top bar */
+  header.top { position: sticky; top: 0; z-index: 10; background: var(--surface); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
+  .bar { max-width: 720px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; }
+  .bar .name { font-family: var(--head); font-weight: 800; font-size: 20px; letter-spacing: -0.01em; line-height: 1.1; }
+  .bar .name small { display: block; font-family: var(--body); font-weight: 500; font-size: 13px; color: var(--muted); letter-spacing: 0; }
+  .bar-actions { display: flex; gap: 8px; }
+  .icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 12px; font-weight: 500; font-size: 14.5px; }
+  .icon-btn[aria-pressed="false"] { color: var(--muted); }
+  .stats { max-width: 720px; margin: 0 auto; padding: 0 16px 10px; color: var(--muted); font-size: 14.5px; }
+  .stats b { color: var(--ink); font-weight: 600; }
+  .tabs { max-width: 720px; margin: 0 auto; display: flex; gap: 6px; padding: 0 16px 12px; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button { flex: 1 0 auto; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 14px; font-weight: 500; white-space: nowrap; }
+  .tabs button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .tabs .n { display: inline-block; min-width: 20px; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--chili); color: #fff; font-size: 13px; font-weight: 600; }
+  .tabs .n.zero { background: var(--line); color: var(--muted); }
+
+  /* Orders */
+  main { max-width: 720px; margin: 0 auto; padding: 16px 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
+  .order { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+  .order.late { border-color: var(--late); box-shadow: 0 0 0 1px var(--late); }
+  .o-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .token { font-family: var(--head); font-weight: 800; font-size: 28px; line-height: 1; letter-spacing: -0.02em; }
+  .table-chip { display: inline-block; margin-top: 6px; padding: 2px 10px; border-radius: 999px; background: var(--ink); color: var(--surface); font-weight: 600; font-size: 14px; }
+  .age { text-align: right; font-size: 14px; color: var(--muted); }
+  .age b { display: block; font-size: 17px; color: var(--ink); font-weight: 600; }
+  .order.late .age b { color: var(--late); }
+  .who { margin-top: 10px; color: var(--muted); font-size: 14.5px; }
+  .who a { color: var(--blue); text-decoration: none; font-weight: 500; }
+  .items { list-style: none; padding: 0; margin: 12px 0 0; border-top: 1px solid var(--line); }
+  .items li { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .items .q { font-weight: 600; min-width: 30px; }
+  .items small { display: block; color: var(--muted); }
+  .note { margin-top: 10px; padding: 9px 12px; border-radius: 10px; background: #FFF5D6; color: #4A3600; font-weight: 500; font-size: 14.5px; }
+  @media (prefers-color-scheme: dark) { .note { background: #3B3110; color: #FFE08A; } }
+  .pay-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 12px; }
+  .pay-row .total { font-family: var(--head); font-weight: 800; font-size: 22px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13.5px; font-weight: 600; }
+  .badge.paid { background: #E6F4EC; color: #1E6B3F; }
+  .badge.pending { background: #FFF5D6; color: #4A3600; }
+  .badge.cancelled { background: var(--chili-soft); color: var(--late); }
+  @media (prefers-color-scheme: dark) { .badge.paid { background: #14301F; color: #8FD9AE; } .badge.pending { background: #3B3110; color: #FFE08A; } }
+  .mark-paid { margin-top: 10px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 14.5px; color: var(--muted); }
+  .mark-paid button { border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 6px 12px; font-weight: 500; }
+  .actions { display: flex; gap: 8px; margin-top: 14px; }
+  .primary { flex: 1; border: 0; border-radius: 12px; padding: 13px; background: var(--chili); color: #fff; font-weight: 600; font-size: 16.5px; }
+  .primary:active { background: var(--chili-dark); }
+  .primary:disabled, .mark-paid button:disabled, .cancel:disabled { opacity: .55; }
+  .cancel { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 13px 16px; font-weight: 500; color: var(--late); }
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: 500px; margin: 0 auto; background: var(--ink); color: var(--surface); padding: 12px 16px; border-radius: 12px; z-index: 50; font-size: 14.5px; }
+
+  /* View switcher */
+  .views { max-width: 720px; margin: 0 auto; display: flex; gap: 8px; padding: 0 16px 12px; }
+  .views button { flex: 1; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px; font-weight: 600; }
+  .views button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .views .n { display: inline-block; min-width: 20px; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--chili); color: #fff; font-size: 13px; font-weight: 600; }
+  .views .n.zero { display: none; }
+
+  /* Menu management */
+  .m-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .m-toolbar .count { color: var(--muted); font-size: 14.5px; }
+  .add-item { border: 0; border-radius: 12px; padding: 11px 18px; background: var(--chili); color: #fff; font-weight: 600; }
+  .add-item:active { background: var(--chili-dark); }
+  .m-cats { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; scrollbar-width: none; }
+  .m-cats::-webkit-scrollbar { display: none; }
+  .m-cats button { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 15px; font-weight: 500; }
+  .m-cats button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .mrow { display: flex; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px; margin-bottom: 10px; }
+  .mrow.off .mthumb, .mrow.off .minfo { opacity: .5; }
+  .mthumb { width: 64px; height: 64px; flex: none; border-radius: 12px; background: #E6EBE9 center / cover no-repeat; display: grid; place-items: center; font-family: var(--head); font-weight: 800; font-size: 24px; color: var(--muted); }
+  .minfo { flex: 1; min-width: 0; }
+  .mname { font-family: var(--head); font-weight: 600; font-size: 17px; line-height: 1.25; }
+  .msub { color: var(--muted); font-size: 14px; margin-top: 2px; }
+  .mflag { display: inline-block; margin-top: 4px; padding: 0 9px; border-radius: 999px; background: var(--yellow); color: #3a2a00; font-size: 12.5px; font-weight: 600; }
+  .mctl { display: flex; flex-direction: column; gap: 6px; align-items: stretch; flex: none; }
+  .mctl button { border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 6px 12px; font-weight: 500; font-size: 14px; white-space: nowrap; }
+  .mctl .avail[aria-pressed="true"] { background: #E6F4EC; color: #1E6B3F; border-color: #9AD1B0; font-weight: 600; }
+  .mctl .avail[aria-pressed="false"] { background: var(--chili-soft); color: var(--late); border-color: var(--late); font-weight: 600; }
+  @media (prefers-color-scheme: dark) { .mctl .avail[aria-pressed="true"] { background: #14301F; color: #8FD9AE; border-color: #2E6B47; } }
+  .hint { color: var(--muted); font-size: 13.5px; margin-top: 4px; }
+
+  /* Edit sheet */
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 30; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--surface); border-radius: 22px 22px 0 0; max-height: 92vh; overflow-y: auto; transform: translateY(102%); transition: transform .28s cubic-bezier(.2,.8,.2,1); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .sheet.open { transform: none; }
+  .sheet-in { max-width: 560px; margin: 0 auto; padding: 20px 20px 24px; }
+  .sheet-head { display: flex; justify-content: space-between; align-items: center; }
+  .sheet h2 { font-family: var(--head); font-weight: 800; font-size: 24px; letter-spacing: -0.01em; }
+  .close { border: 0; background: var(--bg); width: 36px; height: 36px; border-radius: 50%; font-size: 20px; }
+  .field select, .field textarea { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface); }
+  .two { display: flex; gap: 10px; } .two .field { flex: 1; }
+  .check { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-weight: 500; }
+  .check input { width: 20px; height: 20px; accent-color: var(--chili); }
+  .danger { display: block; width: 100%; margin-top: 10px; border: 1px solid var(--late); background: transparent; color: var(--late); border-radius: 12px; padding: 12px; font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) { .sheet, .scrim { transition: none; } }
+</style>
+</head>
+<body>
+
+<!-- Login screen -->
+<section id="loginView" class="hidden">
+  <div class="flags" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="login">
+    <div class="brand">Momo Mama<small>Staff login</small></div>
+    <form id="loginForm" novalidate>
+      <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="username" inputmode="email" required></div>
+      <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required></div>
+      <div class="msg err hidden" id="loginErr" role="alert"></div>
+      <div class="msg ok hidden" id="loginOk"></div>
+      <button class="btn" id="loginBtn" type="submit">Sign in</button>
+      <button class="link" id="forgotBtn" type="button">Forgot password?</button>
+    </form>
+  </div>
+</section>
+
+<!-- Orders board -->
+<section id="boardView" class="hidden">
+  <header class="top">
+    <div class="bar">
+      <div class="name">Momo Mama<small id="who"></small></div>
+      <div class="bar-actions">
+        <button class="icon-btn" id="soundBtn" aria-pressed="true">Sound on</button>
+        <button class="icon-btn" id="logoutBtn">Sign out</button>
+      </div>
+    </div>
+    <div class="views" id="views">
+      <button data-view="orders" aria-pressed="true">Orders<span class="n zero" id="newBadge">0</span></button>
+      <button data-view="menu" aria-pressed="false">Menu</button>
+    </div>
+    <div id="ordersHead">
+      <div class="stats" id="stats"></div>
+      <nav class="tabs" id="tabs" aria-label="Order status"></nav>
+    </div>
+  </header>
+  <main>
+    <div id="ordersView"><div id="list" aria-live="polite"></div></div>
+    <div id="menuView" class="hidden">
+      <div class="m-toolbar"><span class="count" id="menuCount"></span><button class="add-item" id="addItem">Add item</button></div>
+      <nav class="m-cats" id="menuCats" aria-label="Menu categories"></nav>
+      <div id="menuBody"></div>
+    </div>
+  </main>
+</section>
+
+
+<div class="scrim" id="itemScrim"></div>
+<div class="sheet" id="itemSheet" role="dialog" aria-modal="true" aria-labelledby="itemTitle">
+  <div class="sheet-in">
+    <div class="sheet-head"><h2 id="itemTitle">Edit item</h2><button class="close" id="itemClose" type="button" aria-label="Close">&times;</button></div>
+    <form id="itemForm" novalidate>
+      <div class="field"><label for="fName">Item name</label><input id="fName" maxlength="80" autocomplete="off"></div>
+      <div class="two">
+        <div class="field"><label for="fCat">Category</label><input id="fCat" list="catList" maxlength="30" autocomplete="off" placeholder="Chicken, Veg..."><datalist id="catList"></datalist></div>
+        <div class="field"><label for="fPrice">Price (Rs)</label><input id="fPrice" inputmode="decimal" autocomplete="off" placeholder="190"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="fPieces">Pieces</label><input id="fPieces" inputmode="numeric" autocomplete="off" placeholder="6"></div>
+        <div class="field"><label for="fSpice">Spice level</label><select id="fSpice"><option>None</option><option>Mild</option><option>Medium</option><option>Fire</option></select></div>
+      </div>
+      <div class="field"><label for="fDesc">Description</label><textarea id="fDesc" rows="3" maxlength="240"></textarea></div>
+      <div class="field"><label for="fImg">Photo link (optional)</label><input id="fImg" inputmode="url" autocomplete="off" placeholder="https://..."><div class="hint">Internet-er kono chhobi-r link (https diye shuru). Faka rakhle chhobi chhara dekhabe.</div></div>
+      <label class="check"><input type="checkbox" id="fAvail"> Available (customer order korte parbe)</label>
+      <label class="check"><input type="checkbox" id="fSpecial"> Today's special</label>
+      <div class="msg err hidden" id="itemErr" role="alert"></div>
+      <button class="btn" id="itemSave" type="submit">Save item</button>
+      <button class="danger hidden" id="itemDelete" type="button">Delete this item</button>
+      <div class="hint hidden" id="itemNoDelete">Starter item delete kora jay na, Available bondho kore dao.</div>
+    </form>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast" role="status"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { initializeFirestore, collection, query, orderBy, limit, onSnapshot, doc, updateDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB2s_LZL6lLuWieNh-8O3aHWiUuFcEzfK0",
+    authDomain: "momo-mama.firebaseapp.com",
+    projectId: "momo-mama",
+    storageBucket: "momo-mama.firebasestorage.app",
+    messagingSenderId: "429400485602",
+    appId: "1:429400485602:web:88b8f0a34fc0f4c44d78bb"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const money = (n) => "Rs " + (Math.round(Number(n || 0) * 100) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+
+  const TABS = [
+    { key: "new", label: "New", statuses: ["NEW"] },
+    { key: "kitchen", label: "In kitchen", statuses: ["ACCEPTED", "PREPARING"] },
+    { key: "ready", label: "Ready", statuses: ["READY"] },
+    { key: "done", label: "Done", statuses: ["COMPLETED", "CANCELLED"] }
+  ];
+  const NEXT = {
+    NEW: { to: "ACCEPTED", label: "Accept order" },
+    ACCEPTED: { to: "PREPARING", label: "Start cooking" },
+    PREPARING: { to: "READY", label: "Mark ready" },
+    READY: { to: "COMPLETED", label: "Served" }
+  };
+  const STATUS_LABEL = { NEW: "New order", ACCEPTED: "Accepted", PREPARING: "Cooking", READY: "Ready", COMPLETED: "Served", CANCELLED: "Cancelled" };
+  const PAID = { PAID_CASH: "Paid, cash", PAID_UPI: "Paid, UPI", PAID_CARD: "Paid, card" };
+
+  let orders = [];
+  let activeTab = "new";
+  let unsub = null;
+  let firstSnapshot = true;
+  let soundOn = true;
+  let audioCtx = null;
+  const busy = new Set();
+
+  /* ---------- Sound ---------- */
+  function unlockAudio() {
+    try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === "suspended") audioCtx.resume(); } catch (_) {}
+  }
+  function beep() {
+    if (!soundOn) return;
+    try {
+      unlockAudio(); if (!audioCtx) return;
+      [0, 0.28, 0.56].forEach((t, i) => {
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = "sine"; o.frequency.value = i === 2 ? 1046 : 784;
+        g.gain.setValueAtTime(0.0001, audioCtx.currentTime + t);
+        g.gain.exponentialRampToValueAtTime(0.35, audioCtx.currentTime + t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + t + 0.22);
+        o.connect(g); g.connect(audioCtx.destination); o.start(audioCtx.currentTime + t); o.stop(audioCtx.currentTime + t + 0.25);
+      });
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    } catch (_) {}
+  }
+  $("soundBtn").addEventListener("click", () => {
+    soundOn = !soundOn;
+    $("soundBtn").setAttribute("aria-pressed", String(soundOn));
+    $("soundBtn").textContent = soundOn ? "Sound on" : "Sound off";
+    if (soundOn) { unlockAudio(); beep(); }
+  });
+
+  /* ---------- Toast ---------- */
+  let toastTimer;
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.classList.remove("hidden");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add("hidden"), 4500);
+  }
+
+  /* ---------- Auth ---------- */
+  const authMsg = (code) => ({
+    "auth/invalid-credential": "Email ba password thik na. Abar try koro.",
+    "auth/wrong-password": "Email ba password thik na. Abar try koro.",
+    "auth/user-not-found": "Email ba password thik na. Abar try koro.",
+    "auth/invalid-email": "Email ta thik kore likho.",
+    "auth/too-many-requests": "Onek bar bhul hoyeche. Kichukkhon pore try koro.",
+    "auth/network-request-failed": "Internet check koro.",
+    "auth/operation-not-allowed": "Firebase-e Email/Password sign-in on kora nei.",
+    "auth/unauthorized-domain": "Ei website Firebase-er authorized domain-e nei. Authentication, Settings, Authorized domains-e add koro."
+  }[code] || "Login hoy ni (" + code + ")");
+
+  $("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    unlockAudio();
+    $("loginErr").classList.add("hidden"); $("loginOk").classList.add("hidden");
+    const btn = $("loginBtn"); btn.disabled = true; btn.textContent = "Signing in...";
+    try {
+      await signInWithEmailAndPassword(auth, $("email").value.trim(), $("password").value);
+      $("password").value = "";
+    } catch (err) {
+      $("loginErr").textContent = authMsg(err.code || err.message); $("loginErr").classList.remove("hidden");
+    } finally { btn.disabled = false; btn.textContent = "Sign in"; }
+  });
+
+  $("forgotBtn").addEventListener("click", async () => {
+    const email = $("email").value.trim();
+    $("loginErr").classList.add("hidden"); $("loginOk").classList.add("hidden");
+    if (!email) { $("loginErr").textContent = "Age email likho, tarpor Forgot password tap koro."; $("loginErr").classList.remove("hidden"); return; }
+    try { await sendPasswordResetEmail(auth, email); } catch (_) {}
+    $("loginOk").textContent = "Email-e account thakle password reset-er link pathano hoyeche. Spam folder-o dekho."; $("loginOk").classList.remove("hidden");
+  });
+
+  $("logoutBtn").addEventListener("click", () => signOut(auth));
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      $("loginView").classList.add("hidden"); $("boardView").classList.remove("hidden");
+      $("who").textContent = user.email;
+      startListening();
+      startMenuListening();
+    } else {
+      if (unsub) { unsub(); unsub = null; }
+      if (menuUnsub) { menuUnsub(); menuUnsub = null; }
+      menuDocs = new Map(); view = "orders";
+      orders = []; firstSnapshot = true;
+      $("boardView").classList.add("hidden"); $("loginView").classList.remove("hidden");
+      document.title = "Momo Mama Kitchen";
+    }
+  });
+
+  /* ---------- Orders ---------- */
+  function startListening() {
+    if (unsub) unsub();
+    firstSnapshot = true;
+    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"), limit(150));
+    unsub = onSnapshot(q, (snap) => {
+      orders = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      if (!firstSnapshot) {
+        const fresh = snap.docChanges().some((c) => c.type === "added" && (c.doc.data().status || "NEW") === "NEW");
+        if (fresh) beep();
+      }
+      firstSnapshot = false;
+      updateBadge();
+      if (view === "orders") render();
+    }, (err) => {
+      const denied = err.code === "permission-denied";
+      $("list").innerHTML = `<div class="empty">${denied ? "Ei account-er orders dekhar permission nei. Firebase rules-e tomar email staff hisebe add kora ache kina dekho." : "Orders load hoy ni (" + esc(err.code || err.message) + ")"}</div>`;
+    });
+  }
+
+  const statusOf = (o) => o.status || "NEW";
+  function parseItems(o) {
+    try { const a = JSON.parse(o.itemsJson || "[]"); return Array.isArray(a) ? a : []; } catch (_) { return []; }
+  }
+  function ageMin(o) { return Math.max(0, Math.floor((Date.now() - Number(o.createdAt || Date.now())) / 60000)); }
+  function ageText(m) { return m < 1 ? "Just now" : m < 60 ? m + " min ago" : Math.floor(m / 60) + " h " + (m % 60) + " min ago"; }
+  const isLate = (o) => ["NEW", "ACCEPTED", "PREPARING"].includes(statusOf(o)) && ageMin(o) > (Number(o.targetReadyMinutes) || 15);
+
+  function render() {
+    // Counts and stats
+    const counts = {}; TABS.forEach((t) => counts[t.key] = orders.filter((o) => t.statuses.includes(statusOf(o))).length);
+    $("tabs").innerHTML = TABS.map((t) => `<button data-tab="${t.key}" aria-pressed="${t.key === activeTab}">${t.label}<span class="n ${t.key !== "done" && counts[t.key] ? "" : "zero"}">${counts[t.key]}</span></button>`).join("");
+    const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+    const today = orders.filter((o) => Number(o.createdAt) >= midnight.getTime() && statusOf(o) !== "CANCELLED");
+    $("stats").innerHTML = `Today: <b>${today.length}</b> orders, <b>${money(today.reduce((s, o) => s + Number(o.totalAmount || 0), 0))}</b>`;
+    document.title = (counts.new ? "(" + counts.new + ") " : "") + "Momo Mama Kitchen";
+
+    const tab = TABS.find((t) => t.key === activeTab);
+    let list = orders.filter((o) => tab.statuses.includes(statusOf(o)));
+    if (activeTab === "done") list = list.slice(0, 40);
+    else list = list.slice().reverse(); // oldest first so nothing waits
+    $("list").innerHTML = list.length ? list.map(card).join("") : `<div class="empty">${activeTab === "new" ? "No new orders right now." : "Nothing here."}</div>`;
+  }
+
+  function card(o) {
+    const st = statusOf(o), mins = ageMin(o), items = parseItems(o), pay = o.paymentStatus || "PENDING", busyNow = busy.has(o.id);
+    const isPaid = pay in PAID;
+    const next = NEXT[st];
+    const itemHtml = items.map((i) => {
+      const add = Array.isArray(i.addOns) && i.addOns.length ? i.addOns.map((a) => typeof a === "string" ? a : (a && a.name) || "").filter(Boolean).join(", ") : "";
+      return `<li><span class="q">${esc(i.quantity)} x</span><span>${esc(i.name)}${add ? `<small>${esc(add)}</small>` : ""}${i.specialNote ? `<small>${esc(i.specialNote)}</small>` : ""}</span></li>`;
+    }).join("");
+    const phone = String(o.customerPhone || "").trim();
+    const badge = st === "CANCELLED" ? `<span class="badge cancelled">Cancelled</span>` : isPaid ? `<span class="badge paid">${PAID[pay]}</span>` : `<span class="badge pending">${esc(o.paymentMethod || "Payment")} pending</span>`;
+    const canAct = st !== "COMPLETED" && st !== "CANCELLED";
+    return `<article class="order ${isLate(o) ? "late" : ""}">
+      <div class="o-head">
+        <div><div class="token">${esc(o.tokenNumber || o.id)}</div><span class="table-chip">${esc(o.tableNumber || "No table")}</span></div>
+        <div class="age"><b>${ageText(mins)}</b>${esc(STATUS_LABEL[st] || st)}</div>
+      </div>
+      <div class="who">${esc(o.customerName || "Guest")}${phone ? ` &nbsp; <a href="tel:${esc(phone)}">${esc(phone)}</a>` : ""}</div>
+      <ul class="items">${itemHtml || `<li><span>No item details</span></li>`}</ul>
+      ${o.specialInstructions ? `<div class="note">${esc(o.specialInstructions)}</div>` : ""}
+      <div class="pay-row"><div>${badge}</div><div class="total">${money(o.totalAmount)}</div></div>
+      ${!isPaid && st !== "CANCELLED" ? `<div class="mark-paid">Payment received:
+        <button data-pay="PAID_CASH" data-id="${esc(o.id)}" ${busyNow ? "disabled" : ""}>Cash</button>
+        <button data-pay="PAID_UPI" data-id="${esc(o.id)}" ${busyNow ? "disabled" : ""}>UPI</button>
+        <button data-pay="PAID_CARD" data-id="${esc(o.id)}" ${busyNow ? "disabled" : ""}>Card</button></div>` : ""}
+      ${canAct ? `<div class="actions">
+        ${next ? `<button class="primary" data-to="${next.to}" data-id="${esc(o.id)}" ${busyNow ? "disabled" : ""}>${next.label}</button>` : ""}
+        <button class="cancel" data-cancel="${esc(o.id)}" ${busyNow ? "disabled" : ""}>Cancel</button></div>` : ""}
+    </article>`;
+  }
+
+  async function update(id, fields, okMsg) {
+    busy.add(id); render();
+    try { await updateDoc(doc(db, "orders", id), fields); if (okMsg) toast(okMsg); }
+    catch (err) { toast("Update hoy ni (" + (err.code || err.message) + ")"); }
+    finally { busy.delete(id); render(); }
+  }
+
+  $("tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) { activeTab = b.dataset.tab; render(); window.scrollTo(0, 0); } });
+  $("list").addEventListener("click", (e) => {
+    const go = e.target.closest("[data-to]"), pay = e.target.closest("[data-pay]"), can = e.target.closest("[data-cancel]");
+    if (go) update(go.dataset.id, { status: go.dataset.to });
+    if (pay) update(pay.dataset.id, { paymentStatus: pay.dataset.pay }, "Payment marked");
+    if (can && confirm("Ei order cancel korbe?")) update(can.dataset.cancel, { status: "CANCELLED" }, "Order cancelled");
+  });
+
+  /* ---------- Menu management ---------- */
+  const DEFAULT_MENU = [
+    { id: "M-01", name: "Himalayan Steamed Chicken Momo", category: "Chicken", description: "Juicy minced chicken with ginger, scallions and mountain spices. Served with fiery red sesame chutney.", price: 190, isAvailable: true, isTodaysSpecial: true, spiciness: "Medium", pieces: 6, imageUrl: "https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?w=400&auto=format&fit=crop" },
+    { id: "M-02", name: "Kurkure Paneer Crispy Momo", category: "Paneer", description: "Fresh cottage cheese filling with a crunchy panko coating, fried golden. Served with garlic mint mayo.", price: 180, isAvailable: true, isTodaysSpecial: false, spiciness: "Mild", pieces: 6, imageUrl: "https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?w=400&auto=format&fit=crop" },
+    { id: "M-03", name: "Schezwan Wok-Tossed Veg Momo", category: "Veg", description: "Crispy pan-fried cabbage and mushroom dumplings tossed in fiery Sichuan sauce with crushed peanuts.", price: 160, isAvailable: true, isTodaysSpecial: false, spiciness: "Fire", pieces: 6, imageUrl: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400&auto=format&fit=crop" },
+    { id: "M-04", name: "Smoky Tandoori Chicken Momo", category: "Chicken", description: "Char-grilled momos marinated in spiced yoghurt and mustard oil, with roasted onions and mint dip.", price: 220, isAvailable: true, isTodaysSpecial: true, spiciness: "Medium", pieces: 6, imageUrl: "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=400&auto=format&fit=crop" },
+    { id: "M-05", name: "Darjeeling Classic Veg Steamed", category: "Veg", description: "Thin-wrapper dumplings stuffed with hill greens, cabbage, paneer and crushed black pepper.", price: 140, isAvailable: true, isTodaysSpecial: false, spiciness: "Mild", pieces: 6, imageUrl: "https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=400&auto=format&fit=crop" },
+    { id: "M-06", name: "Afghani Malai Paneer Momo", category: "Paneer", description: "Coated in cashew cream, charred in the tandoor with cardamom and fresh coriander.", price: 210, isAvailable: true, isTodaysSpecial: false, spiciness: "Mild", pieces: 6, imageUrl: "https://images.unsplash.com/photo-1563245372-f21724e3856d?w=400&auto=format&fit=crop" },
+    { id: "M-07", name: "Momo Mama Chef's Platter (12 pcs)", category: "Specials", description: "Sampler of steamed chicken, kurkure paneer, fried veg and tandoori momos with 4 house dips.", price: 390, isAvailable: true, isTodaysSpecial: true, spiciness: "Medium", pieces: 12, imageUrl: "https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?w=400&auto=format&fit=crop" },
+    { id: "M-08", name: "Spicy Thukpa Mountain Noodle Soup", category: "Specials", description: "Slow-simmered aromatic broth with hand-pulled noodles, fresh greens and herbs.", price: 170, isAvailable: true, isTodaysSpecial: false, spiciness: "Medium", pieces: 1, imageUrl: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&auto=format&fit=crop" },
+    { id: "M-09", name: "Himalayan Peach Iced Tea", category: "Beverages", description: "Brewed Darjeeling black tea with sweet mountain peach and fresh mint.", price: 95, isAvailable: true, isTodaysSpecial: false, spiciness: "None", pieces: 1, imageUrl: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&auto=format&fit=crop" },
+    { id: "M-10", name: "Szechuan Spiced Lemonade", category: "Beverages", description: "Fresh lime soda with Sichuan pepper, roasted cumin and black rock salt.", price: 85, isAvailable: true, isTodaysSpecial: false, spiciness: "Mild", pieces: 1, imageUrl: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400&auto=format&fit=crop" }
+  ];
+  const DEFAULT_IDS = new Set(DEFAULT_MENU.map((m) => m.id));
+  let view = "orders", menuDocs = new Map(), menuUnsub = null, menuCat = "All", editingId = null, savingItem = false;
+
+  // Same merge the customer page uses: starter items plus whatever is saved in Firestore
+  function mergedMenu() {
+    const byId = new Map(DEFAULT_MENU.map((m) => [m.id, { ...m }]));
+    menuDocs.forEach((m, id) => byId.set(id, { ...byId.get(id), ...m, id }));
+    return [...byId.values()];
+  }
+  function startMenuListening() {
+    if (menuUnsub) menuUnsub();
+    menuUnsub = onSnapshot(collection(db, "menu_items"), (snap) => {
+      menuDocs = new Map(snap.docs.map((d) => [d.id, d.data()]));
+      if (view === "menu") renderMenu();
+    }, (err) => toast("Menu load hoy ni (" + (err.code || err.message) + ")"));
+  }
+
+  function updateBadge() {
+    const n = orders.filter((o) => statusOf(o) === "NEW").length;
+    const b = $("newBadge"); b.textContent = n; b.classList.toggle("zero", n === 0);
+    document.title = (n ? "(" + n + ") " : "") + "Momo Mama Kitchen";
+  }
+  function setView(v) {
+    view = v;
+    $("ordersHead").classList.toggle("hidden", v !== "orders");
+    $("ordersView").classList.toggle("hidden", v !== "orders");
+    $("menuView").classList.toggle("hidden", v !== "menu");
+    [...$("views").children].forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === v)));
+    if (v === "orders") render(); else renderMenu();
+    window.scrollTo(0, 0);
+  }
+  $("views").addEventListener("click", (e) => { const b = e.target.closest("button[data-view]"); if (b) setView(b.dataset.view); });
+
+  const okImg = (u) => /^https?:\/\//i.test(String(u || ""));
+  function renderMenu() {
+    const items = mergedMenu();
+    const cats = ["All", ...new Set(items.map((m) => m.category).filter(Boolean))];
+    if (!cats.includes(menuCat)) menuCat = "All";
+    $("menuCats").innerHTML = cats.map((c) => `<button type="button" data-c="${esc(c)}" aria-pressed="${c === menuCat}">${esc(c)}</button>`).join("");
+    $("catList").innerHTML = cats.filter((c) => c !== "All").map((c) => `<option value="${esc(c)}">`).join("");
+    const onSale = items.filter((m) => m.isAvailable !== false).length;
+    $("menuCount").textContent = onSale + " of " + items.length + " items on sale";
+    const list = items.filter((m) => menuCat === "All" || m.category === menuCat);
+    $("menuBody").innerHTML = list.length ? list.map((m) => {
+      const on = m.isAvailable !== false;
+      const sub = [m.category, money(m.price), Number(m.pieces) > 1 ? m.pieces + " pcs" : ""].filter(Boolean).join(", ");
+      return `<div class="mrow ${on ? "" : "off"}">
+        <div class="mthumb" ${okImg(m.imageUrl) ? `style="background-image:url('${esc(m.imageUrl)}')"` : ""}>${okImg(m.imageUrl) ? "" : esc((m.name || "?").charAt(0).toUpperCase())}</div>
+        <div class="minfo"><div class="mname">${esc(m.name)}</div><div class="msub">${esc(sub)}</div>${m.isTodaysSpecial ? `<span class="mflag">Today's special</span>` : ""}</div>
+        <div class="mctl">
+          <button class="avail" data-avail="${esc(m.id)}" aria-pressed="${on}">${on ? "Available" : "Unavailable"}</button>
+          <button data-edit="${esc(m.id)}">Edit</button>
+        </div>
+      </div>`;
+    }).join("") : `<div class="empty">Ei category-te kichu nei.</div>`;
+  }
+
+  $("menuCats").addEventListener("click", (e) => { const b = e.target.closest("button[data-c]"); if (b) { menuCat = b.dataset.c; renderMenu(); } });
+  $("menuBody").addEventListener("click", (e) => {
+    const av = e.target.closest("[data-avail]"), ed = e.target.closest("[data-edit]");
+    if (av) toggleAvail(av.dataset.avail);
+    if (ed) openItemSheet(ed.dataset.edit);
+  });
+  $("addItem").addEventListener("click", () => openItemSheet(null));
+
+  async function toggleAvail(id) {
+    const m = mergedMenu().find((x) => x.id === id); if (!m) return;
+    try { await setDoc(doc(db, "menu_items", id), { ...m, isAvailable: m.isAvailable === false }); }
+    catch (err) { toast("Update hoy ni (" + (err.code || err.message) + ")"); }
+  }
+
+  function openItemSheet(id) {
+    editingId = id;
+    const m = id ? mergedMenu().find((x) => x.id === id) : null;
+    $("itemTitle").textContent = m ? "Edit item" : "Add new item";
+    $("fName").value = m ? m.name : "";
+    $("fCat").value = m ? m.category : (menuCat !== "All" ? menuCat : "");
+    $("fPrice").value = m ? m.price : "";
+    $("fPieces").value = m ? m.pieces : 6;
+    $("fSpice").value = m && m.spiciness ? m.spiciness : "Mild";
+    $("fDesc").value = m ? (m.description || "") : "";
+    $("fImg").value = m ? (m.imageUrl || "") : "";
+    $("fAvail").checked = m ? m.isAvailable !== false : true;
+    $("fSpecial").checked = m ? !!m.isTodaysSpecial : false;
+    $("itemErr").classList.add("hidden");
+    const custom = !!m && !DEFAULT_IDS.has(id);
+    $("itemDelete").classList.toggle("hidden", !custom);
+    $("itemNoDelete").classList.toggle("hidden", !(m && DEFAULT_IDS.has(id)));
+    $("itemScrim").classList.add("open"); $("itemSheet").classList.add("open");
+  }
+  const closeItemSheet = () => { $("itemScrim").classList.remove("open"); $("itemSheet").classList.remove("open"); };
+  $("itemClose").addEventListener("click", closeItemSheet);
+  $("itemScrim").addEventListener("click", closeItemSheet);
+
+  $("itemForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (savingItem) return;
+    const fail = (m) => { $("itemErr").textContent = m; $("itemErr").classList.remove("hidden"); };
+    const name = $("fName").value.trim(), category = $("fCat").value.trim(), price = parseFloat($("fPrice").value), img = $("fImg").value.trim();
+    if (!name) return fail("Item-er naam likho.");
+    if (!category) return fail("Category likho, jemon Chicken ba Veg.");
+    if (!(price > 0 && price <= 10000)) return fail("Dam thik kore likho (1 theke 10000-er modhye).");
+    if (img && !okImg(img)) return fail("Photo link https:// diye shuru hote hobe, na hole faka rakho.");
+    const pieces = parseInt($("fPieces").value, 10);
+    const item = {
+      id: editingId || "C-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+      name, category, description: $("fDesc").value.trim(),
+      price: Math.round(price * 100) / 100,
+      isAvailable: $("fAvail").checked, isTodaysSpecial: $("fSpecial").checked,
+      spiciness: $("fSpice").value, pieces: pieces > 0 ? pieces : 1, imageUrl: img
+    };
+    savingItem = true; const btn = $("itemSave"); btn.disabled = true; btn.textContent = "Saving...";
+    try { await setDoc(doc(db, "menu_items", item.id), item); closeItemSheet(); toast("Item saved. Customer page-e ekhoni dekhabe."); }
+    catch (err) { fail("Save hoy ni (" + (err.code || err.message) + ")"); }
+    finally { savingItem = false; btn.disabled = false; btn.textContent = "Save item"; }
+  });
+
+  $("itemDelete").addEventListener("click", async () => {
+    if (!editingId || DEFAULT_IDS.has(editingId) || !confirm("Ei item delete korbe? Eta ar phire pabe na.")) return;
+    try { await deleteDoc(doc(db, "menu_items", editingId)); closeItemSheet(); toast("Item deleted"); }
+    catch (err) { $("itemErr").textContent = "Delete hoy ni (" + (err.code || err.message) + ")"; $("itemErr").classList.remove("hidden"); }
+  });
+
+  /* Keep the "x min ago" text and late highlight fresh */
+  setInterval(() => { if (!$("boardView").classList.contains("hidden") && view === "orders") render(); }, 30000);
+</script>
+</body>
+</html>
