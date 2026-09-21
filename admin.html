@@ -205,9 +205,15 @@
     <div class="sheet-head"><h2 id="itemTitle">Edit item</h2><button class="close" id="itemClose" type="button" aria-label="Close">&times;</button></div>
     <form id="itemForm" novalidate>
       <div class="field"><label for="fName">Item name</label><input id="fName" maxlength="80" autocomplete="off"></div>
+      <div class="field"><label for="fCat">Category</label><input id="fCat" list="catList" maxlength="30" autocomplete="off" placeholder="Momo, Sides, Beverages..."><datalist id="catList"></datalist></div>
+      <div class="hint">Variant thakle (Veg/Chicken/Paneer) niche dam bhorun — jegulo lagbe na oigulo faka rakhun. Kono variant na thakle shudhu "Flat price" bhorun.</div>
       <div class="two">
-        <div class="field"><label for="fCat">Category</label><input id="fCat" list="catList" maxlength="30" autocomplete="off" placeholder="Chicken, Veg..."><datalist id="catList"></datalist></div>
-        <div class="field"><label for="fPrice">Price (Rs)</label><input id="fPrice" inputmode="decimal" autocomplete="off" placeholder="190"></div>
+        <div class="field"><label for="fVeg">Veg (Rs)</label><input id="fVeg" inputmode="decimal" autocomplete="off" placeholder="12"></div>
+        <div class="field"><label for="fChicken">Chicken (Rs)</label><input id="fChicken" inputmode="decimal" autocomplete="off" placeholder="15"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="fPaneer">Paneer (Rs)</label><input id="fPaneer" inputmode="decimal" autocomplete="off" placeholder="15"></div>
+        <div class="field"><label for="fPrice">Flat price (Rs)</label><input id="fPrice" inputmode="decimal" autocomplete="off" placeholder="100"></div>
       </div>
       <div class="two">
         <div class="field"><label for="fPieces">Pieces</label><input id="fPieces" inputmode="numeric" autocomplete="off" placeholder="6"></div>
@@ -248,6 +254,20 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const money = (n) => "Rs " + (Math.round(Number(n || 0) * 100) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+
+  // Shows "Veg Rs 12 / Chicken Rs 15 / Paneer Rs 15" when an item has variants,
+  // otherwise falls back to the item's flat price.
+  function priceLabel(m) {
+    if (Array.isArray(m.variants) && m.variants.length) {
+      return m.variants.map((v) => v.label + " " + money(v.price)).join(" / ");
+    }
+    return money(m.price);
+  }
+  // Lowest price across variants (or the flat price) — used for the customer-facing sort/display later if needed.
+  function fromPrice(m) {
+    if (Array.isArray(m.variants) && m.variants.length) return Math.min(...m.variants.map((v) => Number(v.price) || 0));
+    return Number(m.price) || 0;
+  }
 
   const TABS = [
     { key: "new", label: "New", statuses: ["NEW"] },
@@ -503,7 +523,7 @@
     const list = items.filter((m) => menuCat === "All" || m.category === menuCat);
     $("menuBody").innerHTML = list.length ? list.map((m) => {
       const on = m.isAvailable !== false;
-      const sub = [m.category, money(m.price), Number(m.pieces) > 1 ? m.pieces + " pcs" : ""].filter(Boolean).join(", ");
+      const sub = [m.category, priceLabel(m), Number(m.pieces) > 1 ? m.pieces + " pcs" : ""].filter(Boolean).join(", ");
       return `<div class="mrow ${on ? "" : "off"}">
         <div class="mthumb" ${okImg(m.imageUrl) ? `style="background-image:url('${esc(m.imageUrl)}')"` : ""}>${okImg(m.imageUrl) ? "" : esc((m.name || "?").charAt(0).toUpperCase())}</div>
         <div class="minfo"><div class="mname">${esc(m.name)}</div><div class="msub">${esc(sub)}</div>${m.isTodaysSpecial ? `<span class="mflag">Today's special</span>` : ""}</div>
@@ -529,13 +549,23 @@
     catch (err) { toast("Update hoy ni (" + (err.code || err.message) + ")"); }
   }
 
+  // Pull a variant's price out of an item, or "" if that variant isn't set
+  function variantVal(m, label) {
+    if (!m || !Array.isArray(m.variants)) return "";
+    const v = m.variants.find((x) => x.label === label);
+    return v ? v.price : "";
+  }
+
   function openItemSheet(id) {
     editingId = id;
     const m = id ? mergedMenu().find((x) => x.id === id) : null;
     $("itemTitle").textContent = m ? "Edit item" : "Add new item";
     $("fName").value = m ? m.name : "";
     $("fCat").value = m ? m.category : (menuCat !== "All" ? menuCat : "");
-    $("fPrice").value = m ? m.price : "";
+    $("fVeg").value = variantVal(m, "Veg");
+    $("fChicken").value = variantVal(m, "Chicken");
+    $("fPaneer").value = variantVal(m, "Paneer");
+    $("fPrice").value = m && m.price != null ? m.price : "";
     $("fPieces").value = m ? m.pieces : 6;
     $("fSpice").value = m && m.spiciness ? m.spiciness : "Mild";
     $("fDesc").value = m ? (m.description || "") : "";
@@ -552,20 +582,43 @@
   $("itemClose").addEventListener("click", closeItemSheet);
   $("itemScrim").addEventListener("click", closeItemSheet);
 
+  // Reads one price field. Empty is allowed (returns null). A non-empty value
+  // outside 1-10000 is invalid (returns undefined + pushes a message to errs).
+  function readPrice(id, label, errs) {
+    const raw = $(id).value.trim();
+    if (raw === "") return null;
+    const n = parseFloat(raw);
+    if (!(n > 0 && n <= 10000)) { errs.push(label + "-er dam thik na (1 theke 10000-er modhye likho, na hole faka rakho)."); return undefined; }
+    return Math.round(n * 100) / 100;
+  }
+
   $("itemForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     if (savingItem) return;
     const fail = (m) => { $("itemErr").textContent = m; $("itemErr").classList.remove("hidden"); };
-    const name = $("fName").value.trim(), category = $("fCat").value.trim(), price = parseFloat($("fPrice").value), img = $("fImg").value.trim();
+    const name = $("fName").value.trim(), category = $("fCat").value.trim(), img = $("fImg").value.trim();
     if (!name) return fail("Item-er naam likho.");
-    if (!category) return fail("Category likho, jemon Chicken ba Veg.");
-    if (!(price > 0 && price <= 10000)) return fail("Dam thik kore likho (1 theke 10000-er modhye).");
+    if (!category) return fail("Category likho, jemon Momo, Sides, Beverages.");
     if (img && !okImg(img)) return fail("Photo link https:// diye shuru hote hobe, na hole faka rakho.");
+
+    const errs = [];
+    const vVeg = readPrice("fVeg", "Veg", errs);
+    const vChicken = readPrice("fChicken", "Chicken", errs);
+    const vPaneer = readPrice("fPaneer", "Paneer", errs);
+    const flat = readPrice("fPrice", "Flat price", errs);
+    if (errs.length) return fail(errs[0]);
+
+    const variants = [];
+    if (vVeg != null) variants.push({ label: "Veg", price: vVeg });
+    if (vChicken != null) variants.push({ label: "Chicken", price: vChicken });
+    if (vPaneer != null) variants.push({ label: "Paneer", price: vPaneer });
+    if (!variants.length && flat == null) return fail("Kono ekta dam dao — Veg/Chicken/Paneer-er ekta, othoba Flat price.");
+
     const pieces = parseInt($("fPieces").value, 10);
     const item = {
       id: editingId || "C-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
       name, category, description: $("fDesc").value.trim(),
-      price: Math.round(price * 100) / 100,
+      variants, price: variants.length ? null : flat,
       isAvailable: $("fAvail").checked, isTodaysSpecial: $("fSpecial").checked,
       spiciness: $("fSpice").value, pieces: pieces > 0 ? pieces : 1, imageUrl: img
     };
