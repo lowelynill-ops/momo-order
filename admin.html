@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#182226">
+<meta name="robots" content="noindex, nofollow">
+<title>Momo Mama Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F4F6F5; --surface: #FFFFFF; --ink: #182226; --muted: #5B6A6E; --line: #DDE3E1;
+    --chili: #C9302C; --chili-dark: #A82420; --chili-soft: #FCEDEC;
+    --blue: #2E6FBA; --green: #2E8B57; --yellow: #F0B429; --late: #B3261E; --late-soft: #FCEDEC;
+    --head: "Bricolage Grotesque", system-ui, sans-serif;
+    --body: "Hind Siliguri", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101719; --surface: #182226; --ink: #EEF2F1; --muted: #9AA9AD; --line: #2C3A3F;
+      --chili-soft: #3A1B1A; --late-soft: #3A1B1A; --late: #FF8A80;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { font-family: var(--body); font-size: 16px; line-height: 1.45; color: var(--ink); background: var(--bg); min-height: 100vh; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  .hidden { display: none !important; }
+  .flags { display: flex; height: 8px; }
+  .flags i { flex: 1; }
+  .flags i:nth-child(5n+1) { background: #2E6FBA; } .flags i:nth-child(5n+2) { background: #F7F7F7; }
+  .flags i:nth-child(5n+3) { background: #C9302C; } .flags i:nth-child(5n+4) { background: #3C8D5A; } .flags i:nth-child(5n+5) { background: #F0B429; }
+
+  /* Login */
+  .login { max-width: 400px; margin: 0 auto; padding: 56px 24px 40px; }
+  .brand { font-family: var(--head); font-weight: 800; font-size: 38px; line-height: 1; letter-spacing: -0.02em; }
+  .brand small { display: block; font-family: var(--body); font-weight: 500; font-size: 15px; letter-spacing: 0; color: var(--muted); margin-top: 8px; }
+  .login form { margin-top: 32px; }
+  .field { margin-top: 14px; }
+  .field label { display: block; font-weight: 600; font-size: 14.5px; margin-bottom: 5px; }
+  .field input { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface); }
+  .btn { display: block; width: 100%; margin-top: 20px; border: 0; border-radius: 12px; padding: 14px; background: var(--chili); color: #fff; font-weight: 600; font-size: 17px; }
+  .btn:active { background: var(--chili-dark); }
+  .btn:disabled { opacity: .6; }
+  .link { background: none; border: 0; color: var(--blue); margin-top: 14px; padding: 4px 0; font-weight: 500; }
+  .msg { margin-top: 14px; padding: 11px 12px; border-radius: 10px; font-size: 14.5px; }
+  .msg.err { background: var(--chili-soft); color: var(--late); border: 1px solid var(--late); }
+  .msg.ok { background: #E6F4EC; color: #1E6B3F; border: 1px solid #9AD1B0; }
+  @media (prefers-color-scheme: dark) { .msg.ok { background: #14301F; color: #8FD9AE; border-color: #2E6B47; } }
+
+  /* Top bar */
+  header.top { position: sticky; top: 0; z-index: 10; background: var(--surface); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
+  .bar { max-width: 720px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; }
+  .bar .name { font-family: var(--head); font-weight: 800; font-size: 20px; letter-spacing: -0.01em; line-height: 1.1; }
+  .bar .name small { display: block; font-family: var(--body); font-weight: 500; font-size: 13px; color: var(--muted); letter-spacing: 0; }
+  .bar-actions { display: flex; gap: 8px; }
+  .icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 12px; font-weight: 500; font-size: 14.5px; }
+  .icon-btn[aria-pressed="false"] { color: var(--muted); }
+  .stats { max-width: 720px; margin: 0 auto; padding: 0 16px 10px; color: var(--muted); font-size: 14.5px; }
+  .stats b { color: var(--ink); font-weight: 600; }
+  .tabs { max-width: 720px; margin: 0 auto; display: flex; gap: 6px; padding: 0 16px 12px; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button { flex: 1 0 auto; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 14px; font-weight: 500; white-space: nowrap; }
+  .tabs button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .tabs .n { display: inline-block; min-width: 20px; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--chili); color: #fff; font-size: 13px; font-weight: 600; }
+  .tabs .n.zero { background: var(--line); color: var(--muted); }
+
+  /* Orders */
+  main { max-width: 720px; margin: 0 auto; padding: 16px 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
+  .order { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+  .order.late { border-color: var(--late); box-shadow: 0 0 0 1px var(--late); }
+  .o-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .token { font-family: var(--head); font-weight: 800; font-size: 28px; line-height: 1; letter-spacing: -0.02em; }
+  .table-chip { display: inline-block; margin-top: 6px; padding: 2px 10px; border-radius: 999px; background: var(--ink); color: var(--surface); font-weight: 600; font-size: 14px; }
+  .age { text-align: right; font-size: 14px; color: var(--muted); }
+  .age b { display: block; font-size: 17px; color: var(--ink); font-weight: 600; }
+  .order.late .age b { color: var(--late); }
+  .who { margin-top: 10px; color: var(--muted); font-size: 14.5px; }
+  .who a { color: var(--blue); text-decoration: none; font-weight: 500; }
+  .items { list-style: none; padding: 0; margin: 12px 0 0; border-top: 1px solid var(--line); }
+  .items li { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .items .q { font-weight: 600; min-width: 30px; }
+  .items small { display: block; color: var(--muted); }
+  .note { margin-top: 10px; padding: 9px 12px; border-radius: 10px; background: #FFF5D6; color: #4A3600; font-weight: 500; font-size: 14.5px; }
+  @media (prefers-color-scheme: dark) { .note { background: #3B3110; color: #FFE08A; } }
+  .pay-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 12px; }
+  .pay-row .total { font-family: var(--head); font-weight: 800; font-size: 22px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13.5px; font-weight: 600; }
+  .badge.paid { background: #E6F4EC; color: #1E6B3F; }
+  .badge.pending { background: #FFF5D6; color: #4A3600; }
+  .badge.cancelled { background: var(--chili-soft); color: var(--late); }
+  @media (prefers-color-scheme: dark) { .badge.paid { background: #14301F; color: #8FD9AE; } .badge.pending { background: #3B3110; color: #FFE08A; } }
+  .mark-paid { margin-top: 10px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 14.5px; color: var(--muted); }
+  .mark-paid button { border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 6px 12px; font-weight: 500; }
+  .actions { display: flex; gap: 8px; margin-top: 14px; }
+  .primary { flex: 1; border: 0; border-radius: 12px; padding: 13px; background: var(--chili); color: #fff; font-weight: 600; font-size: 16.5px; }
+  .primary:active { background: var(--chili-dark); }
+  .primary:disabled, .mark-paid button:disabled, .cancel:disabled { opacity: .55; }
+  .cancel { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 13px 16px; font-weight: 500; color: var(--late); }
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: 500px; margin: 0 auto; background: var(--ink); color: var(--surface); padding: 12px 16px; border-radius: 12px; z-index: 50; font-size: 14.5px; }
+</style>
+</head>
+<body>
+
+<!-- Login screen -->
+<section id="loginView" class="hidden">
+  <div class="flags" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="login">
+    <div class="brand">Momo Mama<small>Staff login</small></div>
+    <form id="loginForm" novalidate>
+      <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="username" inputmode="email" required></div>
+      <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required></div>
+      <div class="msg err hidden" id="loginErr" role="alert"></div>
+      <div class="msg ok hidden" id="loginOk"></div>
+      <button class="btn" id="loginBtn" type="submit">Sign in</button>
+      <button class="link" id="forgotBtn" type="button">Forgot password?</button>
+    </form>
+  </div>
+</section>
+
+<!-- Orders board -->
+<section id="boardView" class="hidden">
+  <header class="top">
+    <div class="bar">
+      <div class="name">Momo Mama<small id="who"></small></div>
+      <div class="bar-actions">
+        <button class="icon-btn" id="soundBtn" aria-pressed="true">Sound on</button>
+        <button class="icon-btn" id="logoutBtn">Sign out</button>
+      </div>
+    </div>
+    <div class="stats" id="stats"></div>
+    <nav class="tabs" id="tabs" aria-label="Order status"></nav>
+  </header>
+  <main id="list" aria-live="polite"></main>
+</section>
+
+<div class="toast hidden" id="toast" role="status"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { initializeFirestore, collection, query, orderBy, limit, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB2s_LZL6lLuWieNh-8O3aHWiUuFcEzfK0",
+    authDomain: "momo-mama.firebaseapp.com",
+    projectId: "momo-mama",
+    storageBucket: "momo-mama.firebasestorage.app",
+    messagingSenderId: "429400485602",
+    appId: "1:429400485602:web:88b8f0a34fc0f4c44d78bb"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const money = (n) => "Rs " + (Math.round(Number(n || 0) * 100) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+
+  const TABS = [
+    { key: "new", label: "New", statuses: ["NEW"] },
+    { key: "kitchen", label: "In kitchen", statuses: ["ACCEPTED", "PREPARING"] },
+    { key: "ready", label: "Ready", statuses: ["READY"] },
+    { key: "done", label: "Done", statuses: ["COMPLETED", "CANCELLED"] }
+  ];
+  const NEXT = {
+    NEW: { to: "ACCEPTED", label: "Accept order" },
+    ACCEPTED: { to: "PREPARING", label: "Start cooking" },
+    PREPARING: { to: "READY", label: "Mark ready" },
+    READY: { to: "COMPLETED", label: "Served" }
+  };
+  const STATUS_LABEL = { NEW: "New order", ACCEPTED: "Accepted", PREPARING: "Cooking", READY: "Ready", COMPLETED: "Served", CANCELLED: "Cancelled" };
+  const PAID = { PAID_CASH: "Paid, cash", PAID_UPI: "Paid, UPI", PAID_CARD: "Paid, card" };
+
+  let orders = [];
+  let activeTab = "new";
+  let unsub = null;
+  let firstSnapshot = true;
+  let soundOn = true;
+  let audioCtx = null;
+  const busy = new Set();
+
+  /* ---------- Sound ---------- */
+  function unlockAudio() {
+    try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === "suspended") audioCtx.resume(); } catch (_) {}
+  }
+  function beep() {
+    if (!soundOn) return;
+    try {
+      unlockAudio(); if (!audioCtx) return;
+      [0, 0.28, 0.56].forEach((t, i) => {
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = "sine"; o.frequency.value = i === 2 ? 1046 : 784;
+        g.gain.setValueAtTime(0.0001, audioCtx.currentTime + t);
+        g.gain.exponentialRampToValueAtTime(0.35, audioCtx.currentTime + t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + t + 0.22);
+        o.connect(g); g.connect(audioCtx.destination); o.start(audioCtx.currentTime + t); o.stop(audioCtx.currentTime + t + 0.25);
+      });
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    } catch (_) {}
+  }
+  $("soundBtn").addEventListener("click", () => {
+    soundOn = !soundOn;
+    $("soundBtn").setAttribute("aria-pressed", String(soundOn));
+    $("soundBtn").textContent = soundOn ? "Sound on" : "Sound off";
+    if (soundOn) { unlockAudio(); beep(); }
+  });
+
+  /* ---------- Toast ---------- */
+  let toastTimer;
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.classList.remove("hidden");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add("hidden"), 4500);
+  }
+
+  /* ---------- Auth ---------- */
+  const authMsg = (code) => ({
+    "auth/invalid-credential": "Email ba password thik na. Abar try koro.",
+    "auth/wrong-password": "Email ba password thik na. Abar try koro.",
+    "auth/user-not-found": "Email ba password thik na. Abar try koro.",
+    "auth/invalid-email": "Email ta thik kore likho.",
+    "auth/too-many-requests": "Onek bar bhul hoyeche. Kichukkhon pore try koro.",
+    "auth/network-request-failed": "Internet check koro.",
+    "auth/operation-not-allowed": "Firebase-e Email/Password sign-in on kora nei.",
+    "auth/unauthorized-domain": "Ei website Firebase-er authorized domain-e nei. Authentication, Settings, Authorized domains-e add koro."
+  }[code] || "Login hoy ni (" + code + ")");
+
+  $("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    unlockAudio();
+    $("loginErr").classList.add("hidden"); $("loginOk").classList.add("hidden");
+    const btn = $("loginBtn"); btn.disabled = true; btn.textContent = "Signing in...";
+    try {
+      await signInWithEmailAndPassword(auth, $("email").value.trim(), $("password").value);
+      $("password").value = "";
+    } catch (err) {
+      $("loginErr").textContent = authMsg(err.code || err.message); $("loginErr").classList.remove("hidden");
+    } finally { btn.disabled = false; btn.textContent = "Sign in"; }
+  });
+
+  $("forgotBtn").addEventListener("click", async () => {
+    const email = $("email").value.trim();
+    $("loginErr").classList.add("hidden"); $("loginOk").classList.add("hidden");
+    if (!email) { $("loginErr").textContent = "Age email likho, tarpor Forgot password tap koro."; $("loginErr").classList.remove("hidden"); return; }
+    try { await sendPasswordResetEmail(auth, email); } catch (_) {}
+    $("loginOk").textContent = "Email-e account thakle password reset-er link pathano hoyeche. Spam folder-o dekho."; $("loginOk").classList.remove("hidden");
+  });
+
+  $("logoutBtn").addEventListener("click", () => signOut(auth));
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      $("loginView").classList.add("hidden"); $("boardView").classList.remove("hidden");
+      $("who").textContent = user.email;
+      startListening();
+    } else {
+      if (unsub) { unsub(); unsub = null; }
+      orders = []; firstSnapshot = true;
+      $("boardView").classList.add("hidden"); $("loginView").classList.remove("hidden");
+      document.title = "Momo Mama Kitchen";
+    }
+  });
+
+  /* ---------- Orders ---------- */
+  function startListening() {
+    if (unsub) unsub();
+    firstSnapshot = true;
+    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"), limit(150));
+    unsub = onSnapshot(q, (snap) => {
+      orders = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      if (!firstSnapshot) {
+        const fresh = snap.docChanges().some((c) => c.type === "added" && (c.doc.data().status || "NEW") === "NEW");
+        if (fresh) beep();
+      }
+      firstSnapshot = false;
+      render();
+    }, (err) => {
+      const denied = err.code === "permission-denied";
+      $("list").innerHTML = `<div class="empty">${denied ? "Ei account-er orders dekhar permission nei. Firebase rules-e tomar email staff hisebe add kora ache kina dekho." : "Orders load hoy ni (" + esc(err.code || err.message) + ")"}</div>`;
+    });
+  }
+
+  const statusOf = (o) => o.status || "NEW";
+  function parseItems(o) {
+    try { const a = JSON.parse(o.itemsJson || "[]"); return Array.isArray(a) ? a : []; } catch (_) { return []; }
+  }
+  function ageMin(o) { return Math.max(0, Math.floor((Date.now() - Number(o.createdAt || Date.now())) / 60000)); }
+  function ageText(m) { return m < 1 ? "Just now" : m < 60 ? m + " min ago" : Math.floor(m / 60) + " h " + (m % 60) + " min ago"; }
+  const isLate = (o) => ["NEW", "ACCEPTED", "PREPARING"].includes(statusOf(o)) && ageMin(o) > (Number(o.targetReadyMinutes) || 15);
+
+  function render() {
+    // Counts and stats
+    const counts = {}; TABS.forEach((t) => counts[t.key] = orders.filter((o) => t.statuses.includes(statusOf(o))).length);
+    $("tabs").innerHTML = TABS.map((t) => `<button data-tab="${t.key}" aria-pressed="${t.key === activeTab}">${t.label}<span class="n ${t.key !== "done" && counts[t.key] ? "" : "zero"}">${counts[t.key]}</span></button>`).join("");
+    const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+    const today = orders.filter((o) => Number(o.createdAt) >= midnight.getTime() && statusOf(o) !== "CANCELLED");
+    $("stats").innerHTML = `Today: <b>${today.length}</b> orders, <b>${money(today.reduce((s, o) => s + Number(o.totalAmount || 0), 0))}</b>`;
+    document.title = (counts.new ? "(" + counts.new + ") " : "") + "Momo Mama Kitchen";
+
+    const tab = TABS.find((t) => t.key === activeTab);
+    let list = orders.filter((o) => tab.statuses.includes(statusOf(o)));
+    if (activeTab === "done") list = list.slice(0, 40);
+    else list = list.slice().reverse(); // oldest first so nothing waits
+    $("list").innerHTML = list.length ? list.map(card).join("") : `<div class="empty">${activeTab === "new" ? "No new orders right now." : "Nothing here."}</div>`;
+  }
+
+  function card(o) {
+    const st = statusOf(o), mins = ageMin(o), items = parseItems(o), pay = o.paymentStatus || "PENDING", busyNow = busy.has(o.id);
+    const isPaid = pay in PAID;
+    const next = NEXT[st];
+    const itemHtml = items.map((i) => {
+      const add = Array.isArray(i.addOns) && i.addOns.length ? i.addOns.map((a) => typeof a === "string" ? a : (a && a.name) || "").filter(Boolean).join(", ") : "";
+      return `<li><span class="q">${esc(i.quantity)} x</span><span>${esc(i.name)}${add ? `<small>${esc(add)}</small>` : ""}${i.specialNote ? `<small>${esc(i.specialNote)}</small>` : ""}</span></li>`;
+    }).join("");
+    const phone = String(o.customerPhone || "").trim();
+    const badge = st === "CANCELLED" ? `<span class="badge cancelled">Cancelled</span>` : isPaid ? `<span class="badge paid">${PAID[pay]}</span>` : `<span class="badge pending">${esc(o.paymentMethod || "Payment")} pending</span>`;
+    const canAct = st !== "COMPLETED" && st !== "CANCELLED";
+    return `<article class="order ${isLate(o) ? "late" : ""}">
+      <div class="o-head">
+        <div><div class="token">${esc(o.tokenNumber || o.id)}</div><span class="table-chip">${esc(o.tableNumber || "No table")}</span></div>
+        <div class="age"><b>${ageText(mins)}</b>${esc(STATUS_LABEL[st] || st)}</div>
+      </div>
+      <div class="who">${esc(o.customerName || "Guest")}${phone ? ` &nbsp; <a href="tel:${esc(phone)}">${esc(phone)}</a>` : ""}</div>
+      <ul class="items">${itemHtml || `<li><span>No item details</span></li>`}</ul>
+      ${o.specialInstructions ? `<div class="note">${esc(o.specialInstructions)}</div>` : ""}
+      <div class="pay-row"><div>${badge}</div><div class="total">${money(o.totalAmount)}</div></div>
+      ${!isPaid && st !== "CANCELLED" ? `<div class="mark-paid">Payment received:
+        <button data-pay="PAID_CASH" data-id="${esc(o.id)}" ${busyNow ? "disabled" : ""}>Cash</button>
+        <button data-pay="PAID_UPI" data-id="${esc(o.id)}" ${busyNow ? "disabled" : ""}>UPI</button>
+        <button data-pay="PAID_CARD" data-id="${esc(o.id)}" ${busyNow ? "disabled" : ""}>Card</button></div>` : ""}
+      ${canAct ? `<div class="actions">
+        ${next ? `<button class="primary" data-to="${next.to}" data-id="${esc(o.id)}" ${busyNow ? "disabled" : ""}>${next.label}</button>` : ""}
+        <button class="cancel" data-cancel="${esc(o.id)}" ${busyNow ? "disabled" : ""}>Cancel</button></div>` : ""}
+    </article>`;
+  }
+
+  async function update(id, fields, okMsg) {
+    busy.add(id); render();
+    try { await updateDoc(doc(db, "orders", id), fields); if (okMsg) toast(okMsg); }
+    catch (err) { toast("Update hoy ni (" + (err.code || err.message) + ")"); }
+    finally { busy.delete(id); render(); }
+  }
+
+  $("tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) { activeTab = b.dataset.tab; render(); window.scrollTo(0, 0); } });
+  $("list").addEventListener("click", (e) => {
+    const go = e.target.closest("[data-to]"), pay = e.target.closest("[data-pay]"), can = e.target.closest("[data-cancel]");
+    if (go) update(go.dataset.id, { status: go.dataset.to });
+    if (pay) update(pay.dataset.id, { paymentStatus: pay.dataset.pay }, "Payment marked");
+    if (can && confirm("Ei order cancel korbe?")) update(can.dataset.cancel, { status: "CANCELLED" }, "Order cancelled");
+  });
+
+  /* Keep the "x min ago" text and late highlight fresh */
+  setInterval(() => { if (!$("boardView").classList.contains("hidden")) render(); }, 30000);
+</script>
+</body>
+</html>
