@@ -179,6 +179,10 @@
   .check { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-weight: 500; }
   .check input { width: 20px; height: 20px; accent-color: var(--chili); }
   .danger { display: block; width: 100%; margin-top: 10px; border: 1px solid var(--late); background: transparent; color: var(--late); border-radius: 12px; padding: 12px; font-weight: 600; }
+  .img-pick { display: flex; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+  .img-preview { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; border: 1px solid var(--line); flex: none; }
+  .file-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 14px; font-weight: 500; }
+  .text-btn { border: 0; background: none; color: var(--blue); font-weight: 500; padding: 4px 0; }
   @media (prefers-reduced-motion: reduce) { .sheet, .scrim { transition: none; } }
 </style>
 </head>
@@ -245,7 +249,17 @@
         <div class="field"><label for="fSpice">Spice level</label><select id="fSpice"><option>None</option><option>Mild</option><option>Medium</option><option>Fire</option></select></div>
       </div>
       <div class="field"><label for="fDesc">Description</label><textarea id="fDesc" rows="3" maxlength="240"></textarea></div>
-      <div class="field"><label for="fImg">Photo link (optional)</label><input id="fImg" inputmode="url" autocomplete="off" placeholder="https://..."><div class="hint">Internet-er kono chhobi-r link (https diye shuru). Faka rakhle chhobi chhara dekhabe.</div></div>
+      <div class="field">
+        <label for="fImgFile">Photo (optional)</label>
+        <div class="img-pick">
+          <img id="imgPreview" class="img-preview hidden" alt="">
+          <button type="button" class="file-btn" id="imgPickBtn">Gallery theke choose koro</button>
+          <button type="button" class="text-btn hidden" id="imgRemoveBtn">Mucho felo</button>
+        </div>
+        <input id="fImgFile" type="file" accept="image/*" class="hidden">
+        <input type="hidden" id="fImg">
+        <div class="hint" id="imgUploadStatus">Gallery theke direct chhobi upload korte paren. Faka rakhle item-er naam-er first letter dekhabe.</div>
+      </div>
       <label class="check"><input type="checkbox" id="fAvail"> Available (customer order korte parbe)</label>
       <label class="check"><input type="checkbox" id="fSpecial"> Today's special</label>
       <div class="msg err hidden" id="itemErr" role="alert"></div>
@@ -597,7 +611,7 @@
     { id: "M-10", name: "Szechuan Spiced Lemonade", category: "Beverages", description: "Fresh lime soda with Sichuan pepper, roasted cumin and black rock salt.", price: 85, isAvailable: true, isTodaysSpecial: false, spiciness: "Mild", pieces: 1, imageUrl: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400&auto=format&fit=crop" }
   ];
   const DEFAULT_IDS = new Set(DEFAULT_MENU.map((m) => m.id));
-  let view = "orders", menuDocs = new Map(), menuUnsub = null, menuCat = "All", editingId = null, savingItem = false;
+  let view = "orders", menuDocs = new Map(), menuUnsub = null, menuCat = "All", editingId = null, savingItem = false, uploadingImage = false;
 
   // Same merge the customer page uses: starter items plus whatever is saved in Firestore
   function mergedMenu() {
@@ -629,7 +643,62 @@
   }
   $("views").addEventListener("click", (e) => { const b = e.target.closest("button[data-view]"); if (b) setView(b.dataset.view); });
 
-  const okImg = (u) => /^https?:\/\//i.test(String(u || ""));
+  // Accepts both real https links (old items) and the data: photos this page now saves.
+  const okImg = (u) => /^(https?:|data:image\/)/i.test(String(u || ""));
+
+  // Shrinks a chosen photo in the browser itself (no server, no Firebase Storage) so it
+  // stays well inside Firestore's 1MB-per-document limit, then hands back a data: URL
+  // that can be saved directly on the menu item and shown immediately, everywhere.
+  function resizeImageFile(file, maxDim, quality) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("read-failed"));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("decode-failed"));
+        img.onload = () => {
+          let w = img.naturalWidth, h = img.naturalHeight;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+            else { w = Math.round(w * maxDim / h); h = maxDim; }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  $("imgPickBtn").addEventListener("click", () => $("fImgFile").click());
+  $("imgRemoveBtn").addEventListener("click", () => {
+    $("fImg").value = ""; $("fImgFile").value = "";
+    $("imgPreview").src = ""; $("imgPreview").classList.add("hidden");
+    $("imgRemoveBtn").classList.add("hidden");
+    $("imgUploadStatus").textContent = "Photo mucha hoyeche.";
+  });
+  $("fImgFile").addEventListener("change", async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast("Shudhu chhobi (image) file dao."); e.target.value = ""; return; }
+    uploadingImage = true;
+    $("imgUploadStatus").textContent = "Chhobi process hocche...";
+    try {
+      let quality = 0.72, dataUrl = await resizeImageFile(file, 640, quality);
+      while (dataUrl.length > 700000 && quality > 0.3) { quality -= 0.12; dataUrl = await resizeImageFile(file, 640, quality); }
+      if (dataUrl.length > 950000) throw new Error("too-big");
+      $("fImg").value = dataUrl;
+      $("imgPreview").src = dataUrl; $("imgPreview").classList.remove("hidden");
+      $("imgRemoveBtn").classList.remove("hidden");
+      $("imgUploadStatus").textContent = "Chhobi ready. Ekhon Save item-e tap koro.";
+    } catch (err) {
+      $("imgUploadStatus").textContent = "Ei chhobi-ta process hoy ni, onno ekta chhobi try koro.";
+    } finally { uploadingImage = false; }
+  });
+
   function renderMenu() {
     const items = mergedMenu();
     const cats = ["All", ...new Set(items.map((m) => m.category).filter(Boolean))];
@@ -677,7 +746,11 @@
     $("fPieces").value = m ? m.pieces : 6;
     $("fSpice").value = m && m.spiciness ? m.spiciness : "Mild";
     $("fDesc").value = m ? (m.description || "") : "";
+    $("fImgFile").value = "";
     $("fImg").value = m ? (m.imageUrl || "") : "";
+    if (m && m.imageUrl) { $("imgPreview").src = m.imageUrl; $("imgPreview").classList.remove("hidden"); $("imgRemoveBtn").classList.remove("hidden"); }
+    else { $("imgPreview").src = ""; $("imgPreview").classList.add("hidden"); $("imgRemoveBtn").classList.add("hidden"); }
+    $("imgUploadStatus").textContent = "Gallery theke direct chhobi upload korte paren. Faka rakhle item-er naam-er first letter dekhabe.";
     $("fAvail").checked = m ? m.isAvailable !== false : true;
     $("fSpecial").checked = m ? !!m.isTodaysSpecial : false;
     $("itemErr").classList.add("hidden");
@@ -694,11 +767,11 @@
     e.preventDefault();
     if (savingItem) return;
     const fail = (m) => { $("itemErr").textContent = m; $("itemErr").classList.remove("hidden"); };
-    const name = $("fName").value.trim(), category = $("fCat").value.trim(), price = parseFloat($("fPrice").value), img = $("fImg").value.trim();
+    if (uploadingImage) return fail("Chhobi process hocche, ektu wait kore abar Save-e tap koro.");
+    const name = $("fName").value.trim(), category = $("fCat").value.trim(), price = parseFloat($("fPrice").value), img = $("fImg").value;
     if (!name) return fail("Item-er naam likho.");
     if (!category) return fail("Category likho, jemon Chicken ba Veg.");
     if (!(price > 0 && price <= 10000)) return fail("Dam thik kore likho (1 theke 10000-er modhye).");
-    if (img && !okImg(img)) return fail("Photo link https:// diye shuru hote hobe, na hole faka rakho.");
     const pieces = parseInt($("fPieces").value, 10);
     const item = {
       id: editingId || "C-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
