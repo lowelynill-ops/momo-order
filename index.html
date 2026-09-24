@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
     --bg: #F4F6F5;
@@ -137,6 +138,38 @@
   .steps li.now::before { background: var(--flag-yellow); border-color: var(--flag-yellow); box-shadow: 0 0 0 5px rgba(240,180,41,.3); }
   .cancelled { margin-top: 20px; }
   .ghost { margin-top: 10px; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px 18px; font-weight: 600; }
+  .view-bill { display: block; width: 100%; margin-top: 24px; border: 0; background: var(--chili); color: #fff; border-radius: 14px; padding: 15px; font-weight: 600; font-size: 17px; box-shadow: 0 6px 18px rgba(201,48,44,.3); }
+  .view-bill:active { background: var(--chili-dark); }
+
+  /* Bill popup */
+  .bill-scrim { position: fixed; inset: 0; background: rgba(24,34,38,.55); z-index: 40; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .bill-scrim.open { opacity: 1; pointer-events: auto; }
+  .bill-sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: var(--surface); border-radius: 20px 20px 0 0; max-height: 90vh; display: flex; flex-direction: column; transform: translateY(102%); transition: transform .28s cubic-bezier(.2,.8,.2,1); }
+  .bill-sheet.open { transform: none; }
+  .bill-scroll { overflow-y: auto; padding: 22px 22px 10px; }
+  .bill-paper { max-width: 380px; margin: 0 auto; font-family: "Courier New", Courier, monospace; }
+  .bill-brand { text-align: center; }
+  .bill-brand b { display: block; font-family: var(--head); font-weight: 800; font-size: 22px; letter-spacing: -0.01em; }
+  .bill-brand span { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .bill-dash { border: none; border-top: 1px dashed var(--line); margin: 14px 0; }
+  .bill-meta div { display: flex; justify-content: space-between; font-size: 14px; padding: 2px 0; }
+  .bill-meta b { font-weight: 600; }
+  .bill-items table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .bill-items th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  .bill-items th:last-child, .bill-items td:last-child, .bill-items th.num, .bill-items td.num { text-align: right; }
+  .bill-items td { padding: 7px 0; vertical-align: top; border-bottom: 1px dotted var(--line); }
+  .bill-items .iname small { display: block; color: var(--muted); font-size: 12px; }
+  .bill-totals div { display: flex; justify-content: space-between; padding: 3px 0; font-size: 14px; color: var(--muted); }
+  .bill-totals .grand { color: var(--ink); font-weight: 700; font-size: 18px; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 8px; }
+  .bill-pay { margin-top: 10px; font-size: 14px; }
+  .bill-thanks { text-align: center; margin-top: 18px; color: var(--muted); font-size: 13px; }
+  .bill-actions { display: flex; gap: 10px; padding: 14px 22px calc(14px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); background: var(--surface); }
+  .bill-actions button { flex: 1; border-radius: 12px; padding: 13px; font-weight: 600; font-size: 15.5px; }
+  .bill-back { border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .bill-download { border: 0; background: var(--chili); color: #fff; }
+  .bill-download:active { background: var(--chili-dark); }
+  .toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: 500px; margin: 0 auto; background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 12px; z-index: 60; font-size: 14.5px; }
+  @media (prefers-reduced-motion: reduce) { .bill-scrim, .bill-sheet { transition: none; } }
 
   /* Active-order banner on the menu */
   .banner { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--ink); color: #fff; padding: 10px 20px; font-weight: 500; }
@@ -176,9 +209,25 @@
     <p class="lead" id="trackMsg">We got your order.</p>
     <ol class="steps" id="steps"></ol>
     <div id="trackCancelled" class="error cancelled hidden">This order was cancelled. Please talk to our staff at the counter.</div>
+    <button class="view-bill hidden" id="viewBillBtn" type="button">View bill</button>
     <button class="ghost" id="newOrder">Back to menu</button>
   </section>
 </main>
+
+<div class="bill-scrim" id="billScrim"></div>
+<div class="bill-sheet" id="billSheet" role="dialog" aria-modal="true" aria-labelledby="billTitle">
+  <div class="bill-scroll">
+    <div class="bill-paper" id="billPaper">
+      <h2 id="billTitle" style="position:absolute;width:1px;height:1px;overflow:hidden;">Bill</h2>
+    </div>
+  </div>
+  <div class="bill-actions">
+    <button class="bill-back" id="billBack" type="button">Back</button>
+    <button class="bill-download" id="billDownload" type="button">Download bill</button>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast" role="status"></div>
 
 <div class="cart-bar hidden" id="cartBar">
   <button id="openCart"><span id="cartCount">0 items</span><span id="cartTotal">Rs 0</span></button>
@@ -242,6 +291,8 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const money = (n) => "Rs " + (Math.round(n * 100) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+  let toastTimer;
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.remove("hidden"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add("hidden"), 4500); }
   const round2 = (n) => Math.round(n * 100) / 100;
   const params = new URLSearchParams(location.search);
   const debugOn = params.get("debug") === "1";
@@ -419,7 +470,8 @@
   // One saved order per table, so opening another table's QR never shows this order
   const KEY = "mm_order_" + tableName;
   const TERMINAL = ["COMPLETED", "CANCELLED"];
-  let unsub = null, active = null, doneTimer = null;
+  let unsub = null, active = null;
+  let activeOrderData = null; // the full order document, kept fresh for the bill
 
   const saveActive = (a) => { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch (_) {} };
   const clearActive = () => { try { localStorage.removeItem(KEY); } catch (_) {} };
@@ -442,9 +494,8 @@
     window.scrollTo(0, 0);
   }
   function finishOrder() {
-    clearTimeout(doneTimer);
     if (unsub) { unsub(); unsub = null; }
-    active = null; clearActive();
+    active = null; activeOrderData = null; clearActive();
     showMenu();
   }
   function updateBanner() {
@@ -457,8 +508,8 @@
 
   function startTracking(id, token, table) {
     if (unsub) unsub();
-    clearTimeout(doneTimer);
     active = { id, token, table, status: "NEW", first: true };
+    activeOrderData = null;
     if (!db) return;
     unsub = onSnapshot(doc(db, "orders", id), (snap) => {
       if (!active || active.id !== id) return;
@@ -466,30 +517,29 @@
       const status = snap.exists() ? (snap.data().status || "NEW") : "GONE";
       const first = active.first; active.first = false;
       // Old or removed order on first look: go straight to the menu
-      if (status === "GONE" || (first && TERMINAL.includes(status))) { finishOrder(); return; }
-      if (snap.data().tokenNumber) active.token = snap.data().tokenNumber;
+      if (status === "GONE" || (first && TERMINAL.includes(status) && !snap.exists())) { finishOrder(); return; }
+      if (snap.exists()) activeOrderData = snap.data();
+      if (snap.exists() && snap.data().tokenNumber) active.token = snap.data().tokenNumber;
       active.status = status;
       const onTrack = !$("trackView").classList.contains("hidden");
       if (first && !onTrack) showTracking();
       if (onTrack) { $("trackToken").textContent = active.token; renderSteps(status); }
       updateBanner();
-      if (status === "COMPLETED") {
-        if (onTrack) { clearTimeout(doneTimer); doneTimer = setTimeout(finishOrder, 6000); }
-        else finishOrder();
-      } else if (status === "CANCELLED") {
-        clearActive();
-        if (!onTrack) showTracking();
-      }
+      // Completed and cancelled orders both stay visible until the customer taps "Back to menu" -
+      // completed ones so the bill stays reachable, cancelled ones so the notice isn't missed.
+      if (status === "CANCELLED") { clearActive(); if (!onTrack) showTracking(); }
+      else if (status === "COMPLETED" && !onTrack) showTracking();
     }, () => {});
   }
 
   function renderSteps(status) {
-    const cancelled = status === "CANCELLED";
+    const cancelled = status === "CANCELLED", completed = status === "COMPLETED";
     $("trackCancelled").classList.toggle("hidden", !cancelled);
+    $("viewBillBtn").classList.toggle("hidden", !completed);
     const idx = Math.max(0, STATUS_STEPS.findIndex((x) => x.key === status));
     $("steps").classList.toggle("hidden", cancelled);
     $("steps").innerHTML = STATUS_STEPS.map((x, i) => `<li class="${i < idx ? "done" : i === idx ? "now" : ""}">${esc(x.label)}</li>`).join("");
-    $("trackMsg").textContent = cancelled ? "Order cancelled." : status === "COMPLETED" ? "Enjoy your meal! Taking you back to the menu..." : STATUS_STEPS[idx].msg;
+    $("trackMsg").textContent = cancelled ? "Order cancelled." : STATUS_STEPS[idx].msg;
   }
 
   $("newOrder").addEventListener("click", () => {
@@ -497,6 +547,102 @@
     showMenu(); // order still in progress: keep following it from the banner
   });
   $("bannerView").addEventListener("click", () => { if (active) showTracking(); });
+
+  /* ---------------- Bill ---------------- */
+  const dateTimeStr = (ms) => { try { return new Date(Number(ms)).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }); } catch (_) { return ""; } };
+  function billItems(o) { try { const a = JSON.parse(o.itemsJson || "[]"); return Array.isArray(a) ? a : []; } catch (_) { return []; } }
+  const PAY_LABEL = { PAID_CASH: "Paid - Cash", PAID_UPI: "Paid - UPI", PAID_CARD: "Paid - Card", PENDING: "Payment pending" };
+
+  function billRowsHtml(o) {
+    return billItems(o).map((i) => {
+      const add = Array.isArray(i.addOns) && i.addOns.length ? i.addOns.map((a) => typeof a === "string" ? a : (a && a.name) || "").filter(Boolean).join(", ") : "";
+      return `<tr><td class="iname">${esc(i.name)}${add ? `<small>${esc(add)}</small>` : ""}${i.specialNote ? `<small>${esc(i.specialNote)}</small>` : ""}</td><td class="num">${esc(i.quantity)}</td><td class="num">${money(i.price)}</td><td class="num">${money(Number(i.price) * Number(i.quantity))}</td></tr>`;
+    }).join("");
+  }
+  function renderBillHtml(o) {
+    const pay = PAY_LABEL[o.paymentStatus] || (o.paymentMethod || "Payment") + " pending";
+    return `
+      <div class="bill-brand"><b>Momo Mama</b><span>Kolkata</span></div>
+      <hr class="bill-dash">
+      <div class="bill-meta">
+        <div><span>Bill / Token</span><b>${esc(o.tokenNumber || active.id)}</b></div>
+        <div><span>Table</span><b>${esc(o.tableNumber || "Takeaway")}</b></div>
+        <div><span>Date &amp; time</span><b>${esc(dateTimeStr(o.createdAt))}</b></div>
+        ${o.customerName ? `<div><span>Guest</span><b>${esc(o.customerName)}</b></div>` : ""}
+      </div>
+      <hr class="bill-dash">
+      <div class="bill-items"><table>
+        <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead>
+        <tbody>${billRowsHtml(o) || `<tr><td colspan="4">No item details</td></tr>`}</tbody>
+      </table></div>
+      <hr class="bill-dash">
+      <div class="bill-totals">
+        <div><span>Subtotal</span><span>${money(o.subtotal)}</span></div>
+        <div><span>GST (5%)</span><span>${money(o.gstAmount)}</span></div>
+        ${Number(o.serviceCharge) > 0 ? `<div><span>Service charge</span><span>${money(o.serviceCharge)}</span></div>` : ""}
+        ${Number(o.discountAmount) > 0 ? `<div><span>Discount</span><span>-${money(o.discountAmount)}</span></div>` : ""}
+        <div class="grand"><span>Total</span><span>${money(o.totalAmount)}</span></div>
+      </div>
+      <div class="bill-pay"><b>${esc(pay)}</b>${o.paymentMethod ? ` (${esc(o.paymentMethod)})` : ""}</div>
+      <p class="bill-thanks">Thank you for visiting Momo Mama!<br>Taxes as applicable. Computer-generated bill.</p>`;
+  }
+  function openBill() {
+    if (!activeOrderData) { toast("Bill load hocche na, ektu pore abar try koro."); return; }
+    $("billPaper").innerHTML = `<h2 id="billTitle" style="position:absolute;width:1px;height:1px;overflow:hidden;">Bill</h2>` + renderBillHtml(activeOrderData);
+    $("billScrim").classList.add("open"); $("billSheet").classList.add("open");
+  }
+  const closeBill = () => { $("billScrim").classList.remove("open"); $("billSheet").classList.remove("open"); };
+  $("viewBillBtn").addEventListener("click", openBill);
+  $("billBack").addEventListener("click", closeBill);
+  $("billScrim").addEventListener("click", closeBill);
+
+  function downloadBillPdf() {
+    const o = activeOrderData;
+    if (!o) { toast("Bill load hocche na, ektu pore abar try koro."); return; }
+    if (!(window.jspdf && window.jspdf.jsPDF)) { toast("PDF tool load hoyni. Internet check kore abar try koro."); return; }
+    const { jsPDF } = window.jspdf;
+    const doc_ = new jsPDF({ unit: "pt", format: "a5" });
+    const W = doc_.internal.pageSize.getWidth(), M = 36; let y = 46;
+    const line = (t, size, bold, align, x) => { doc_.setFont("courier", bold ? "bold" : "normal"); doc_.setFontSize(size); doc_.text(t, x ?? (align === "center" ? W / 2 : M), y, { align: align || "left" }); y += size * 1.35; };
+    const row = (a, b) => { doc_.setFont("courier", "normal"); doc_.setFontSize(10); doc_.text(a, M, y); doc_.text(b, W - M, y, { align: "right" }); y += 15; };
+    line("MOMO MAMA", 16, true, "center"); line("Kolkata", 10, false, "center"); y += 4;
+    doc_.setLineDashPattern([2, 2], 0); doc_.line(M, y, W - M, y); y += 16;
+    row("Bill / Token:", o.tokenNumber || active.id);
+    row("Table:", o.tableNumber || "Takeaway");
+    row("Date & time:", dateTimeStr(o.createdAt));
+    if (o.customerName) row("Guest:", o.customerName);
+    doc_.line(M, y, W - M, y); y += 16;
+    doc_.setFont("courier", "bold"); doc_.setFontSize(10);
+    doc_.text("Item", M, y); doc_.text("Qty", W - 160, y, { align: "right" }); doc_.text("Rate", W - 90, y, { align: "right" }); doc_.text("Amt", W - M, y, { align: "right" }); y += 14;
+    doc_.setFont("courier", "normal");
+    billItems(o).forEach((it) => {
+      const nameLines = doc_.splitTextToSize(String(it.name || ""), W - M - 170);
+      nameLines.forEach((t, i) => {
+        doc_.text(t, M, y);
+        if (i === 0) {
+          doc_.text(String(it.quantity), W - 160, y, { align: "right" });
+          doc_.text(money(it.price).replace("Rs ", ""), W - 90, y, { align: "right" });
+          doc_.text(money(Number(it.price) * Number(it.quantity)).replace("Rs ", ""), W - M, y, { align: "right" });
+        }
+        y += 13;
+      });
+      const add = Array.isArray(it.addOns) && it.addOns.length ? it.addOns.map((a) => typeof a === "string" ? a : (a && a.name) || "").filter(Boolean).join(", ") : "";
+      if (add) { doc_.setFontSize(8.5); doc_.text("+ " + add, M, y); doc_.setFontSize(10); y += 12; }
+      if (it.specialNote) { doc_.setFontSize(8.5); doc_.text(String(it.specialNote), M, y); doc_.setFontSize(10); y += 12; }
+    });
+    doc_.line(M, y, W - M, y); y += 16;
+    row("Subtotal", money(o.subtotal));
+    row("GST (5%)", money(o.gstAmount));
+    if (Number(o.serviceCharge) > 0) row("Service charge", money(o.serviceCharge));
+    if (Number(o.discountAmount) > 0) row("Discount", "-" + money(o.discountAmount));
+    doc_.setFont("courier", "bold"); doc_.setFontSize(13); doc_.text("TOTAL", M, y); doc_.text(money(o.totalAmount), W - M, y, { align: "right" }); y += 20;
+    doc_.setFont("courier", "normal"); doc_.setFontSize(10);
+    line(PAY_LABEL[o.paymentStatus] || ((o.paymentMethod || "Payment") + " pending") + (o.paymentMethod ? " (" + o.paymentMethod + ")" : ""), 10, false);
+    y += 6; line("Thank you for visiting Momo Mama!", 9.5, false, "center"); line("Taxes as applicable. Computer-generated bill.", 8.5, false, "center");
+    const fname = "MomoMama-Bill-" + String(o.tokenNumber || active.id).replace(/[^a-zA-Z0-9]/g, "") + ".pdf";
+    doc_.save(fname);
+  }
+  $("billDownload").addEventListener("click", downloadBillPdf);
 
   /* Reopen tracking after a refresh, only for this table and only while the order is still running */
   try { localStorage.removeItem("mm_order"); } catch (_) {} // older single-key format that got stuck
