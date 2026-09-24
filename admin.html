@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
     --bg: #F4F6F5; --surface: #FFFFFF; --ink: #182226; --muted: #5B6A6E; --line: #DDE3E1;
@@ -100,6 +101,36 @@
   .primary { flex: 1; border: 0; border-radius: 12px; padding: 13px; background: var(--chili); color: #fff; font-weight: 600; font-size: 16.5px; }
   .primary:active { background: var(--chili-dark); }
   .primary:disabled, .mark-paid button:disabled, .cancel:disabled { opacity: .55; }
+  .bill-link { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 9px; padding: 6px 12px; font-weight: 500; font-size: 14px; }
+
+  /* Bill popup */
+  .bill-scrim { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 40; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .bill-scrim.open { opacity: 1; pointer-events: auto; }
+  .bill-sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: var(--surface); border-radius: 20px 20px 0 0; max-height: 90vh; display: flex; flex-direction: column; transform: translateY(102%); transition: transform .28s cubic-bezier(.2,.8,.2,1); }
+  .bill-sheet.open { transform: none; }
+  .bill-scroll { overflow-y: auto; padding: 22px 22px 10px; }
+  .bill-paper { max-width: 380px; margin: 0 auto; font-family: "Courier New", Courier, monospace; }
+  .bill-brand { text-align: center; }
+  .bill-brand b { display: block; font-family: var(--head); font-weight: 800; font-size: 22px; letter-spacing: -0.01em; }
+  .bill-brand span { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .bill-dash { border: none; border-top: 1px dashed var(--line); margin: 14px 0; }
+  .bill-meta div { display: flex; justify-content: space-between; font-size: 14px; padding: 2px 0; }
+  .bill-meta b { font-weight: 600; }
+  .bill-items table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .bill-items th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  .bill-items th:last-child, .bill-items td:last-child, .bill-items th.num, .bill-items td.num { text-align: right; }
+  .bill-items td { padding: 7px 0; vertical-align: top; border-bottom: 1px dotted var(--line); }
+  .bill-items .iname small { display: block; color: var(--muted); font-size: 12px; }
+  .bill-totals div { display: flex; justify-content: space-between; padding: 3px 0; font-size: 14px; color: var(--muted); }
+  .bill-totals .grand { color: var(--ink); font-weight: 700; font-size: 18px; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 8px; }
+  .bill-pay { margin-top: 10px; font-size: 14px; }
+  .bill-thanks { text-align: center; margin-top: 18px; color: var(--muted); font-size: 13px; }
+  .bill-actions { display: flex; gap: 10px; padding: 14px 22px calc(14px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); background: var(--surface); }
+  .bill-actions button { flex: 1; border-radius: 12px; padding: 13px; font-weight: 600; font-size: 15.5px; }
+  .bill-back { border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .bill-download { border: 0; background: var(--chili); color: #fff; }
+  .bill-download:active { background: var(--chili-dark); }
+  @media (prefers-reduced-motion: reduce) { .bill-scrim, .bill-sheet { transition: none; } }
   .cancel { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 13px 16px; font-weight: 500; color: var(--late); }
   .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
   .toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: 500px; margin: 0 auto; background: var(--ink); color: var(--surface); padding: 12px 16px; border-radius: 12px; z-index: 50; font-size: 14.5px; }
@@ -205,15 +236,9 @@
     <div class="sheet-head"><h2 id="itemTitle">Edit item</h2><button class="close" id="itemClose" type="button" aria-label="Close">&times;</button></div>
     <form id="itemForm" novalidate>
       <div class="field"><label for="fName">Item name</label><input id="fName" maxlength="80" autocomplete="off"></div>
-      <div class="field"><label for="fCat">Category</label><input id="fCat" list="catList" maxlength="30" autocomplete="off" placeholder="Momo, Sides, Beverages..."><datalist id="catList"></datalist></div>
-      <div class="hint">Variant thakle (Veg/Chicken/Paneer) niche dam bhorun — jegulo lagbe na oigulo faka rakhun. Kono variant na thakle shudhu "Flat price" bhorun.</div>
       <div class="two">
-        <div class="field"><label for="fVeg">Veg (Rs)</label><input id="fVeg" inputmode="decimal" autocomplete="off" placeholder="12"></div>
-        <div class="field"><label for="fChicken">Chicken (Rs)</label><input id="fChicken" inputmode="decimal" autocomplete="off" placeholder="15"></div>
-      </div>
-      <div class="two">
-        <div class="field"><label for="fPaneer">Paneer (Rs)</label><input id="fPaneer" inputmode="decimal" autocomplete="off" placeholder="15"></div>
-        <div class="field"><label for="fPrice">Flat price (Rs)</label><input id="fPrice" inputmode="decimal" autocomplete="off" placeholder="100"></div>
+        <div class="field"><label for="fCat">Category</label><input id="fCat" list="catList" maxlength="30" autocomplete="off" placeholder="Chicken, Veg..."><datalist id="catList"></datalist></div>
+        <div class="field"><label for="fPrice">Price (Rs)</label><input id="fPrice" inputmode="decimal" autocomplete="off" placeholder="190"></div>
       </div>
       <div class="two">
         <div class="field"><label for="fPieces">Pieces</label><input id="fPieces" inputmode="numeric" autocomplete="off" placeholder="6"></div>
@@ -228,6 +253,19 @@
       <button class="danger hidden" id="itemDelete" type="button">Delete this item</button>
       <div class="hint hidden" id="itemNoDelete">Starter item delete kora jay na, Available bondho kore dao.</div>
     </form>
+  </div>
+</div>
+
+<div class="bill-scrim" id="billScrim"></div>
+<div class="bill-sheet" id="billSheet" role="dialog" aria-modal="true" aria-labelledby="billTitle">
+  <div class="bill-scroll">
+    <div class="bill-paper" id="billPaper">
+      <h2 id="billTitle" style="position:absolute;width:1px;height:1px;overflow:hidden;">Bill</h2>
+    </div>
+  </div>
+  <div class="bill-actions">
+    <button class="bill-back" id="billBack" type="button">Close</button>
+    <button class="bill-download" id="billDownload" type="button">Download bill</button>
   </div>
 </div>
 
@@ -254,20 +292,6 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const money = (n) => "Rs " + (Math.round(Number(n || 0) * 100) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
-
-  // Shows "Veg Rs 12 / Chicken Rs 15 / Paneer Rs 15" when an item has variants,
-  // otherwise falls back to the item's flat price.
-  function priceLabel(m) {
-    if (Array.isArray(m.variants) && m.variants.length) {
-      return m.variants.map((v) => v.label + " " + money(v.price)).join(" / ");
-    }
-    return money(m.price);
-  }
-  // Lowest price across variants (or the flat price) — used for the customer-facing sort/display later if needed.
-  function fromPrice(m) {
-    if (Array.isArray(m.variants) && m.variants.length) return Math.min(...m.variants.map((v) => Number(v.price) || 0));
-    return Number(m.price) || 0;
-  }
 
   const TABS = [
     { key: "new", label: "New", statuses: ["NEW"] },
@@ -439,7 +463,7 @@
       <div class="who">${esc(o.customerName || "Guest")}${phone ? ` &nbsp; <a href="tel:${esc(phone)}">${esc(phone)}</a>` : ""}</div>
       <ul class="items">${itemHtml || `<li><span>No item details</span></li>`}</ul>
       ${o.specialInstructions ? `<div class="note">${esc(o.specialInstructions)}</div>` : ""}
-      <div class="pay-row"><div>${badge}</div><div class="total">${money(o.totalAmount)}</div></div>
+      <div class="pay-row"><div>${badge}${st !== "CANCELLED" ? ` <button class="bill-link" data-bill="${esc(o.id)}" type="button">Bill</button>` : ""}</div><div class="total">${money(o.totalAmount)}</div></div>
       ${!isPaid && st !== "CANCELLED" ? `<div class="mark-paid">Payment received:
         <button data-pay="PAID_CASH" data-id="${esc(o.id)}" ${busyNow ? "disabled" : ""}>Cash</button>
         <button data-pay="PAID_UPI" data-id="${esc(o.id)}" ${busyNow ? "disabled" : ""}>UPI</button>
@@ -457,8 +481,102 @@
     finally { busy.delete(id); render(); }
   }
 
+  /* ---------- Bill (same layout the customer sees) ---------- */
+  const dateTimeStr = (ms) => { try { return new Date(Number(ms)).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }); } catch (_) { return ""; } };
+  function billRowsHtml(o) {
+    return parseItems(o).map((i) => {
+      const add = Array.isArray(i.addOns) && i.addOns.length ? i.addOns.map((a) => typeof a === "string" ? a : (a && a.name) || "").filter(Boolean).join(", ") : "";
+      return `<tr><td class="iname">${esc(i.name)}${add ? `<small>${esc(add)}</small>` : ""}${i.specialNote ? `<small>${esc(i.specialNote)}</small>` : ""}</td><td class="num">${esc(i.quantity)}</td><td class="num">${money(i.price)}</td><td class="num">${money(Number(i.price) * Number(i.quantity))}</td></tr>`;
+    }).join("");
+  }
+  function renderBillHtml(o) {
+    const pay = PAID[o.paymentStatus] || ((o.paymentMethod || "Payment") + " pending");
+    return `
+      <div class="bill-brand"><b>Momo Mama</b><span>Kolkata</span></div>
+      <hr class="bill-dash">
+      <div class="bill-meta">
+        <div><span>Bill / Token</span><b>${esc(o.tokenNumber || o.id)}</b></div>
+        <div><span>Table</span><b>${esc(o.tableNumber || "Takeaway")}</b></div>
+        <div><span>Date &amp; time</span><b>${esc(dateTimeStr(o.createdAt))}</b></div>
+        ${o.customerName ? `<div><span>Guest</span><b>${esc(o.customerName)}</b></div>` : ""}
+      </div>
+      <hr class="bill-dash">
+      <div class="bill-items"><table>
+        <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead>
+        <tbody>${billRowsHtml(o) || `<tr><td colspan="4">No item details</td></tr>`}</tbody>
+      </table></div>
+      <hr class="bill-dash">
+      <div class="bill-totals">
+        <div><span>Subtotal</span><span>${money(o.subtotal)}</span></div>
+        <div><span>GST (5%)</span><span>${money(o.gstAmount)}</span></div>
+        ${Number(o.serviceCharge) > 0 ? `<div><span>Service charge</span><span>${money(o.serviceCharge)}</span></div>` : ""}
+        ${Number(o.discountAmount) > 0 ? `<div><span>Discount</span><span>-${money(o.discountAmount)}</span></div>` : ""}
+        <div class="grand"><span>Total</span><span>${money(o.totalAmount)}</span></div>
+      </div>
+      <div class="bill-pay"><b>${esc(pay)}</b>${o.paymentMethod ? ` (${esc(o.paymentMethod)})` : ""}</div>
+      <p class="bill-thanks">Thank you for visiting Momo Mama!<br>Taxes as applicable. Computer-generated bill.</p>`;
+  }
+  let billOrder = null;
+  function openBill(o) {
+    billOrder = o;
+    $("billPaper").innerHTML = `<h2 id="billTitle" style="position:absolute;width:1px;height:1px;overflow:hidden;">Bill</h2>` + renderBillHtml(o);
+    $("billScrim").classList.add("open"); $("billSheet").classList.add("open");
+  }
+  const closeBill = () => { $("billScrim").classList.remove("open"); $("billSheet").classList.remove("open"); };
+  $("billBack").addEventListener("click", closeBill);
+  $("billScrim").addEventListener("click", closeBill);
+
+  function downloadBillPdf() {
+    const o = billOrder;
+    if (!o) return;
+    if (!(window.jspdf && window.jspdf.jsPDF)) { toast("PDF tool load hoyni. Internet check kore abar try koro."); return; }
+    const { jsPDF } = window.jspdf;
+    const doc_ = new jsPDF({ unit: "pt", format: "a5" });
+    const W = doc_.internal.pageSize.getWidth(), M = 36; let y = 46;
+    const line = (t, size, bold, align) => { doc_.setFont("courier", bold ? "bold" : "normal"); doc_.setFontSize(size); doc_.text(t, align === "center" ? W / 2 : M, y, { align: align || "left" }); y += size * 1.35; };
+    const row = (a, b) => { doc_.setFont("courier", "normal"); doc_.setFontSize(10); doc_.text(a, M, y); doc_.text(b, W - M, y, { align: "right" }); y += 15; };
+    line("MOMO MAMA", 16, true, "center"); line("Kolkata", 10, false, "center"); y += 4;
+    doc_.setLineDashPattern([2, 2], 0); doc_.line(M, y, W - M, y); y += 16;
+    row("Bill / Token:", o.tokenNumber || o.id);
+    row("Table:", o.tableNumber || "Takeaway");
+    row("Date & time:", dateTimeStr(o.createdAt));
+    if (o.customerName) row("Guest:", o.customerName);
+    doc_.line(M, y, W - M, y); y += 16;
+    doc_.setFont("courier", "bold"); doc_.setFontSize(10);
+    doc_.text("Item", M, y); doc_.text("Qty", W - 160, y, { align: "right" }); doc_.text("Rate", W - 90, y, { align: "right" }); doc_.text("Amt", W - M, y, { align: "right" }); y += 14;
+    doc_.setFont("courier", "normal");
+    parseItems(o).forEach((it) => {
+      const nameLines = doc_.splitTextToSize(String(it.name || ""), W - M - 170);
+      nameLines.forEach((t, i) => {
+        doc_.text(t, M, y);
+        if (i === 0) {
+          doc_.text(String(it.quantity), W - 160, y, { align: "right" });
+          doc_.text(money(it.price).replace("Rs ", ""), W - 90, y, { align: "right" });
+          doc_.text(money(Number(it.price) * Number(it.quantity)).replace("Rs ", ""), W - M, y, { align: "right" });
+        }
+        y += 13;
+      });
+      const add = Array.isArray(it.addOns) && it.addOns.length ? it.addOns.map((a) => typeof a === "string" ? a : (a && a.name) || "").filter(Boolean).join(", ") : "";
+      if (add) { doc_.setFontSize(8.5); doc_.text("+ " + add, M, y); doc_.setFontSize(10); y += 12; }
+      if (it.specialNote) { doc_.setFontSize(8.5); doc_.text(String(it.specialNote), M, y); doc_.setFontSize(10); y += 12; }
+    });
+    doc_.line(M, y, W - M, y); y += 16;
+    row("Subtotal", money(o.subtotal));
+    row("GST (5%)", money(o.gstAmount));
+    if (Number(o.serviceCharge) > 0) row("Service charge", money(o.serviceCharge));
+    if (Number(o.discountAmount) > 0) row("Discount", "-" + money(o.discountAmount));
+    doc_.setFont("courier", "bold"); doc_.setFontSize(13); doc_.text("TOTAL", M, y); doc_.text(money(o.totalAmount), W - M, y, { align: "right" }); y += 20;
+    doc_.setFont("courier", "normal"); doc_.setFontSize(10);
+    line((PAID[o.paymentStatus] || ((o.paymentMethod || "Payment") + " pending")) + (o.paymentMethod ? " (" + o.paymentMethod + ")" : ""), 10, false);
+    y += 6; line("Thank you for visiting Momo Mama!", 9.5, false, "center"); line("Taxes as applicable. Computer-generated bill.", 8.5, false, "center");
+    const fname = "MomoMama-Bill-" + String(o.tokenNumber || o.id).replace(/[^a-zA-Z0-9]/g, "") + ".pdf";
+    doc_.save(fname);
+  }
+  $("billDownload").addEventListener("click", downloadBillPdf);
+
   $("tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) { activeTab = b.dataset.tab; render(); window.scrollTo(0, 0); } });
   $("list").addEventListener("click", (e) => {
+    const bill = e.target.closest("[data-bill]"); if (bill) { const o = orders.find((x) => x.id === bill.dataset.bill); if (o) openBill(o); return; }
     const go = e.target.closest("[data-to]"), pay = e.target.closest("[data-pay]"), can = e.target.closest("[data-cancel]");
     if (go) update(go.dataset.id, { status: go.dataset.to });
     if (pay) update(pay.dataset.id, { paymentStatus: pay.dataset.pay }, "Payment marked");
@@ -523,7 +641,7 @@
     const list = items.filter((m) => menuCat === "All" || m.category === menuCat);
     $("menuBody").innerHTML = list.length ? list.map((m) => {
       const on = m.isAvailable !== false;
-      const sub = [m.category, priceLabel(m), Number(m.pieces) > 1 ? m.pieces + " pcs" : ""].filter(Boolean).join(", ");
+      const sub = [m.category, money(m.price), Number(m.pieces) > 1 ? m.pieces + " pcs" : ""].filter(Boolean).join(", ");
       return `<div class="mrow ${on ? "" : "off"}">
         <div class="mthumb" ${okImg(m.imageUrl) ? `style="background-image:url('${esc(m.imageUrl)}')"` : ""}>${okImg(m.imageUrl) ? "" : esc((m.name || "?").charAt(0).toUpperCase())}</div>
         <div class="minfo"><div class="mname">${esc(m.name)}</div><div class="msub">${esc(sub)}</div>${m.isTodaysSpecial ? `<span class="mflag">Today's special</span>` : ""}</div>
@@ -549,23 +667,13 @@
     catch (err) { toast("Update hoy ni (" + (err.code || err.message) + ")"); }
   }
 
-  // Pull a variant's price out of an item, or "" if that variant isn't set
-  function variantVal(m, label) {
-    if (!m || !Array.isArray(m.variants)) return "";
-    const v = m.variants.find((x) => x.label === label);
-    return v ? v.price : "";
-  }
-
   function openItemSheet(id) {
     editingId = id;
     const m = id ? mergedMenu().find((x) => x.id === id) : null;
     $("itemTitle").textContent = m ? "Edit item" : "Add new item";
     $("fName").value = m ? m.name : "";
     $("fCat").value = m ? m.category : (menuCat !== "All" ? menuCat : "");
-    $("fVeg").value = variantVal(m, "Veg");
-    $("fChicken").value = variantVal(m, "Chicken");
-    $("fPaneer").value = variantVal(m, "Paneer");
-    $("fPrice").value = m && m.price != null ? m.price : "";
+    $("fPrice").value = m ? m.price : "";
     $("fPieces").value = m ? m.pieces : 6;
     $("fSpice").value = m && m.spiciness ? m.spiciness : "Mild";
     $("fDesc").value = m ? (m.description || "") : "";
@@ -582,43 +690,20 @@
   $("itemClose").addEventListener("click", closeItemSheet);
   $("itemScrim").addEventListener("click", closeItemSheet);
 
-  // Reads one price field. Empty is allowed (returns null). A non-empty value
-  // outside 1-10000 is invalid (returns undefined + pushes a message to errs).
-  function readPrice(id, label, errs) {
-    const raw = $(id).value.trim();
-    if (raw === "") return null;
-    const n = parseFloat(raw);
-    if (!(n > 0 && n <= 10000)) { errs.push(label + "-er dam thik na (1 theke 10000-er modhye likho, na hole faka rakho)."); return undefined; }
-    return Math.round(n * 100) / 100;
-  }
-
   $("itemForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     if (savingItem) return;
     const fail = (m) => { $("itemErr").textContent = m; $("itemErr").classList.remove("hidden"); };
-    const name = $("fName").value.trim(), category = $("fCat").value.trim(), img = $("fImg").value.trim();
+    const name = $("fName").value.trim(), category = $("fCat").value.trim(), price = parseFloat($("fPrice").value), img = $("fImg").value.trim();
     if (!name) return fail("Item-er naam likho.");
-    if (!category) return fail("Category likho, jemon Momo, Sides, Beverages.");
+    if (!category) return fail("Category likho, jemon Chicken ba Veg.");
+    if (!(price > 0 && price <= 10000)) return fail("Dam thik kore likho (1 theke 10000-er modhye).");
     if (img && !okImg(img)) return fail("Photo link https:// diye shuru hote hobe, na hole faka rakho.");
-
-    const errs = [];
-    const vVeg = readPrice("fVeg", "Veg", errs);
-    const vChicken = readPrice("fChicken", "Chicken", errs);
-    const vPaneer = readPrice("fPaneer", "Paneer", errs);
-    const flat = readPrice("fPrice", "Flat price", errs);
-    if (errs.length) return fail(errs[0]);
-
-    const variants = [];
-    if (vVeg != null) variants.push({ label: "Veg", price: vVeg });
-    if (vChicken != null) variants.push({ label: "Chicken", price: vChicken });
-    if (vPaneer != null) variants.push({ label: "Paneer", price: vPaneer });
-    if (!variants.length && flat == null) return fail("Kono ekta dam dao — Veg/Chicken/Paneer-er ekta, othoba Flat price.");
-
     const pieces = parseInt($("fPieces").value, 10);
     const item = {
       id: editingId || "C-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
       name, category, description: $("fDesc").value.trim(),
-      variants, price: variants.length ? null : flat,
+      price: Math.round(price * 100) / 100,
       isAvailable: $("fAvail").checked, isTodaysSpecial: $("fSpecial").checked,
       spiciness: $("fSpice").value, pieces: pieces > 0 ? pieces : 1, imageUrl: img
     };
