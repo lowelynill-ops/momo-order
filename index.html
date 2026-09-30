@@ -118,7 +118,10 @@
   .totals div { display: flex; justify-content: space-between; padding: 3px 0; color: var(--muted); }
   .totals .grand { color: var(--ink); font-weight: 600; font-size: 19px; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 10px; }
   .place { display: block; width: 100%; margin-top: 18px; border: 0; background: var(--chili); color: #fff; border-radius: 14px; padding: 15px; font-weight: 600; font-size: 17px; }
-  .place:disabled { opacity: .6; }
+  .place:disabled { opacity: .45; cursor: not-allowed; }
+  .req { color: var(--chili); font-weight: 700; }
+  .mand-note { margin-top: 14px; background: #FFF7E0; border: 1px solid var(--flag-yellow); color: #5a4200; border-radius: 10px; padding: 11px 12px; font-size: 14px; line-height: 1.4; }
+  .mand-note b { font-weight: 600; }
   .place:active { background: var(--chili-dark); }
   .error { margin-top: 14px; background: #FCEDEC; border: 1px solid #E9B5B2; color: #7A1713; border-radius: 10px; padding: 11px 12px; font-size: 14.5px; }
 
@@ -238,15 +241,16 @@
   <div class="sheet-in">
     <div class="sheet-head"><h2 id="sheetTitle">Your order</h2><button class="close" id="closeCart" aria-label="Close">&times;</button></div>
     <div id="cartLines"></div>
-    <div class="field"><label for="custName">Your name</label><input id="custName" autocomplete="given-name" placeholder="So we can call you"></div>
-    <div class="field"><label for="custPhone">Phone number (optional)</label><input id="custPhone" inputmode="tel" autocomplete="tel" placeholder="10-digit number"></div>
+    <div class="field"><label for="custName">Your name <span class="req">*</span></label><input id="custName" autocomplete="given-name" placeholder="So we can call you" required></div>
+    <div class="field"><label for="custPhone">Phone number <span class="req">*</span></label><input id="custPhone" inputmode="numeric" autocomplete="tel" placeholder="10-digit number" required></div>
+    <div class="mand-note" role="note"><b>Note:</b> Name and phone number are mandatory fields. If you do not enter your correct name and phone number, you will not receive a notification when your order is placed or when it is ready to be picked up from the counter.</div>
     <div class="field"><label for="notes">Anything we should know?</label><textarea id="notes" rows="2" placeholder="Less spicy, extra chutney, no onion"></textarea></div>
     <div class="field"><label>How will you pay?</label>
       <div class="pay" id="pay"><button type="button" data-m="Cash" aria-pressed="true">Cash at counter</button><button type="button" data-m="UPI" aria-pressed="false">UPI at counter</button></div>
     </div>
     <div class="totals" id="totals"></div>
     <div class="error hidden" id="orderError" role="alert"></div>
-    <button class="place" id="placeBtn">Place order</button>
+    <button class="place" id="placeBtn" disabled>Place order</button>
   </div>
 </div>
 
@@ -394,7 +398,7 @@
     $("cartLines").innerHTML = cartLines().map((l) => `<div class="line-item"><div><b>${esc(l.m.name)}</b><small>${l.qty} x ${money(l.m.price)}</small></div><div>${money(l.m.price * l.qty)}</div></div>`).join("");
     $("totals").innerHTML = `<div><span>Items</span><span>${money(c.subtotal)}</span></div><div><span>GST (5%)</span><span>${money(c.gst)}</span></div>${isDineIn ? `<div><span>Service charge (5%)</span><span>${money(c.service)}</span></div>` : ""}<div class="grand"><span>Total</span><span>${money(c.total)}</span></div>`;
   }
-  const openSheet = () => { renderSheet(); $("orderError").classList.add("hidden"); $("scrim").classList.add("open"); $("sheet").classList.add("open"); };
+  const openSheet = () => { renderSheet(); updatePlaceState(); $("orderError").classList.add("hidden"); $("scrim").classList.add("open"); $("sheet").classList.add("open"); };
   const closeSheet = () => { $("scrim").classList.remove("open"); $("sheet").classList.remove("open"); };
   $("openCart").addEventListener("click", openSheet);
   $("closeCart").addEventListener("click", closeSheet);
@@ -405,6 +409,25 @@
     const b = e.target.closest("button[data-m]"); if (!b) return;
     payMethod = b.dataset.m;
     [...$("pay").children].forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  });
+
+  /* ---------------- Mandatory name + 10-digit phone ---------------- */
+  let sending = false;
+  const cleanPhone = (v) => {
+    let d = String(v || "").replace(/\D/g, "");
+    if (d.length > 10 && d.startsWith("91")) d = d.slice(2); // pasted as +91...
+    if (d.length > 10 && d.startsWith("0")) d = d.slice(1);  // pasted with leading 0
+    return d.slice(0, 10);
+  };
+  const detailsValid = () => $("custName").value.trim().length > 0 && /^\d{10}$/.test($("custPhone").value);
+  function updatePlaceState() {
+    $("placeBtn").disabled = sending || !detailsValid();
+  }
+  $("custName").addEventListener("input", updatePlaceState);
+  $("custPhone").addEventListener("input", () => {
+    const c = cleanPhone($("custPhone").value);
+    if ($("custPhone").value !== c) $("custPhone").value = c;
+    updatePlaceState();
   });
 
   /* ---------------- Place order ---------------- */
@@ -424,8 +447,9 @@
     if (active && !TERMINAL.includes(active.status)) { closeSheet(); showTracking(); return; }
     const lines = cartLines();
     if (!lines.length) return;
+    if (!detailsValid()) { updatePlaceState(); showError("Please enter your name and a valid 10-digit phone number to place your order."); return; }
     const btn = $("placeBtn");
-    btn.disabled = true; btn.textContent = "Sending your order...";
+    sending = true; btn.disabled = true; btn.textContent = "Sending your order...";
     $("orderError").classList.add("hidden");
 
     pending = pending || { id: "WEB-" + Date.now().toString(36).toUpperCase(), token: "#MM-" + String(100 + Math.floor(Math.random() * 900)) };
@@ -436,7 +460,7 @@
     const order = {
       id: attemptId,
       tokenNumber: token,
-      customerName: $("custName").value.trim() || "Guest",
+      customerName: $("custName").value.trim(),
       customerPhone: $("custPhone").value.trim(),
       tableNumber: tableName,
       isDelivery: false,
@@ -463,7 +487,7 @@
         code === "timeout" ? "The order did not reach the server in time. Check your internet and tap Place order again. It will not create a duplicate." :
         "Could not send the order. Please tap Place order again.";
       showError(help + " (error: " + code + ")");
-    } finally { btn.disabled = false; btn.textContent = "Place order"; }
+    } finally { sending = false; btn.textContent = "Place order"; updatePlaceState(); }
   });
 
   /* ---------------- Live order tracking ---------------- */
