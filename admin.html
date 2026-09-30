@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
   :root {
     --bg: #F4F6F5; --surface: #FFFFFF; --ink: #182226; --muted: #5B6A6E; --line: #DDE3E1;
@@ -184,6 +185,33 @@
   .file-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 14px; font-weight: 500; }
   .text-btn { border: 0; background: none; color: var(--blue); font-weight: 500; padding: 4px 0; }
   @media (prefers-reduced-motion: reduce) { .sheet, .scrim { transition: none; } }
+
+  /* QR codes */
+  .qr-tools { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
+  .qr-tools .field { margin-top: 0; margin-bottom: 12px; }
+  .qr-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .qr-row .field { flex: 1 1 140px; margin-bottom: 0; }
+  .qr-tools .btn-sm { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 14px; font-weight: 600; }
+  .qr-tools .btn-main { border: 0; background: var(--chili); color: #fff; border-radius: 10px; padding: 11px 16px; font-weight: 600; }
+  .qr-tools .btn-main:active { background: var(--chili-dark); }
+  .qr-warn { margin-top: 10px; }
+  .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .qr-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px; text-align: center; }
+  .qr-img { display: block; width: 100%; max-width: 200px; aspect-ratio: 1; margin: 0 auto; background: #fff; border-radius: 8px; image-rendering: pixelated; }
+  .qr-brand { margin-top: 8px; font-family: var(--head); font-weight: 800; font-size: 14px; letter-spacing: -0.01em; color: var(--muted); }
+  .qr-name { font-family: var(--head); font-weight: 800; font-size: 20px; line-height: 1.15; }
+  .qr-sub { color: var(--muted); font-size: 13px; }
+  .qr-actions { display: flex; gap: 6px; margin-top: 10px; justify-content: center; flex-wrap: wrap; }
+  .qr-actions button, .qr-actions a { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 9px; padding: 6px 10px; font-weight: 500; font-size: 13.5px; text-decoration: none; }
+  @media print {
+    body { background: #fff; }
+    #loginView, header.top, .qr-tools, .toast, .bill-sheet, .bill-scrim, .sheet, .scrim, #ordersView, #menuView { display: none !important; }
+    main { padding: 0; max-width: none; }
+    .qr-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .qr-card { break-inside: avoid; background: #fff; color: #000; border: 1px solid #999; }
+    .qr-name, .qr-brand, .qr-sub { color: #000; }
+    .qr-actions { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -217,6 +245,7 @@
     <div class="views" id="views">
       <button data-view="orders" aria-pressed="true">Orders<span class="n zero" id="newBadge">0</span></button>
       <button data-view="menu" aria-pressed="false">Menu</button>
+      <button data-view="qr" aria-pressed="false">QR codes</button>
     </div>
     <div id="ordersHead">
       <div class="stats" id="stats"></div>
@@ -229,6 +258,18 @@
       <div class="m-toolbar"><span class="count" id="menuCount"></span><button class="add-item" id="addItem">Add item</button></div>
       <nav class="m-cats" id="menuCats" aria-label="Menu categories"></nav>
       <div id="menuBody"></div>
+    </div>
+    <div id="qrView" class="hidden">
+      <div class="qr-tools">
+        <div class="field"><label for="qrBase">Customer page link</label><input id="qrBase" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://your-site.com/index.html"><div class="hint">Auto-detected from this admin page. Only change it if your customer page lives somewhere else.</div></div>
+        <div class="qr-row">
+          <div class="field"><label for="qrTables">Number of tables</label><input id="qrTables" type="number" min="1" max="100" inputmode="numeric" value="10"></div>
+          <button class="btn-sm" id="qrReset" type="button">Reset link</button>
+          <button class="btn-main" id="qrPrint" type="button">Print all</button>
+        </div>
+        <div class="msg err qr-warn hidden" id="qrWarn" role="alert"></div>
+      </div>
+      <div class="qr-grid" id="qrGrid"></div>
     </div>
   </main>
 </section>
@@ -637,8 +678,9 @@
     $("ordersHead").classList.toggle("hidden", v !== "orders");
     $("ordersView").classList.toggle("hidden", v !== "orders");
     $("menuView").classList.toggle("hidden", v !== "menu");
+    $("qrView").classList.toggle("hidden", v !== "qr");
     [...$("views").children].forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === v)));
-    if (v === "orders") render(); else renderMenu();
+    if (v === "orders") render(); else if (v === "qr") renderQr(); else renderMenu();
     window.scrollTo(0, 0);
   }
   $("views").addEventListener("click", (e) => { const b = e.target.closest("button[data-view]"); if (b) setView(b.dataset.view); });
@@ -791,6 +833,113 @@
     try { await deleteDoc(doc(db, "menu_items", editingId)); closeItemSheet(); toast("Item deleted"); }
     catch (err) { $("itemErr").textContent = "Delete hoy ni (" + (err.code || err.message) + ")"; $("itemErr").classList.remove("hidden"); }
   });
+
+  /* ---------- QR codes (each table opens the customer page with ?t=<table>) ---------- */
+  const lsGet = (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} };
+  const lsDel = (k) => { try { localStorage.removeItem(k); } catch (_) {} };
+  const QR_BASE_KEY = "mm_qr_base", QR_TABLES_KEY = "mm_qr_tables";
+
+  // The customer page sits next to this admin page, so its link is this page's folder + index.html
+  function autoBase() {
+    try { const u = new URL("index.html", location.href); u.search = ""; u.hash = ""; return u.href; } catch (_) { return ""; }
+  }
+  function qrLink(n) {
+    let u;
+    try { u = new URL(($("qrBase").value || "").trim() || autoBase()); } catch (_) { return null; }
+    if (u.protocol !== "https:" && u.protocol !== "http:") return null;
+    u.hash = ""; u.searchParams.delete("t"); u.searchParams.delete("table");
+    if (n > 0) u.searchParams.set("t", String(n));
+    return u.href;
+  }
+  const qrName = (n) => n > 0 ? "Table " + String(n).padStart(2, "0") : "Takeaway";
+
+  // Draws a crisp QR onto a canvas (black on white, with the quiet zone scanners need)
+  function qrCanvas(text, cell) {
+    const qr = qrcode(0, "M"); qr.addData(text); qr.make();
+    const count = qr.getModuleCount(), quiet = 4, size = (count + quiet * 2) * cell;
+    const c = document.createElement("canvas"); c.width = size; c.height = size;
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, size, size); g.fillStyle = "#000";
+    for (let r = 0; r < count; r++) for (let col = 0; col < count; col++) if (qr.isDark(r, col)) g.fillRect((col + quiet) * cell, (r + quiet) * cell, cell, cell);
+    return c;
+  }
+
+  function renderQr() {
+    const warn = $("qrWarn"), grid = $("qrGrid");
+    if (typeof qrcode === "undefined") {
+      grid.innerHTML = `<div class="empty">QR tool load hoyni. Internet check kore page reload koro.</div>`;
+      return;
+    }
+    const base = qrLink(0);
+    if (!base) { warn.textContent = "Customer page link ta thik na. Full link likho, jemon https://your-site.com/index.html"; warn.classList.remove("hidden"); grid.innerHTML = ""; return; }
+    const host = new URL(base).hostname;
+    if (location.protocol === "file:" || host === "localhost" || host === "127.0.0.1") {
+      warn.textContent = "Ei link sudhu ei device/network-e khulbe. Customer-ra scan korle khulbe na. Website live korar por live admin page theke QR banao.";
+      warn.classList.remove("hidden");
+    } else warn.classList.add("hidden");
+    let n = parseInt($("qrTables").value, 10);
+    if (!(n >= 1)) n = 1; if (n > 100) n = 100;
+    const nums = [0]; for (let i = 1; i <= n; i++) nums.push(i);
+    grid.innerHTML = nums.map((t) => {
+      const link = qrLink(t);
+      const img = qrCanvas(link, 8).toDataURL("image/png");
+      return `<div class="qr-card">
+        <img class="qr-img" src="${img}" alt="QR code for ${esc(qrName(t))}">
+        <div class="qr-brand">Momo Mama</div>
+        <div class="qr-name">${esc(qrName(t))}</div>
+        <div class="qr-sub">Scan to order</div>
+        <div class="qr-actions">
+          <button type="button" data-dl="${t}">Download</button>
+          <button type="button" data-copy="${t}">Copy link</button>
+          <a href="${esc(link)}" target="_blank" rel="noopener">Test</a>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  function downloadQr(t) {
+    const link = qrLink(t); if (!link) return;
+    const qr = qrCanvas(link, 12);
+    const pad = 130, c = document.createElement("canvas"); c.width = qr.width; c.height = qr.height + pad;
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+    g.drawImage(qr, 0, 0);
+    g.fillStyle = "#182226"; g.textAlign = "center";
+    g.font = "800 40px Arial, sans-serif"; g.fillText("Momo Mama", c.width / 2, qr.height + 14);
+    g.font = "800 34px Arial, sans-serif"; g.fillText(qrName(t), c.width / 2, qr.height + 58);
+    g.fillStyle = "#5B6A6E"; g.font = "600 24px Arial, sans-serif"; g.fillText("Scan to order", c.width / 2, qr.height + 96);
+    c.toBlob((blob) => {
+      if (!blob) { toast("Download hoy ni."); return; }
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+      a.download = "MomoMama-QR-" + qrName(t).replace(/\s+/g, "-") + ".png";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }, "image/png");
+  }
+
+  async function copyQrLink(t) {
+    const link = qrLink(t); if (!link) return;
+    try { await navigator.clipboard.writeText(link); toast("Link copied: " + link); }
+    catch (_) { window.prompt("Link copy koro:", link); }
+  }
+
+  $("qrGrid").addEventListener("click", (e) => {
+    const d = e.target.closest("[data-dl]"), c = e.target.closest("[data-copy]");
+    if (d) downloadQr(parseInt(d.dataset.dl, 10));
+    if (c) copyQrLink(parseInt(c.dataset.copy, 10));
+  });
+  $("qrBase").addEventListener("input", () => {
+    const v = $("qrBase").value.trim();
+    if (v && v !== autoBase()) lsSet(QR_BASE_KEY, v); else lsDel(QR_BASE_KEY);
+    renderQr();
+  });
+  $("qrTables").addEventListener("input", () => {
+    const n = parseInt($("qrTables").value, 10);
+    if (n >= 1 && n <= 100) { lsSet(QR_TABLES_KEY, String(n)); renderQr(); }
+  });
+  $("qrReset").addEventListener("click", () => { lsDel(QR_BASE_KEY); $("qrBase").value = autoBase(); renderQr(); toast("Link auto-detect e reset hoyeche."); });
+  $("qrPrint").addEventListener("click", () => window.print());
+  $("qrBase").value = lsGet(QR_BASE_KEY) || autoBase();
+  $("qrTables").value = lsGet(QR_TABLES_KEY) || "10";
 
   /* Keep the "x min ago" text and late highlight fresh */
   setInterval(() => { if (!$("boardView").classList.contains("hidden") && view === "orders") render(); }, 30000);
