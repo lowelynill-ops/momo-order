@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
   :root {
     --bg: #F4F6F5;
@@ -117,66 +117,43 @@
   .totals { margin-top: 18px; }
   .totals div { display: flex; justify-content: space-between; padding: 3px 0; color: var(--muted); }
   .totals .grand { color: var(--ink); font-weight: 600; font-size: 19px; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 10px; }
-  .place { display: block; width: 100%; margin-top: 18px; border: 0; background: var(--chili); color: #fff; border-radius: 14px; padding: 15px; font-weight: 600; font-size: 17px; }
-  .place:disabled { opacity: .45; cursor: not-allowed; }
-  .req { color: var(--chili); font-weight: 700; }
-  .mand-note { margin-top: 14px; background: #FFF7E0; border: 1px solid var(--flag-yellow); color: #5a4200; border-radius: 10px; padding: 11px 12px; font-size: 14px; line-height: 1.4; }
-  .mand-note b { font-weight: 600; }
-  .place:active { background: var(--chili-dark); }
   .error { margin-top: 14px; background: #FCEDEC; border: 1px solid #E9B5B2; color: #7A1713; border-radius: 10px; padding: 11px 12px; font-size: 14.5px; }
 
-  /* Order tracking */
-  .track { padding: 28px 20px 20px; }
-  .token { font-family: var(--head); font-weight: 800; font-size: 56px; line-height: 1; letter-spacing: -0.03em; }
-  .track p.lead { color: var(--muted); margin-top: 8px; }
-  .steps { list-style: none; padding: 0; margin: 26px 0 0; }
-  .steps li { position: relative; padding: 0 0 22px 34px; color: var(--muted); }
-  .steps li::before { content: ""; position: absolute; left: 0; top: 3px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); }
-  .steps li::after { content: ""; position: absolute; left: 8px; top: 24px; bottom: -1px; width: 2px; background: var(--line); }
-  .steps li:last-child::after { display: none; }
-  .steps li.done { color: var(--ink); }
-  .steps li.done::before { background: var(--flag-green); border-color: var(--flag-green); }
-  .steps li.done::after { background: var(--flag-green); }
-  .steps li.now { color: var(--ink); font-weight: 600; }
-  .steps li.now::before { background: var(--flag-yellow); border-color: var(--flag-yellow); box-shadow: 0 0 0 5px rgba(240,180,41,.3); }
-  .cancelled { margin-top: 20px; }
+  .toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: 500px; margin: 0 auto; background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 12px; z-index: 80; font-size: 14.5px; }
   .ghost { margin-top: 10px; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px 18px; font-weight: 600; }
-  .view-bill { display: block; width: 100%; margin-top: 24px; border: 0; background: var(--chili); color: #fff; border-radius: 14px; padding: 15px; font-weight: 600; font-size: 17px; box-shadow: 0 6px 18px rgba(201,48,44,.3); }
-  .view-bill:active { background: var(--chili-dark); }
 
-  /* Bill popup */
-  .bill-scrim { position: fixed; inset: 0; background: rgba(24,34,38,.55); z-index: 40; opacity: 0; pointer-events: none; transition: opacity .2s; }
-  .bill-scrim.open { opacity: 1; pointer-events: auto; }
-  .bill-sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: var(--surface); border-radius: 20px 20px 0 0; max-height: 90vh; display: flex; flex-direction: column; transform: translateY(102%); transition: transform .28s cubic-bezier(.2,.8,.2,1); }
-  .bill-sheet.open { transform: none; }
-  .bill-scroll { overflow-y: auto; padding: 22px 22px 10px; }
-  .bill-paper { max-width: 380px; margin: 0 auto; font-family: "Courier New", Courier, monospace; }
-  .bill-brand { text-align: center; }
-  .bill-brand b { display: block; font-family: var(--head); font-weight: 800; font-size: 22px; letter-spacing: -0.01em; }
-  .bill-brand span { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
-  .bill-dash { border: none; border-top: 1px dashed var(--line); margin: 14px 0; }
-  .bill-meta div { display: flex; justify-content: space-between; font-size: 14px; padding: 2px 0; }
-  .bill-meta b { font-weight: 600; }
-  .bill-items table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  .bill-items th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
-  .bill-items th:last-child, .bill-items td:last-child, .bill-items th.num, .bill-items td.num { text-align: right; }
-  .bill-items td { padding: 7px 0; vertical-align: top; border-bottom: 1px dotted var(--line); }
-  .bill-items .iname small { display: block; color: var(--muted); font-size: 12px; }
-  .bill-totals div { display: flex; justify-content: space-between; padding: 3px 0; font-size: 14px; color: var(--muted); }
-  .bill-totals .grand { color: var(--ink); font-weight: 700; font-size: 18px; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 8px; }
-  .bill-pay { margin-top: 10px; font-size: 14px; }
-  .bill-thanks { text-align: center; margin-top: 18px; color: var(--muted); font-size: 13px; }
-  .bill-actions { display: flex; gap: 10px; padding: 14px 22px calc(14px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); background: var(--surface); }
-  .bill-actions button { flex: 1; border-radius: 12px; padding: 13px; font-weight: 600; font-size: 15.5px; }
-  .bill-back { border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
-  .bill-download { border: 0; background: var(--chili); color: #fff; }
-  .bill-download:active { background: var(--chili-dark); }
-  .toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: 500px; margin: 0 auto; background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 12px; z-index: 60; font-size: 14.5px; }
-  @media (prefers-reduced-motion: reduce) { .bill-scrim, .bill-sheet { transition: none; } }
+  /* Payment options */
+  .payblock { margin-top: 20px; }
+  .pay-title { font-weight: 600; font-size: 14.5px; margin-bottom: 8px; }
+  .upi-apps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .upi-app { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 4px; font-weight: 600; font-size: 13.5px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .upi-app i { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-style: normal; font-weight: 800; font-size: 15px; }
+  .upi-app:active { background: var(--bg); }
+  .upi-app:disabled { opacity: .45; cursor: not-allowed; }
+  .payopt { display: block; width: 100%; margin-top: 10px; border: 1px solid var(--chili); background: var(--surface); color: var(--chili); border-radius: 12px; padding: 13px; font-weight: 600; font-size: 16px; }
+  .payopt.plain { border-color: var(--ink); color: var(--ink); }
+  .payopt:active { background: var(--bg); }
+  .payopt:disabled { opacity: .45; cursor: not-allowed; }
+  .pay-hint { margin-top: 10px; color: var(--muted); font-size: 13.5px; }
+  .pay-or { display: flex; align-items: center; gap: 10px; color: var(--muted); margin-top: 14px; font-size: 13px; }
+  .pay-or::before, .pay-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 
-  /* Active-order banner on the menu */
-  .banner { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--ink); color: #fff; padding: 10px 20px; font-weight: 500; }
-  .banner button { flex: none; border: 0; background: var(--flag-yellow); color: #3a2a00; border-radius: 8px; padding: 6px 12px; font-weight: 600; }
+  /* Waiting / done screen */
+  .overlay { position: fixed; inset: 0; z-index: 50; background: var(--bg); overflow-y: auto; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .ov-in { max-width: 420px; margin: 0 auto; padding: 36px 22px 28px; text-align: center; }
+  .ov-in h2 { font-family: var(--head); font-weight: 800; font-size: 26px; letter-spacing: -0.01em; }
+  .ov-amt { font-family: var(--head); font-weight: 800; font-size: 34px; margin: 8px 0 2px; }
+  .ov-tok { font-family: var(--head); font-weight: 800; font-size: 52px; line-height: 1; letter-spacing: -0.03em; margin: 12px 0 6px; }
+  .ov-msg { color: var(--muted); margin-top: 10px; }
+  .ov-slow { margin-top: 16px; padding: 11px 12px; border-radius: 10px; background: #FFF7E0; border: 1px solid var(--flag-yellow); color: #5a4200; font-size: 14.5px; }
+  .ov-qr { display: block; width: 250px; max-width: 100%; aspect-ratio: 1; margin: 16px auto 4px; background: #fff; border: 1px solid var(--line); border-radius: 14px; image-rendering: pixelated; }
+  .ov-btn { display: block; width: 100%; margin-top: 18px; border: 0; background: var(--chili); color: #fff; border-radius: 14px; padding: 14px; font-weight: 600; font-size: 17px; }
+  .ov-btn:active { background: var(--chili-dark); }
+  .spinner { width: 46px; height: 46px; border-radius: 50%; border: 4px solid var(--line); border-top-color: var(--chili); margin: 0 auto 18px; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .tick { width: 66px; height: 66px; border-radius: 50%; background: var(--flag-green); color: #fff; display: grid; place-items: center; font-size: 36px; margin: 0 auto 14px; }
+  .tick.bad { background: var(--chili); }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
 
   /* Setup notice */
   .notice { margin: 20px; padding: 16px; border: 1px solid var(--flag-yellow); background: #FFF7E0; border-radius: 12px; }
@@ -200,35 +177,12 @@
   <div id="setupNotice" class="notice hidden"><b>One-time setup needed</b>Open index.html and paste your Firebase web app keys into the firebaseConfig block at the top of the script.</div>
 
   <div id="menuView">
-    <div class="banner hidden" id="orderBanner"><span id="bannerText"></span><button id="bannerView" type="button">View status</button></div>
     <nav class="cats" id="cats" aria-label="Menu categories"></nav>
     <section class="menu" id="menuList" aria-live="polite"></section>
     <div class="debug hidden" id="debug"></div>
   </div>
 
-  <section id="trackView" class="track hidden" aria-live="polite">
-    <p class="lead" id="trackTable"></p>
-    <div class="token" id="trackToken">#MM-000</div>
-    <p class="lead" id="trackMsg">We got your order.</p>
-    <ol class="steps" id="steps"></ol>
-    <div id="trackCancelled" class="error cancelled hidden">This order was cancelled. Please talk to our staff at the counter.</div>
-    <button class="view-bill hidden" id="viewBillBtn" type="button">View bill</button>
-    <button class="ghost" id="newOrder">Back to menu</button>
-  </section>
 </main>
-
-<div class="bill-scrim" id="billScrim"></div>
-<div class="bill-sheet" id="billSheet" role="dialog" aria-modal="true" aria-labelledby="billTitle">
-  <div class="bill-scroll">
-    <div class="bill-paper" id="billPaper">
-      <h2 id="billTitle" style="position:absolute;width:1px;height:1px;overflow:hidden;">Bill</h2>
-    </div>
-  </div>
-  <div class="bill-actions">
-    <button class="bill-back" id="billBack" type="button">Back</button>
-    <button class="bill-download" id="billDownload" type="button">Download bill</button>
-  </div>
-</div>
 
 <div class="toast hidden" id="toast" role="status"></div>
 
@@ -245,12 +199,46 @@
     <div class="field"><label for="custPhone">Phone number <span class="req">*</span></label><input id="custPhone" inputmode="numeric" autocomplete="tel" placeholder="10-digit number" required></div>
     <div class="mand-note" role="note"><b>Note:</b> Name and phone number are mandatory fields. If you do not enter your correct name and phone number, you will not receive a notification when your order is placed or when it is ready to be picked up from the counter.</div>
     <div class="field"><label for="notes">Anything we should know?</label><textarea id="notes" rows="2" placeholder="Less spicy, extra chutney, no onion"></textarea></div>
-    <div class="field"><label>How will you pay?</label>
-      <div class="pay" id="pay"><button type="button" data-m="Cash" aria-pressed="true">Cash at counter</button><button type="button" data-m="UPI" aria-pressed="false">UPI at counter</button></div>
-    </div>
     <div class="totals" id="totals"></div>
     <div class="error hidden" id="orderError" role="alert"></div>
-    <button class="place" id="placeBtn" disabled>Place order</button>
+    <div class="payblock">
+      <div class="pay-title">Pay online with UPI</div>
+      <div class="upi-apps" id="upiApps"></div>
+      <button type="button" class="payopt" id="qrPayBtn" disabled>Pay with QR code</button>
+      <div class="pay-hint" id="payHint"></div>
+      <div class="pay-or"><span>or</span></div>
+      <button type="button" class="payopt plain" id="cashBtn" disabled>Pay cash at the counter</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="overlay" role="dialog" aria-modal="true" aria-labelledby="ovTitle">
+  <div class="ov-in">
+    <div id="ovWait">
+      <div class="spinner" aria-hidden="true"></div>
+      <h2 id="ovTitle">Waiting for your payment</h2>
+      <div class="ov-amt" id="ovAmt"></div>
+      <div class="ov-msg" id="ovToken"></div>
+      <img class="ov-qr hidden" id="ovQr" alt="UPI payment QR code">
+      <p class="ov-msg" id="ovMsg"></p>
+      <button class="ov-btn hidden" id="ovReopen" type="button">Open app again</button>
+      <div class="ov-slow hidden" id="ovSlow"></div>
+      <p class="ov-msg">This screen updates by itself as soon as your payment is confirmed. Please keep it open.</p>
+      <button class="ghost" id="ovBack" type="button">Go back</button>
+    </div>
+    <div class="hidden" id="ovDone">
+      <div class="tick" aria-hidden="true">&#10003;</div>
+      <h2 id="doneTitle">Order placed</h2>
+      <div class="ov-tok" id="doneToken"></div>
+      <p class="ov-msg" id="doneMsg"></p>
+      <button class="ov-btn" id="doneBtn" type="button">Back to menu</button>
+    </div>
+    <div class="hidden" id="ovFail">
+      <div class="tick bad" aria-hidden="true">!</div>
+      <h2>Order cancelled</h2>
+      <p class="ov-msg" id="failMsg">We could not confirm your payment. Please talk to our staff at the counter.</p>
+      <button class="ov-btn" id="failBtn" type="button">Back to menu</button>
+    </div>
   </div>
 </div>
 
@@ -282,14 +270,6 @@
     { id: "M-08", name: "Spicy Thukpa Mountain Noodle Soup", category: "Specials", description: "Slow-simmered aromatic broth with hand-pulled noodles, fresh greens and herbs.", price: 170, isAvailable: true, isTodaysSpecial: false, spiciness: "Medium", pieces: 1, imageUrl: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&auto=format&fit=crop" },
     { id: "M-09", name: "Himalayan Peach Iced Tea", category: "Beverages", description: "Brewed Darjeeling black tea with sweet mountain peach and fresh mint.", price: 95, isAvailable: true, isTodaysSpecial: false, spiciness: "None", pieces: 1, imageUrl: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&auto=format&fit=crop" },
     { id: "M-10", name: "Szechuan Spiced Lemonade", category: "Beverages", description: "Fresh lime soda with Sichuan pepper, roasted cumin and black rock salt.", price: 85, isAvailable: true, isTodaysSpecial: false, spiciness: "Mild", pieces: 1, imageUrl: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400&auto=format&fit=crop" }
-  ];
-
-  const STATUS_STEPS = [
-    { key: "NEW", label: "Order received", msg: "We got your order. The kitchen will pick it up shortly." },
-    { key: "ACCEPTED", label: "Accepted by the kitchen", msg: "The kitchen accepted your order." },
-    { key: "PREPARING", label: "Cooking now", msg: "Your momos are being cooked." },
-    { key: "READY", label: "Ready", msg: "Your order is ready." },
-    { key: "COMPLETED", label: "Served", msg: "Enjoy your meal!" }
   ];
 
   const $ = (id) => document.getElementById(id);
@@ -389,7 +369,7 @@
   }
   function renderCartBar() {
     const n = [...cart.values()].reduce((a, b) => a + b, 0);
-    $("cartBar").classList.toggle("hidden", n === 0 || !$("trackView").classList.contains("hidden"));
+    $("cartBar").classList.toggle("hidden", n === 0);
     $("cartCount").textContent = n + (n === 1 ? " item" : " items") + " in your order";
     $("cartTotal").textContent = money(calc().total);
   }
@@ -398,20 +378,52 @@
     $("cartLines").innerHTML = cartLines().map((l) => `<div class="line-item"><div><b>${esc(l.m.name)}</b><small>${l.qty} x ${money(l.m.price)}</small></div><div>${money(l.m.price * l.qty)}</div></div>`).join("");
     $("totals").innerHTML = `<div><span>Items</span><span>${money(c.subtotal)}</span></div><div><span>GST (5%)</span><span>${money(c.gst)}</span></div>${isDineIn ? `<div><span>Service charge (5%)</span><span>${money(c.service)}</span></div>` : ""}<div class="grand"><span>Total</span><span>${money(c.total)}</span></div>`;
   }
-  const openSheet = () => { renderSheet(); updatePlaceState(); $("orderError").classList.add("hidden"); $("scrim").classList.add("open"); $("sheet").classList.add("open"); };
+  const openSheet = () => { renderSheet(); updatePayState(); $("orderError").classList.add("hidden"); $("scrim").classList.add("open"); $("sheet").classList.add("open"); };
   const closeSheet = () => { $("scrim").classList.remove("open"); $("sheet").classList.remove("open"); };
   $("openCart").addEventListener("click", openSheet);
   $("closeCart").addEventListener("click", closeSheet);
   $("scrim").addEventListener("click", closeSheet);
 
-  let payMethod = "Cash";
-  $("pay").addEventListener("click", (e) => {
-    const b = e.target.closest("button[data-m]"); if (!b) return;
-    payMethod = b.dataset.m;
-    [...$("pay").children].forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
-  });
+  /* ---------------- Payment settings (UPI ID of the shop account) ---------------- */
+  // The admin page saves the shop's UPI details in Firestore: settings/payment { upiId, payeeName, merchantCode }.
+  // Until then you can paste them here as a fallback; Firestore always wins when it has a value.
+  const FALLBACK_PAYMENT = { upiId: "", payeeName: "Momo Mama", merchantCode: "" };
+  let payCfg = { ...FALLBACK_PAYMENT };
+  const validUpi = (v) => /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z][a-zA-Z0-9.-]{1,63}$/.test(String(v || "").trim());
+  const onlineReady = () => validUpi(payCfg.upiId);
+  if (db) {
+    onSnapshot(doc(db, "settings", "payment"), (snap) => {
+      const d = snap.exists() ? snap.data() : {};
+      payCfg = {
+        upiId: String(d.upiId || FALLBACK_PAYMENT.upiId || "").trim(),
+        payeeName: String(d.payeeName || FALLBACK_PAYMENT.payeeName || "Momo Mama").trim(),
+        merchantCode: String(d.merchantCode || FALLBACK_PAYMENT.merchantCode || "").trim()
+      };
+      updatePayState();
+    }, () => { updatePayState(); });
+  }
 
-  /* ---------------- Mandatory name + 10-digit phone ---------------- */
+  /* ---------------- UPI links ---------------- */
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const APPS = [
+    { key: "phonepe", name: "PhonePe", color: "#5F259F", letter: "P", url: (q) => "phonepe://pay?" + q },
+    { key: "gpay", name: "Google Pay", color: "#1A73E8", letter: "G", url: (q) => (isIOS ? "gpay://upi/pay?" : "tez://upi/pay?") + q },
+    { key: "paytm", name: "Paytm", color: "#00A5D8", letter: "P", url: (q) => "paytmmp://pay?" + q },
+    { key: "cred", name: "CRED", color: "#1B1B1B", letter: "C", url: (q) => "credpay://upi/pay?" + q },
+    { key: "bhim", name: "BHIM", color: "#00796B", letter: "B", url: (q) => "bhim://upi/pay?" + q },
+    { key: "upi", name: "Other UPI app", color: "#5B6A6E", letter: "U", url: (q) => "upi://pay?" + q }
+  ];
+  $("upiApps").innerHTML = APPS.map((a) => `<button type="button" class="upi-app" data-app="${a.key}" disabled><i style="background:${a.color}">${a.letter}</i>${esc(a.name)}</button>`).join("");
+
+  // pa = shop UPI id, am = exact order total, tn = note that shows in the shop's bank statement
+  function upiQuery(total, token) {
+    const e = encodeURIComponent;
+    let q = "pa=" + e(payCfg.upiId) + "&pn=" + e(payCfg.payeeName || "Momo Mama") + "&am=" + Number(total).toFixed(2) + "&cu=INR&tn=" + e("Momo Mama " + String(token).replace("#", ""));
+    if (payCfg.merchantCode) q += "&mc=" + e(payCfg.merchantCode);
+    return q;
+  }
+
+  /* ---------------- Name + 10-digit phone must be valid before any payment button works ---------------- */
   let sending = false;
   const cleanPhone = (v) => {
     let d = String(v || "").replace(/\D/g, "");
@@ -420,45 +432,45 @@
     return d.slice(0, 10);
   };
   const detailsValid = () => $("custName").value.trim().length > 0 && /^\d{10}$/.test($("custPhone").value);
-  function updatePlaceState() {
-    $("placeBtn").disabled = sending || !detailsValid();
+  function updatePayState() {
+    const ok = !sending && detailsValid() && cartLines().length > 0;
+    const online = ok && onlineReady();
+    document.querySelectorAll(".upi-app").forEach((b) => { b.disabled = !online; });
+    $("qrPayBtn").disabled = !online;
+    $("cashBtn").disabled = !ok;
+    $("payHint").textContent = !onlineReady() ? "Online payment is not available right now. You can pay cash at the counter."
+      : !detailsValid() ? "Enter your name and 10-digit phone number to continue."
+      : "The exact amount is filled in automatically in your UPI app.";
   }
-  $("custName").addEventListener("input", updatePlaceState);
+  $("custName").addEventListener("input", updatePayState);
   $("custPhone").addEventListener("input", () => {
     const c = cleanPhone($("custPhone").value);
     if ($("custPhone").value !== c) $("custPhone").value = c;
-    updatePlaceState();
+    updatePayState();
   });
 
-  /* ---------------- Place order ---------------- */
-  // pending holds {id, token} for an order that is being submitted. It is saved to
-  // localStorage BEFORE the write goes out (not after it succeeds), so if the page is
-  // refreshed while a slow connection is still sending the first attempt, the retry reuses
-  // the same order id/token instead of creating a second document for the same table.
+  /* ---------------- Create the order ---------------- */
+  // pending holds {id, token} for an order that is being submitted, so a retry after a slow
+  // connection reuses the same order id instead of creating a second order.
   let pending = null;
   const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: "timeout" }), ms))]);
-
   function showError(msg) { const el = $("orderError"); el.textContent = msg; el.classList.remove("hidden"); }
+  function setSending(v) { sending = v; updatePayState(); }
 
-  $("placeBtn").addEventListener("click", async () => {
-    if (!db) { showError("This page is not connected to Firebase yet. Add the web app keys to index.html first."); return; }
-    // One order at a time per table: if this table already has an order in progress, go to it
-    // instead of letting a second order be started (this is also what stops accidental double orders).
-    if (active && !TERMINAL.includes(active.status)) { closeSheet(); showTracking(); return; }
+  // Online orders are saved as PAYMENT_PENDING (the kitchen does not see them) and become NEW once the payment is confirmed.
+  async function createOrder(online, via) {
+    if (!db) { showError("This page is not connected to Firebase yet. Add the web app keys to index.html first."); return null; }
+    if (!detailsValid()) { updatePayState(); showError("Please enter your name and a valid 10-digit phone number to continue."); return null; }
     const lines = cartLines();
-    if (!lines.length) return;
-    if (!detailsValid()) { updatePlaceState(); showError("Please enter your name and a valid 10-digit phone number to place your order."); return; }
-    const btn = $("placeBtn");
-    sending = true; btn.disabled = true; btn.textContent = "Sending your order...";
+    if (!lines.length) return null;
+    setSending(true);
     $("orderError").classList.add("hidden");
-
     pending = pending || { id: "WEB-" + Date.now().toString(36).toUpperCase(), token: "#MM-" + String(100 + Math.floor(Math.random() * 900)) };
-    const { id: attemptId, token } = pending;
-    saveActive({ id: attemptId, token, table: tableName, at: Date.now(), status: "NEW" });
+    const { id, token } = pending;
     const c = calc();
     const items = lines.map((l) => ({ id: l.m.id, name: l.m.name, quantity: l.qty, price: l.m.price, category: l.m.category, addOns: [], specialNote: "" }));
     const order = {
-      id: attemptId,
+      id,
       tokenNumber: token,
       customerName: $("custName").value.trim(),
       customerPhone: $("custPhone").value.trim(),
@@ -466,9 +478,10 @@
       isDelivery: false,
       itemsJson: JSON.stringify(items),
       specialInstructions: $("notes").value.trim(),
-      status: "NEW",
+      status: online ? "PAYMENT_PENDING" : "NEW",
       paymentStatus: "PENDING",
-      paymentMethod: payMethod,
+      paymentMethod: online ? "UPI" : "Cash",
+      paymentVia: via,
       subtotal: c.subtotal,
       gstAmount: c.gst,
       serviceCharge: c.service,
@@ -478,205 +491,146 @@
       targetReadyMinutes: 15
     };
     try {
-      await withTimeout(setDoc(doc(db, "orders", attemptId), order), 12000);
+      await withTimeout(setDoc(doc(db, "orders", id), order), 12000);
       pending = null;
-      cart.clear(); closeSheet(); startTracking(attemptId, token, tableName); showTracking();
+      setSending(false);
+      return { id, token, total: c.total };
     } catch (err) {
       const code = err && (err.code || err.message) || "unknown";
       const help = code === "permission-denied" ? "Firestore rules are blocking this order. Check the Rules tab in Firebase." :
-        code === "timeout" ? "The order did not reach the server in time. Check your internet and tap Place order again. It will not create a duplicate." :
-        "Could not send the order. Please tap Place order again.";
+        code === "timeout" ? "The order did not reach the server in time. Check your internet and try again. It will not create a duplicate." :
+        "Could not send the order. Please try again.";
       showError(help + " (error: " + code + ")");
-    } finally { sending = false; btn.textContent = "Place order"; updatePlaceState(); }
-  });
-
-  /* ---------------- Live order tracking ---------------- */
-  // One saved order per table, so opening another table's QR never shows this order
-  const KEY = "mm_order_" + tableName;
-  const TERMINAL = ["COMPLETED", "CANCELLED"];
-  let unsub = null, active = null;
-  let activeOrderData = null; // the full order document, kept fresh for the bill
-
-  const saveActive = (a) => { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch (_) {} };
-  const clearActive = () => { try { localStorage.removeItem(KEY); } catch (_) {} };
-
-  function showTracking() {
-    if (!active) return;
-    $("menuView").classList.add("hidden");
-    $("trackView").classList.remove("hidden");
-    $("cartBar").classList.add("hidden");
-    $("trackToken").textContent = active.token;
-    $("trackTable").textContent = active.table === "Takeaway" ? "Takeaway order" : "Order for " + active.table;
-    renderSteps(active.status);
-    window.scrollTo(0, 0);
-  }
-  function showMenu() {
-    $("trackView").classList.add("hidden");
-    $("menuView").classList.remove("hidden");
-    renderMenu();
-    updateBanner();
-    window.scrollTo(0, 0);
-  }
-  function finishOrder() {
-    if (unsub) { unsub(); unsub = null; }
-    active = null; activeOrderData = null; clearActive();
-    showMenu();
-  }
-  function updateBanner() {
-    const b = $("orderBanner");
-    if (!active || TERMINAL.includes(active.status) || $("menuView").classList.contains("hidden")) { b.classList.add("hidden"); return; }
-    const step = STATUS_STEPS.find((x) => x.key === active.status) || STATUS_STEPS[0];
-    $("bannerText").textContent = active.token + ": " + step.label;
-    b.classList.remove("hidden");
+      setSending(false);
+      return null;
+    }
   }
 
-  function startTracking(id, token, table) {
-    if (unsub) unsub();
-    active = { id, token, table, status: "NEW", first: true };
-    activeOrderData = null;
-    if (!db) return;
-    unsub = onSnapshot(doc(db, "orders", id), (snap) => {
-      if (!active || active.id !== id) return;
-      if (!snap.exists() && snap.metadata.fromCache) return; // still waiting for the server
-      const status = snap.exists() ? (snap.data().status || "NEW") : "GONE";
-      const first = active.first; active.first = false;
-      // Old or removed order on first look: go straight to the menu
-      if (status === "GONE" || (first && TERMINAL.includes(status) && !snap.exists())) { finishOrder(); return; }
-      if (snap.exists()) activeOrderData = snap.data();
-      if (snap.exists() && snap.data().tokenNumber) active.token = snap.data().tokenNumber;
-      active.status = status;
-      const onTrack = !$("trackView").classList.contains("hidden");
-      if (first && !onTrack) showTracking();
-      if (onTrack) { $("trackToken").textContent = active.token; renderSteps(status); }
-      updateBanner();
-      // Completed and cancelled orders both stay visible until the customer taps "Back to menu" -
-      // completed ones so the bill stays reachable, cancelled ones so the notice isn't missed.
-      if (status === "CANCELLED") { clearActive(); if (!onTrack) showTracking(); }
-      else if (status === "COMPLETED" && !onTrack) showTracking();
+  /* ---------------- Waiting for payment / done screens ---------------- */
+  const PAY_KEY = "mm_pay_" + tableName;
+  let waitUnsub = null, slowTimer = null, curOrder = null, curApp = null, lastOnline = null;
+  const orderSig = (lines) => JSON.stringify([lines.map((l) => [l.m.id, l.qty]), $("custName").value.trim(), $("custPhone").value, $("notes").value.trim()]);
+
+  function showPanel(which) {
+    $("overlay").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    [["ovWait", "wait"], ["ovDone", "done"], ["ovFail", "fail"]].forEach(([id, k]) => $(id).classList.toggle("hidden", k !== which));
+    $("overlay").scrollTop = 0;
+  }
+  function hideOverlay() { $("overlay").classList.add("hidden"); document.body.style.overflow = ""; }
+  function stopWaiting() {
+    if (waitUnsub) { waitUnsub(); waitUnsub = null; }
+    clearTimeout(slowTimer);
+    curOrder = null; curApp = null;
+    try { localStorage.removeItem(PAY_KEY); } catch (_) {}
+  }
+
+  function showDone(o, online) {
+    $("doneTitle").textContent = online ? "Payment received" : "Order placed";
+    $("doneToken").textContent = o.token;
+    $("doneMsg").textContent = online
+      ? "Thank you! Your order is placed. Please wait nearby, we will let you know when it is ready to collect at the counter."
+      : "Please pay " + money(o.total) + " in cash at the counter. Keep your token number handy.";
+    showPanel("done");
+  }
+
+  function startWaiting(o, opts) {
+    stopWaiting();
+    curOrder = o;
+    try { localStorage.setItem(PAY_KEY, JSON.stringify({ id: o.id, token: o.token, total: o.total, at: Date.now() })); } catch (_) {}
+    $("ovAmt").textContent = money(o.total);
+    $("ovToken").textContent = "Order " + o.token;
+    $("ovQr").classList.add("hidden"); $("ovReopen").classList.add("hidden"); $("ovSlow").classList.add("hidden");
+    $("ovMsg").textContent = (opts && opts.resumed) ? "We are waiting for your payment to be confirmed." : "";
+    showPanel("wait");
+    waitUnsub = onSnapshot(doc(db, "orders", o.id), (snap) => {
+      if (!snap.exists()) return;
+      const d = snap.data(), st = d.status || "NEW";
+      if (st === "PAYMENT_PENDING") return;
+      const done = { token: d.tokenNumber || o.token, total: d.totalAmount || o.total };
+      stopWaiting(); lastOnline = null;
+      if (st === "CANCELLED") { showPanel("fail"); return; }
+      cart.clear(); closeSheet(); renderMenu();
+      showDone(done, true);
     }, () => {});
+    slowTimer = setTimeout(() => {
+      $("ovSlow").textContent = "Taking longer than usual? Show your payment screen to our staff at the counter with token " + o.token + " and they will confirm it.";
+      $("ovSlow").classList.remove("hidden");
+    }, 120000);
   }
 
-  function renderSteps(status) {
-    const cancelled = status === "CANCELLED", completed = status === "COMPLETED";
-    $("trackCancelled").classList.toggle("hidden", !cancelled);
-    $("viewBillBtn").classList.toggle("hidden", !completed);
-    const idx = Math.max(0, STATUS_STEPS.findIndex((x) => x.key === status));
-    $("steps").classList.toggle("hidden", cancelled);
-    $("steps").innerHTML = STATUS_STEPS.map((x, i) => `<li class="${i < idx ? "done" : i === idx ? "now" : ""}">${esc(x.label)}</li>`).join("");
-    $("trackMsg").textContent = cancelled ? "Order cancelled." : STATUS_STEPS[idx].msg;
+  function launchApp(app, o) {
+    curApp = app;
+    $("ovMsg").textContent = "Opening " + app.name + "...";
+    $("ovReopen").textContent = "Open " + app.name + " again";
+    $("ovReopen").classList.remove("hidden");
+    location.href = app.url(upiQuery(o.total, o.token));
+    setTimeout(() => {
+      if (curOrder === o && !document.hidden) $("ovMsg").textContent = "If " + app.name + " did not open, it may not be installed. Tap Go back and try another UPI app or the QR code.";
+    }, 2500);
+  }
+  function showQr(o) {
+    try {
+      const link = "upi://pay?" + upiQuery(o.total, o.token);
+      $("ovQr").src = qrCanvas(link, 8).toDataURL("image/png");
+      $("ovQr").classList.remove("hidden");
+      $("ovMsg").textContent = "Scan this QR with any UPI app. The amount is filled in automatically, just confirm and pay.";
+    } catch (_) {
+      $("ovMsg").textContent = "Could not make the QR code. Tap Go back and use a UPI app instead.";
+    }
+  }
+  // Crisp QR (black on white with the quiet zone scanners need)
+  function qrCanvas(text, cell) {
+    if (typeof qrcode === "undefined") throw new Error("qr-lib-missing");
+    const qr = qrcode(0, "M"); qr.addData(text); qr.make();
+    const count = qr.getModuleCount(), quiet = 4, size = (count + quiet * 2) * cell;
+    const c = document.createElement("canvas"); c.width = size; c.height = size;
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, size, size); g.fillStyle = "#000";
+    for (let r = 0; r < count; r++) for (let col = 0; col < count; col++) if (qr.isDark(r, col)) g.fillRect((col + quiet) * cell, (r + quiet) * cell, cell, cell);
+    return c;
   }
 
-  $("newOrder").addEventListener("click", () => {
-    if (!active || TERMINAL.includes(active.status)) { finishOrder(); return; }
-    showMenu(); // order still in progress: keep following it from the banner
+  async function payOnline(key) {
+    if (sending) return;
+    if (!onlineReady()) { showError("Online payment is not available right now. Please pay cash at the counter."); return; }
+    const lines = cartLines(); if (!lines.length) return;
+    const sig = orderSig(lines);
+    let o = lastOnline && lastOnline.sig === sig ? lastOnline : null; // same cart again: reuse the saved order
+    if (!o) { o = await createOrder(true, key === "qr" ? "QR" : key); if (!o) return; o.sig = sig; lastOnline = o; }
+    closeSheet();
+    startWaiting(o);
+    if (key === "qr") showQr(o); else launchApp(APPS.find((a) => a.key === key), o);
+  }
+  async function payCash() {
+    if (sending) return;
+    const o = await createOrder(false, "Cash");
+    if (!o) return;
+    cart.clear(); closeSheet(); renderMenu();
+    showDone(o, false);
+  }
+
+  $("upiApps").addEventListener("click", (e) => { const b = e.target.closest("button[data-app]"); if (b && !b.disabled) payOnline(b.dataset.app); });
+  $("qrPayBtn").addEventListener("click", () => payOnline("qr"));
+  $("cashBtn").addEventListener("click", payCash);
+  $("ovReopen").addEventListener("click", () => { if (curApp && curOrder) location.href = curApp.url(upiQuery(curOrder.total, curOrder.token)); });
+  $("ovBack").addEventListener("click", () => {
+    if (!confirm("Go back? If you have already paid, please wait here until it is confirmed.")) return;
+    stopWaiting(); hideOverlay(); openSheet();
   });
-  $("bannerView").addEventListener("click", () => { if (active) showTracking(); });
+  $("doneBtn").addEventListener("click", () => { hideOverlay(); renderMenu(); window.scrollTo(0, 0); });
+  $("failBtn").addEventListener("click", () => { hideOverlay(); renderMenu(); window.scrollTo(0, 0); });
 
-  /* ---------------- Bill ---------------- */
-  const dateTimeStr = (ms) => { try { return new Date(Number(ms)).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }); } catch (_) { return ""; } };
-  function billItems(o) { try { const a = JSON.parse(o.itemsJson || "[]"); return Array.isArray(a) ? a : []; } catch (_) { return []; } }
-  const PAY_LABEL = { PAID_CASH: "Paid - Cash", PAID_UPI: "Paid - UPI", PAID_CARD: "Paid - Card", PENDING: "Payment pending" };
-
-  function billRowsHtml(o) {
-    return billItems(o).map((i) => {
-      const add = Array.isArray(i.addOns) && i.addOns.length ? i.addOns.map((a) => typeof a === "string" ? a : (a && a.name) || "").filter(Boolean).join(", ") : "";
-      return `<tr><td class="iname">${esc(i.name)}${add ? `<small>${esc(add)}</small>` : ""}${i.specialNote ? `<small>${esc(i.specialNote)}</small>` : ""}</td><td class="num">${esc(i.quantity)}</td><td class="num">${money(i.price)}</td><td class="num">${money(Number(i.price) * Number(i.quantity))}</td></tr>`;
-    }).join("");
-  }
-  function renderBillHtml(o) {
-    const pay = PAY_LABEL[o.paymentStatus] || (o.paymentMethod || "Payment") + " pending";
-    return `
-      <div class="bill-brand"><b>Momo Mama</b><span>Kolkata</span></div>
-      <hr class="bill-dash">
-      <div class="bill-meta">
-        <div><span>Bill / Token</span><b>${esc(o.tokenNumber || active.id)}</b></div>
-        <div><span>Table</span><b>${esc(o.tableNumber || "Takeaway")}</b></div>
-        <div><span>Date &amp; time</span><b>${esc(dateTimeStr(o.createdAt))}</b></div>
-        ${o.customerName ? `<div><span>Guest</span><b>${esc(o.customerName)}</b></div>` : ""}
-      </div>
-      <hr class="bill-dash">
-      <div class="bill-items"><table>
-        <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead>
-        <tbody>${billRowsHtml(o) || `<tr><td colspan="4">No item details</td></tr>`}</tbody>
-      </table></div>
-      <hr class="bill-dash">
-      <div class="bill-totals">
-        <div><span>Subtotal</span><span>${money(o.subtotal)}</span></div>
-        <div><span>GST (5%)</span><span>${money(o.gstAmount)}</span></div>
-        ${Number(o.serviceCharge) > 0 ? `<div><span>Service charge</span><span>${money(o.serviceCharge)}</span></div>` : ""}
-        ${Number(o.discountAmount) > 0 ? `<div><span>Discount</span><span>-${money(o.discountAmount)}</span></div>` : ""}
-        <div class="grand"><span>Total</span><span>${money(o.totalAmount)}</span></div>
-      </div>
-      <div class="bill-pay"><b>${esc(pay)}</b>${o.paymentMethod ? ` (${esc(o.paymentMethod)})` : ""}</div>
-      <p class="bill-thanks">Thank you for visiting Momo Mama!<br>Taxes as applicable. Computer-generated bill.</p>`;
-  }
-  function openBill() {
-    if (!activeOrderData) { toast("Bill load hocche na, ektu pore abar try koro."); return; }
-    $("billPaper").innerHTML = `<h2 id="billTitle" style="position:absolute;width:1px;height:1px;overflow:hidden;">Bill</h2>` + renderBillHtml(activeOrderData);
-    $("billScrim").classList.add("open"); $("billSheet").classList.add("open");
-  }
-  const closeBill = () => { $("billScrim").classList.remove("open"); $("billSheet").classList.remove("open"); };
-  $("viewBillBtn").addEventListener("click", openBill);
-  $("billBack").addEventListener("click", closeBill);
-  $("billScrim").addEventListener("click", closeBill);
-
-  function downloadBillPdf() {
-    const o = activeOrderData;
-    if (!o) { toast("Bill load hocche na, ektu pore abar try koro."); return; }
-    if (!(window.jspdf && window.jspdf.jsPDF)) { toast("PDF tool load hoyni. Internet check kore abar try koro."); return; }
-    const { jsPDF } = window.jspdf;
-    const doc_ = new jsPDF({ unit: "pt", format: "a5" });
-    const W = doc_.internal.pageSize.getWidth(), M = 36; let y = 46;
-    const line = (t, size, bold, align, x) => { doc_.setFont("courier", bold ? "bold" : "normal"); doc_.setFontSize(size); doc_.text(t, x ?? (align === "center" ? W / 2 : M), y, { align: align || "left" }); y += size * 1.35; };
-    const row = (a, b) => { doc_.setFont("courier", "normal"); doc_.setFontSize(10); doc_.text(a, M, y); doc_.text(b, W - M, y, { align: "right" }); y += 15; };
-    line("MOMO MAMA", 16, true, "center"); line("Kolkata", 10, false, "center"); y += 4;
-    doc_.setLineDashPattern([2, 2], 0); doc_.line(M, y, W - M, y); y += 16;
-    row("Bill / Token:", o.tokenNumber || active.id);
-    row("Table:", o.tableNumber || "Takeaway");
-    row("Date & time:", dateTimeStr(o.createdAt));
-    if (o.customerName) row("Guest:", o.customerName);
-    doc_.line(M, y, W - M, y); y += 16;
-    doc_.setFont("courier", "bold"); doc_.setFontSize(10);
-    doc_.text("Item", M, y); doc_.text("Qty", W - 160, y, { align: "right" }); doc_.text("Rate", W - 90, y, { align: "right" }); doc_.text("Amt", W - M, y, { align: "right" }); y += 14;
-    doc_.setFont("courier", "normal");
-    billItems(o).forEach((it) => {
-      const nameLines = doc_.splitTextToSize(String(it.name || ""), W - M - 170);
-      nameLines.forEach((t, i) => {
-        doc_.text(t, M, y);
-        if (i === 0) {
-          doc_.text(String(it.quantity), W - 160, y, { align: "right" });
-          doc_.text(money(it.price).replace("Rs ", ""), W - 90, y, { align: "right" });
-          doc_.text(money(Number(it.price) * Number(it.quantity)).replace("Rs ", ""), W - M, y, { align: "right" });
-        }
-        y += 13;
-      });
-      const add = Array.isArray(it.addOns) && it.addOns.length ? it.addOns.map((a) => typeof a === "string" ? a : (a && a.name) || "").filter(Boolean).join(", ") : "";
-      if (add) { doc_.setFontSize(8.5); doc_.text("+ " + add, M, y); doc_.setFontSize(10); y += 12; }
-      if (it.specialNote) { doc_.setFontSize(8.5); doc_.text(String(it.specialNote), M, y); doc_.setFontSize(10); y += 12; }
-    });
-    doc_.line(M, y, W - M, y); y += 16;
-    row("Subtotal", money(o.subtotal));
-    row("GST (5%)", money(o.gstAmount));
-    if (Number(o.serviceCharge) > 0) row("Service charge", money(o.serviceCharge));
-    if (Number(o.discountAmount) > 0) row("Discount", "-" + money(o.discountAmount));
-    doc_.setFont("courier", "bold"); doc_.setFontSize(13); doc_.text("TOTAL", M, y); doc_.text(money(o.totalAmount), W - M, y, { align: "right" }); y += 20;
-    doc_.setFont("courier", "normal"); doc_.setFontSize(10);
-    line(PAY_LABEL[o.paymentStatus] || ((o.paymentMethod || "Payment") + " pending") + (o.paymentMethod ? " (" + o.paymentMethod + ")" : ""), 10, false);
-    y += 6; line("Thank you for visiting Momo Mama!", 9.5, false, "center"); line("Taxes as applicable. Computer-generated bill.", 8.5, false, "center");
-    const fname = "MomoMama-Bill-" + String(o.tokenNumber || active.id).replace(/[^a-zA-Z0-9]/g, "") + ".pdf";
-    doc_.save(fname);
-  }
-  $("billDownload").addEventListener("click", downloadBillPdf);
-
-  /* Reopen tracking after a refresh, only for this table and only while the order is still running */
-  try { localStorage.removeItem("mm_order"); } catch (_) {} // older single-key format that got stuck
+  /* If the page was reloaded while a payment was being confirmed (the UPI app can push the browser out of memory), pick the wait up again */
+  try { localStorage.removeItem("mm_order"); } catch (_) {}
+  try { localStorage.removeItem("mm_order_" + tableName); } catch (_) {} // old tracking data
   try {
-    const saved = JSON.parse(localStorage.getItem(KEY) || "null");
-    if (saved && saved.id && Date.now() - saved.at < 6 * 60 * 60 * 1000) startTracking(saved.id, saved.token, saved.table);
-    else if (saved) clearActive();
+    const saved = JSON.parse(localStorage.getItem(PAY_KEY) || "null");
+    if (saved && saved.id && db && Date.now() - saved.at < 45 * 60 * 1000) startWaiting({ id: saved.id, token: saved.token, total: saved.total }, { resumed: true });
+    else if (saved) localStorage.removeItem(PAY_KEY);
   } catch (_) {}
 
   renderMenu();
+  updatePayState();
 </script>
 </body>
 </html>
