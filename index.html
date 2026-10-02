@@ -122,6 +122,29 @@
   .toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: 500px; margin: 0 auto; background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 12px; z-index: 80; font-size: 14.5px; }
   .ghost { margin-top: 10px; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px 18px; font-weight: 600; }
 
+  /* Terms + privacy */
+  .agree { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 14.5px; line-height: 1.4; }
+  .agree input { width: 20px; height: 20px; flex: none; margin-top: 1px; accent-color: var(--chili); }
+  .agree a { color: var(--flag-blue); font-weight: 600; text-decoration: underline; }
+  .agree-hint { margin-top: 6px; color: var(--muted); font-size: 13px; }
+  .field input:disabled { background: var(--bg); opacity: .6; cursor: not-allowed; }
+  .legal { position: fixed; inset: 0; z-index: 60; background: var(--bg); overflow-y: auto; }
+  .legal-bar { position: sticky; top: 0; z-index: 2; background: var(--surface); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
+  .legal-bar-in { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 10px 16px; }
+  .legal-back { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 14px; font-weight: 600; }
+  .legal-bar b { font-family: var(--head); font-weight: 800; font-size: 18px; letter-spacing: -0.01em; }
+  .legal-doc { max-width: 720px; margin: 0 auto; padding: 20px 20px calc(40px + env(safe-area-inset-bottom, 0px)); }
+  .legal-doc h1 { font-family: var(--head); font-weight: 800; font-size: 28px; letter-spacing: -0.02em; line-height: 1.15; }
+  .legal-doc .upd { color: var(--muted); font-size: 14px; margin-top: 6px; }
+  .legal-doc h2 { font-family: var(--head); font-weight: 600; font-size: 18px; margin-top: 24px; }
+  .legal-doc p, .legal-doc li { margin-top: 8px; font-size: 15.5px; }
+  .legal-doc ul { padding-left: 20px; }
+  .legal-doc a { color: var(--flag-blue); font-weight: 600; text-decoration: underline; }
+  .legal-doc .note-box { margin-top: 18px; padding: 12px; border-radius: 10px; background: #FFF7E0; border: 1px solid var(--flag-yellow); color: #5a4200; font-size: 14.5px; }
+  .legal-end { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 28px; }
+  .legal-end button { flex: 1 1 160px; border-radius: 12px; padding: 13px; font-weight: 600; border: 1px solid var(--line); background: var(--surface); }
+  .legal-end .main { background: var(--chili); border-color: var(--chili); color: #fff; }
+
   /* Payment options */
   .payblock { margin-top: 20px; }
   .pay-title { font-weight: 600; font-size: 14.5px; margin-bottom: 8px; }
@@ -195,8 +218,10 @@
   <div class="sheet-in">
     <div class="sheet-head"><h2 id="sheetTitle">Your order</h2><button class="close" id="closeCart" aria-label="Close">&times;</button></div>
     <div id="cartLines"></div>
-    <div class="field"><label for="custName">Your name <span class="req">*</span></label><input id="custName" autocomplete="given-name" placeholder="So we can call you" required></div>
-    <div class="field"><label for="custPhone">Phone number <span class="req">*</span></label><input id="custPhone" inputmode="numeric" autocomplete="tel" placeholder="10-digit number" required></div>
+    <label class="agree" for="agree"><input type="checkbox" id="agree"><span>I agree to the <a href="#terms" data-doc="terms">Terms &amp; Conditions</a> and the <a href="#privacy" data-doc="privacy">Privacy Policy</a>.</span></label>
+    <div class="agree-hint" id="agreeHint">Tick the box above to enter your name and phone number.</div>
+    <div class="field"><label for="custName">Your name <span class="req">*</span></label><input id="custName" autocomplete="given-name" placeholder="So we can call you" required disabled></div>
+    <div class="field"><label for="custPhone">Phone number <span class="req">*</span></label><input id="custPhone" inputmode="numeric" autocomplete="tel" placeholder="10-digit number" required disabled></div>
     <div class="mand-note" role="note"><b>Note:</b> Name and phone number are mandatory fields. If you do not enter your correct name and phone number, you will not receive a notification when your order is placed or when it is ready to be picked up from the counter.</div>
     <div class="field"><label for="notes">Anything we should know?</label><textarea id="notes" rows="2" placeholder="Less spicy, extra chutney, no onion"></textarea></div>
     <div class="totals" id="totals"></div>
@@ -240,6 +265,130 @@
       <button class="ov-btn" id="failBtn" type="button">Back to menu</button>
     </div>
   </div>
+</div>
+
+<div class="legal hidden" id="legal" role="dialog" aria-modal="true" aria-labelledby="legalTitle">
+  <div class="legal-bar"><div class="legal-bar-in"><button class="legal-back" id="legalBack" type="button">&larr; Back</button><b id="legalTitle">Terms &amp; Conditions</b></div></div>
+
+  <article class="legal-doc hidden" id="docTerms">
+    <h1>Terms &amp; Conditions</h1>
+    <p class="upd">Momo Mama, Kolkata. Last updated: October 2026.</p>
+    <p>Please read these terms before you place an order on this page. By ticking the box and placing an order, you agree to them.</p>
+
+    <h2>1. Who we are</h2>
+    <p>This ordering page is run by Momo Mama ("we", "us"). It lets you order food and drinks from your table or the counter. If anything here is unclear, please ask our staff at the counter.</p>
+
+    <h2>2. Placing an order</h2>
+    <ul>
+      <li>You place an order by choosing items, entering your name and phone number, and paying online or in cash at the counter.</li>
+      <li>An order is accepted only when our team accepts it. We may refuse or cancel an order, for example if an item has run out, the details are wrong, or we are too busy.</li>
+      <li>Please check your items and total before you pay. Once cooking has started we may not be able to change or cancel it.</li>
+    </ul>
+
+    <h2>3. Your name and phone number</h2>
+    <p>Name and phone number are mandatory. Please enter them correctly. If you enter wrong details, you will not receive notifications about your order, including when it is placed and when it is ready to collect from the counter, and we will not be responsible for a missed or delayed order.</p>
+
+    <h2>4. Prices, taxes and charges</h2>
+    <ul>
+      <li>All prices are in Indian Rupees (Rs).</li>
+      <li>GST at 5% is added to your bill. A service charge of 5% is added for dine-in orders where it is shown in your total.</li>
+      <li>The total shown on the page before you pay is the amount you pay. Prices and the menu may change without notice.</li>
+    </ul>
+
+    <h2>5. Payment</h2>
+    <ul>
+      <li><b>Online (UPI):</b> You can pay through a UPI app on your phone or by scanning the payment QR code. The payment is made between you, your UPI app and your bank. We do not collect or see your card, bank or UPI PIN details.</li>
+      <li><b>Cash:</b> You can choose to pay cash at the counter. Please pay when you reach the counter so staff can start your order.</li>
+      <li>We are not responsible for failed, delayed or declined payments caused by your bank, UPI app, network or phone. If money is deducted but your order is not confirmed, please show your payment screen and your order token to our staff at the counter.</li>
+      <li>Please keep your payment confirmation until you have received your order.</li>
+    </ul>
+
+    <h2>6. Cancellations and refunds</h2>
+    <ul>
+      <li>You can ask to cancel only before cooking starts. Please speak to our staff at the counter.</li>
+      <li>If we cancel an order or cannot serve an item you have already paid for, we will refund the amount for that item to the account you paid from, as soon as we reasonably can.</li>
+      <li>We do not give refunds for food that was prepared correctly as ordered, or for a change of mind after cooking has started.</li>
+    </ul>
+
+    <h2>7. Preparation time</h2>
+    <p>Any preparation time we show or tell you is only an estimate. It can change when the kitchen is busy.</p>
+
+    <h2>8. Allergies and dietary needs</h2>
+    <p>Our food is made in a kitchen that handles ingredients such as wheat (gluten), soy, dairy, eggs, nuts, sesame and fish. We cannot guarantee that any item is free from these. If you have an allergy or special dietary need, please tell our staff before ordering. Notes written on this page may not be seen in time, so please do not rely on them for allergies.</p>
+
+    <h2>9. Item photos and descriptions</h2>
+    <p>Photos are for illustration. The actual dish, portion and spice level may look or taste a little different.</p>
+
+    <h2>10. Using this page properly</h2>
+    <p>Please do not place fake or repeated orders, enter other people's details without permission, or try to interfere with or misuse this page or our systems. We may block orders that look like misuse.</p>
+
+    <h2>11. Our responsibility</h2>
+    <p>We take care to prepare your food safely and to run this page properly. As far as the law allows, we are not responsible for losses caused by things outside our control, such as network or phone problems, power cuts, or third-party apps and banks. Nothing in these terms limits any right you have under Indian consumer law.</p>
+
+    <h2>12. Changes to these terms</h2>
+    <p>We may update these terms from time to time. The version on this page when you place your order is the one that applies to that order.</p>
+
+    <h2>13. Governing law</h2>
+    <p>These terms are governed by the laws of India. Any dispute will be subject to the courts in Kolkata, West Bengal.</p>
+
+    <h2>14. Questions or complaints</h2>
+    <p>Please speak to our staff at the counter. We will try to sort out any problem quickly.</p>
+
+    <div class="legal-end"><button type="button" data-doc="privacy">Read Privacy Policy</button><button type="button" class="main" data-close="1">Back to my order</button></div>
+  </article>
+
+  <article class="legal-doc hidden" id="docPrivacy">
+    <h1>Privacy Policy</h1>
+    <p class="upd">Momo Mama, Kolkata. Last updated: October 2026.</p>
+    <p>This policy explains what personal information we collect when you use this ordering page, why we collect it, and what we do with it. By ticking the box and placing an order, you agree to it.</p>
+
+    <h2>1. What we collect</h2>
+    <ul>
+      <li><b>Details you give us:</b> your name and phone number, your table number, the items you order, any notes you write, and the order total.</li>
+      <li><b>Payment information:</b> whether you chose cash or UPI, which UPI app or QR you used, and whether the order is marked paid. We do not collect or store your card numbers, bank account details or UPI PIN. Your UPI payment is handled by your own UPI app and bank.</li>
+      <li><b>Information saved in your browser:</b> your cart and, while a payment is being confirmed, a reference to your order, so the page can carry on if you switch apps. This stays on your phone.</li>
+    </ul>
+
+    <h2>2. Why we use it</h2>
+    <ul>
+      <li>To prepare and serve your order and to tell you when it is placed or ready to collect.</li>
+      <li>To confirm your payment, give you a bill, and keep records for accounting and tax.</li>
+      <li>To contact you about a problem with your order, such as a payment or item issue.</li>
+      <li>To prevent fake orders and misuse, and to improve our menu and service.</li>
+    </ul>
+    <p>We do not use your phone number for advertising or sell it to anyone.</p>
+
+    <h2>3. Who can see it</h2>
+    <ul>
+      <li>Our staff, to handle your order.</li>
+      <li>Our technology provider, Google (Firebase), which stores order data for us on its servers.</li>
+      <li>Your UPI app and bank, which see the payment you make. We only pass on the amount and an order reference to them through the payment link.</li>
+      <li>The authorities, if the law requires us to share information.</li>
+    </ul>
+
+    <h2>4. Third-party content on this page</h2>
+    <p>This page loads fonts from Google Fonts and some food photos from other websites. Those services can see your device's IP address and basic browser details when the page loads. We do not use advertising or tracking cookies.</p>
+
+    <h2>5. How long we keep it</h2>
+    <p>We keep order records for as long as we need them to run the business, handle complaints, and meet accounting and tax rules. After that we delete them or remove the personal details.</p>
+
+    <h2>6. Keeping it safe</h2>
+    <p>We take reasonable steps to protect your information, including limiting who in our team can see orders. No system is completely secure, so we cannot promise absolute security.</p>
+
+    <h2>7. Your choices</h2>
+    <p>You can ask us to show you the details we hold about you, correct them, or delete them, and you can withdraw your consent at any time. Please ask our staff at the counter. We may need to keep some records where the law requires it, and if you withdraw consent we may not be able to take your order.</p>
+
+    <h2>8. Children</h2>
+    <p>If you are under 18, please order with the help of a parent or guardian.</p>
+
+    <h2>9. Changes to this policy</h2>
+    <p>We may update this policy from time to time. The version on this page when you place your order is the one that applies.</p>
+
+    <h2>10. Contact</h2>
+    <p>For any question about your information, please speak to our staff at the counter.</p>
+
+    <div class="legal-end"><button type="button" data-doc="terms">Read Terms &amp; Conditions</button><button type="button" class="main" data-close="1">Back to my order</button></div>
+  </article>
 </div>
 
 <script type="module">
@@ -431,17 +580,22 @@
     if (d.length > 10 && d.startsWith("0")) d = d.slice(1);  // pasted with leading 0
     return d.slice(0, 10);
   };
-  const detailsValid = () => $("custName").value.trim().length > 0 && /^\d{10}$/.test($("custPhone").value);
+  const detailsValid = () => $("agree").checked && $("custName").value.trim().length > 0 && /^\d{10}$/.test($("custPhone").value);
   function updatePayState() {
+    const agreed = $("agree").checked;
+    $("custName").disabled = !agreed; $("custPhone").disabled = !agreed;
+    $("agreeHint").classList.toggle("hidden", agreed);
     const ok = !sending && detailsValid() && cartLines().length > 0;
     const online = ok && onlineReady();
     document.querySelectorAll(".upi-app").forEach((b) => { b.disabled = !online; });
     $("qrPayBtn").disabled = !online;
     $("cashBtn").disabled = !ok;
-    $("payHint").textContent = !onlineReady() ? "Online payment is not available right now. You can pay cash at the counter."
+    $("payHint").textContent = !agreed ? "Please accept the Terms & Conditions and Privacy Policy to continue."
+      : !onlineReady() ? "Online payment is not available right now. You can pay cash at the counter."
       : !detailsValid() ? "Enter your name and 10-digit phone number to continue."
       : "The exact amount is filled in automatically in your UPI app.";
   }
+  $("agree").addEventListener("change", updatePayState);
   $("custName").addEventListener("input", updatePayState);
   $("custPhone").addEventListener("input", () => {
     const c = cleanPhone($("custPhone").value);
@@ -628,6 +782,34 @@
     if (saved && saved.id && db && Date.now() - saved.at < 45 * 60 * 1000) startWaiting({ id: saved.id, token: saved.token, total: saved.total }, { resumed: true });
     else if (saved) localStorage.removeItem(PAY_KEY);
   } catch (_) {}
+
+
+  /* ---------------- Terms & Conditions / Privacy Policy pages ---------------- */
+  const DOCS = { terms: { el: "docTerms", title: "Terms & Conditions" }, privacy: { el: "docPrivacy", title: "Privacy Policy" } };
+  function showDoc(which) {
+    const d = DOCS[which]; if (!d) return;
+    Object.values(DOCS).forEach((x) => $(x.el).classList.toggle("hidden", x !== d));
+    $("legalTitle").textContent = d.title;
+    $("legal").classList.remove("hidden"); $("legal").scrollTop = 0;
+    document.body.style.overflow = "hidden";
+    $("legalBack").focus();
+  }
+  function hideDoc() { $("legal").classList.add("hidden"); document.body.style.overflow = ""; }
+  function openDoc(which) {
+    try { history.pushState({ doc: which }, "", location.pathname + location.search + "#" + which); } catch (_) {}
+    showDoc(which);
+  }
+  function closeDoc() {
+    if (history.state && history.state.doc) history.back(); else { try { history.replaceState(null, "", location.pathname + location.search); } catch (_) {} hideDoc(); }
+  }
+  window.addEventListener("popstate", () => { const h = location.hash.slice(1); if (DOCS[h]) showDoc(h); else hideDoc(); });
+  document.addEventListener("click", (e) => {
+    const l = e.target.closest("[data-doc]");
+    if (l) { e.preventDefault(); openDoc(l.dataset.doc); return; }
+    if (e.target.closest("[data-close]")) closeDoc();
+  });
+  $("legalBack").addEventListener("click", closeDoc);
+  if (DOCS[location.hash.slice(1)]) showDoc(location.hash.slice(1)); // someone opened the link /#terms or /#privacy directly
 
   renderMenu();
   updatePayState();
