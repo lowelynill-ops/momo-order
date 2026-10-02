@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <style>
   :root {
     --bg: #F4F6F5; --surface: #FFFFFF; --ink: #182226; --muted: #5B6A6E; --line: #DDE3E1;
@@ -186,6 +187,24 @@
   .text-btn { border: 0; background: none; color: var(--blue); font-weight: 500; padding: 4px 0; }
   @media (prefers-reduced-motion: reduce) { .sheet, .scrim { transition: none; } }
 
+  /* Auto-accept switch + payment account */
+  .auto-row { max-width: 720px; margin: 0 auto; padding: 0 16px 10px; }
+  .auto-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 12px; font-weight: 600; text-align: left; }
+  .auto-btn small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; line-height: 1.3; margin-top: 2px; }
+  .auto-btn[aria-checked="true"] { border-color: var(--green); }
+  .sw { width: 46px; height: 26px; border-radius: 999px; background: var(--line); position: relative; flex: none; transition: background .2s; }
+  .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; }
+  .auto-btn[aria-checked="true"] .sw { background: var(--green); }
+  .auto-btn[aria-checked="true"] .sw::after { transform: translateX(20px); }
+  @media (prefers-reduced-motion: reduce) { .sw, .sw::after { transition: none; } }
+  .auto-note { margin-top: 8px; padding: 8px 12px; border-radius: 10px; background: #FFF5D6; color: #4A3600; font-size: 13.5px; }
+  @media (prefers-color-scheme: dark) { .auto-note { background: #3B3110; color: #FFE08A; } }
+  .pay-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  .pay-card h3 { font-family: var(--head); font-weight: 800; font-size: 20px; letter-spacing: -0.01em; }
+  .pay-card .field:first-of-type { margin-top: 12px; }
+  .pay-prev { display: flex; gap: 14px; align-items: center; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .pay-prev img { width: 120px; height: 120px; flex: none; background: #fff; border: 1px solid var(--line); border-radius: 10px; image-rendering: pixelated; }
+
   /* QR codes */
   .qr-tools { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
   .qr-tools .field { margin-top: 0; margin-bottom: 12px; }
@@ -246,9 +265,16 @@
       <button data-view="orders" aria-pressed="true">Orders<span class="n zero" id="newBadge">0</span></button>
       <button data-view="menu" aria-pressed="false">Menu</button>
       <button data-view="qr" aria-pressed="false">QR codes</button>
+      <button data-view="pay" aria-pressed="false">Payment</button>
     </div>
     <div id="ordersHead">
       <div class="stats" id="stats"></div>
+      <div class="auto-row">
+        <button class="auto-btn" id="autoBtn" type="button" role="switch" aria-checked="false">
+          <span>Auto-accept online orders<small id="autoSub">Off. Online orders wait here for you to accept.</small></span>
+          <span class="sw" aria-hidden="true"></span>
+        </button>
+      </div>
       <nav class="tabs" id="tabs" aria-label="Order status"></nav>
     </div>
   </header>
@@ -270,6 +296,24 @@
         <div class="msg err qr-warn hidden" id="qrWarn" role="alert"></div>
       </div>
       <div class="qr-grid" id="qrGrid"></div>
+    </div>
+    <div id="payView" class="hidden">
+      <div class="pay-card">
+        <h3>Shop payment account</h3>
+        <div class="hint">Customers pay to this UPI ID. The customer page opens their UPI app, or shows a QR, with the order total filled in.</div>
+        <div class="field"><label for="pUpi">UPI ID</label><input id="pUpi" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="shopname@bank"></div>
+        <div class="field"><label for="pName">Name shown to the customer</label><input id="pName" maxlength="40" autocomplete="off" placeholder="Momo Mama"></div>
+        <div class="field"><label for="pMc">Merchant code (optional)</label><input id="pMc" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="Only if your QR has one"></div>
+        <div class="field">
+          <label>Or read it from your payment QR</label>
+          <div class="img-pick"><button type="button" class="file-btn" id="pQrBtn">Choose QR image</button></div>
+          <input id="pQrFile" type="file" accept="image/*" class="hidden">
+          <div class="hint">Upload a screenshot or photo of your current account QR. The UPI ID and name are filled in for you. Check them, then save.</div>
+        </div>
+        <div class="msg err hidden" id="payErr" role="alert"></div>
+        <button class="btn" id="paySave" type="button">Save payment account</button>
+        <div class="pay-prev hidden" id="payPrev"><img id="payPrevImg" alt="Test QR of the saved payment account"><div class="hint">Saved. Scan this with any UPI app to check the name that shows up. Do not pay from it, there is no amount.</div></div>
+      </div>
     </div>
   </main>
 </section>
@@ -349,18 +393,19 @@
   const money = (n) => "Rs " + (Math.round(Number(n || 0) * 100) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
   const TABS = [
-    { key: "new", label: "New", statuses: ["NEW"] },
-    { key: "kitchen", label: "In kitchen", statuses: ["ACCEPTED", "PREPARING"] },
-    { key: "ready", label: "Ready", statuses: ["READY"] },
-    { key: "done", label: "Done", statuses: ["COMPLETED", "CANCELLED"] }
+    { key: "new", label: "New" },
+    { key: "kitchen", label: "In kitchen" },
+    { key: "ready", label: "Ready" },
+    { key: "done", label: "Done" }
   ];
+  // Ready is the last step. There is no "Served" step any more.
   const NEXT = {
-    NEW: { to: "ACCEPTED", label: "Accept order" },
+    NEW: { to: "ACCEPTED", label: "Order received" },
+    PAYMENT_PENDING: { to: "ACCEPTED", label: "Order received" },
     ACCEPTED: { to: "PREPARING", label: "Start cooking" },
-    PREPARING: { to: "READY", label: "Mark ready" },
-    READY: { to: "COMPLETED", label: "Served" }
+    PREPARING: { to: "READY", label: "Mark ready" }
   };
-  const STATUS_LABEL = { NEW: "New order", ACCEPTED: "Accepted", PREPARING: "Cooking", READY: "Ready", COMPLETED: "Served", CANCELLED: "Cancelled" };
+  const STATUS_LABEL = { NEW: "New order", PAYMENT_PENDING: "Online order, payment awaited", ACCEPTED: "Order received", PREPARING: "Cooking", READY: "Ready", COMPLETED: "Served", CANCELLED: "Cancelled" };
   const PAID = { PAID_CASH: "Paid, cash", PAID_UPI: "Paid, UPI", PAID_CARD: "Paid, card" };
 
   let orders = [];
@@ -445,9 +490,11 @@
       $("who").textContent = user.email;
       startListening();
       startMenuListening();
+      startSettingsListening();
     } else {
       if (unsub) { unsub(); unsub = null; }
       if (menuUnsub) { menuUnsub(); menuUnsub = null; }
+      settingsUnsubs.forEach((u) => u()); settingsUnsubs = [];
       menuDocs = new Map(); view = "orders";
       orders = []; firstSnapshot = true;
       $("boardView").classList.add("hidden"); $("loginView").classList.remove("hidden");
@@ -463,12 +510,13 @@
     unsub = onSnapshot(q, (snap) => {
       orders = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       if (!firstSnapshot) {
-        const fresh = snap.docChanges().some((c) => c.type === "added" && (c.doc.data().status || "NEW") === "NEW");
+        const fresh = snap.docChanges().some((c) => { if (c.type !== "added") return false; const st = c.doc.data().status || "NEW"; return st === "NEW" || (st === "PAYMENT_PENDING" && !autoOnline); });
         if (fresh) beep();
       }
       firstSnapshot = false;
       updateBadge();
       if (view === "orders") render();
+      autoAcceptPending();
     }, (err) => {
       const denied = err.code === "permission-denied";
       $("list").innerHTML = `<div class="empty">${denied ? "Ei account-er orders dekhar permission nei. Firebase rules-e tomar email staff hisebe add kora ache kina dekho." : "Orders load hoy ni (" + esc(err.code || err.message) + ")"}</div>`;
@@ -476,6 +524,15 @@
   }
 
   const statusOf = (o) => o.status || "NEW";
+  const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); };
+  // Ready orders stay in the Ready tab for the day, older ones move to Done so the tab does not grow forever
+  function tabOf(o) {
+    const st = statusOf(o);
+    if (st === "NEW" || st === "PAYMENT_PENDING") return "new";
+    if (st === "ACCEPTED" || st === "PREPARING") return "kitchen";
+    if (st === "READY") return Number(o.createdAt) >= startOfToday() ? "ready" : "done";
+    return "done";
+  }
   function parseItems(o) {
     try { const a = JSON.parse(o.itemsJson || "[]"); return Array.isArray(a) ? a : []; } catch (_) { return []; }
   }
@@ -485,15 +542,14 @@
 
   function render() {
     // Counts and stats
-    const counts = {}; TABS.forEach((t) => counts[t.key] = orders.filter((o) => t.statuses.includes(statusOf(o))).length);
+    const counts = {}; TABS.forEach((t) => counts[t.key] = orders.filter((o) => tabOf(o) === t.key).length);
     $("tabs").innerHTML = TABS.map((t) => `<button data-tab="${t.key}" aria-pressed="${t.key === activeTab}">${t.label}<span class="n ${t.key !== "done" && counts[t.key] ? "" : "zero"}">${counts[t.key]}</span></button>`).join("");
     const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
-    const today = orders.filter((o) => Number(o.createdAt) >= midnight.getTime() && statusOf(o) !== "CANCELLED");
+    const today = orders.filter((o) => Number(o.createdAt) >= midnight.getTime() && statusOf(o) !== "CANCELLED" && statusOf(o) !== "PAYMENT_PENDING");
     $("stats").innerHTML = `Today: <b>${today.length}</b> orders, <b>${money(today.reduce((s, o) => s + Number(o.totalAmount || 0), 0))}</b>`;
     document.title = (counts.new ? "(" + counts.new + ") " : "") + "Momo Mama Kitchen";
 
-    const tab = TABS.find((t) => t.key === activeTab);
-    let list = orders.filter((o) => tab.statuses.includes(statusOf(o)));
+    let list = orders.filter((o) => tabOf(o) === activeTab);
     if (activeTab === "done") list = list.slice(0, 40);
     else list = list.slice().reverse(); // oldest first so nothing waits
     $("list").innerHTML = list.length ? list.map(card).join("") : `<div class="empty">${activeTab === "new" ? "No new orders right now." : "Nothing here."}</div>`;
@@ -509,7 +565,7 @@
     }).join("");
     const phone = String(o.customerPhone || "").trim();
     const badge = st === "CANCELLED" ? `<span class="badge cancelled">Cancelled</span>` : isPaid ? `<span class="badge paid">${PAID[pay]}</span>` : `<span class="badge pending">${esc(o.paymentMethod || "Payment")} pending</span>`;
-    const canAct = st !== "COMPLETED" && st !== "CANCELLED";
+    const canAct = st !== "COMPLETED" && st !== "CANCELLED" && st !== "READY";
     return `<article class="order ${isLate(o) ? "late" : ""}">
       <div class="o-head">
         <div><div class="token">${esc(o.tokenNumber || o.id)}</div><span class="table-chip">${esc(o.tableNumber || "No table")}</span></div>
@@ -518,6 +574,7 @@
       <div class="who">${esc(o.customerName || "Guest")}${phone ? ` &nbsp; <a href="tel:${esc(phone)}">${esc(phone)}</a>` : ""}</div>
       <ul class="items">${itemHtml || `<li><span>No item details</span></li>`}</ul>
       ${o.specialInstructions ? `<div class="note">${esc(o.specialInstructions)}</div>` : ""}
+      ${o.autoAccepted && !isPaid && st !== "CANCELLED" ? `<div class="who">Auto-accepted online order. Check the payment in your UPI app (note: Momo Mama ${esc(String(o.tokenNumber || "").replace("#", ""))}).</div>` : ""}
       <div class="pay-row"><div>${badge}${st !== "CANCELLED" ? ` <button class="bill-link" data-bill="${esc(o.id)}" type="button">Bill</button>` : ""}</div><div class="total">${money(o.totalAmount)}</div></div>
       ${!isPaid && st !== "CANCELLED" ? `<div class="mark-paid">Payment received:
         <button data-pay="PAID_CASH" data-id="${esc(o.id)}" ${busyNow ? "disabled" : ""}>Cash</button>
@@ -669,7 +726,7 @@
   }
 
   function updateBadge() {
-    const n = orders.filter((o) => statusOf(o) === "NEW").length;
+    const n = orders.filter((o) => statusOf(o) === "NEW" || statusOf(o) === "PAYMENT_PENDING").length;
     const b = $("newBadge"); b.textContent = n; b.classList.toggle("zero", n === 0);
     document.title = (n ? "(" + n + ") " : "") + "Momo Mama Kitchen";
   }
@@ -679,8 +736,9 @@
     $("ordersView").classList.toggle("hidden", v !== "orders");
     $("menuView").classList.toggle("hidden", v !== "menu");
     $("qrView").classList.toggle("hidden", v !== "qr");
+    $("payView").classList.toggle("hidden", v !== "pay");
     [...$("views").children].forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === v)));
-    if (v === "orders") render(); else if (v === "qr") renderQr(); else renderMenu();
+    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else renderMenu();
     window.scrollTo(0, 0);
   }
   $("views").addEventListener("click", (e) => { const b = e.target.closest("button[data-view]"); if (b) setView(b.dataset.view); });
@@ -833,6 +891,122 @@
     try { await deleteDoc(doc(db, "menu_items", editingId)); closeItemSheet(); toast("Item deleted"); }
     catch (err) { $("itemErr").textContent = "Delete hoy ni (" + (err.code || err.message) + ")"; $("itemErr").classList.remove("hidden"); }
   });
+
+  /* ---------- Auto-accept online orders ---------- */
+  // Online orders arrive as PAYMENT_PENDING. With the switch on, a fresh one goes straight to
+  // "Cooking" and only "Mark ready" is left for staff. Cash orders always wait for staff.
+  let autoOnline = false, settingsUnsubs = [], payDirty = false;
+  try { autoOnline = localStorage.getItem("mm_auto_online") === "1"; } catch (_) {}
+  const autoBusy = new Set(), autoFailed = new Set();
+  const AUTO_MAX_AGE_MIN = 20; // older unpaid online orders are left for staff to decide
+
+  function renderAuto() {
+    $("autoBtn").setAttribute("aria-checked", String(autoOnline));
+    $("autoSub").textContent = autoOnline
+      ? "On. Online orders go straight to the kitchen. Only Mark ready is left. Works while this page is open."
+      : "Off. Online orders wait here for you to accept.";
+  }
+  async function autoAcceptPending() {
+    if (!autoOnline) return;
+    for (const o of orders) {
+      if (statusOf(o) !== "PAYMENT_PENDING" || autoBusy.has(o.id) || autoFailed.has(o.id) || ageMin(o) > AUTO_MAX_AGE_MIN) continue;
+      autoBusy.add(o.id);
+      try {
+        await updateDoc(doc(db, "orders", o.id), { status: "PREPARING", autoAccepted: true, acceptedAt: Date.now() });
+        beep(); toast("Online order " + (o.tokenNumber || o.id) + " auto-accepted");
+      } catch (err) {
+        autoFailed.add(o.id);
+        toast("Auto-accept hoy ni (" + (err.code || err.message) + ")");
+      } finally { autoBusy.delete(o.id); }
+    }
+  }
+  $("autoBtn").addEventListener("click", async () => {
+    unlockAudio();
+    autoOnline = !autoOnline; autoFailed.clear();
+    try { localStorage.setItem("mm_auto_online", autoOnline ? "1" : "0"); } catch (_) {}
+    renderAuto();
+    toast(autoOnline ? "Auto-accept on" : "Auto-accept off");
+    try { await setDoc(doc(db, "settings", "orderFlow"), { autoAcceptOnline: autoOnline, updatedAt: Date.now() }, { merge: true }); }
+    catch (err) { toast("Setting save hoy ni, ei device-e kaj korbe (" + (err.code || err.message) + ")"); }
+    autoAcceptPending();
+  });
+
+  /* ---------- Shop payment account (the customer page reads settings/payment) ---------- */
+  const validUpi = (v) => /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z][a-zA-Z0-9.-]{1,63}$/.test(String(v || "").trim());
+  function showPayPrev(upi, name, mc) {
+    try {
+      let link = "upi://pay?pa=" + encodeURIComponent(upi) + "&pn=" + encodeURIComponent(name || "Momo Mama") + "&cu=INR";
+      if (mc) link += "&mc=" + encodeURIComponent(mc);
+      const qr = qrcode(0, "M"); qr.addData(link); qr.make();
+      const n = qr.getModuleCount(), cell = 6, quiet = 4, size = (n + quiet * 2) * cell;
+      const c = document.createElement("canvas"); c.width = size; c.height = size;
+      const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, size, size); g.fillStyle = "#000";
+      for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (qr.isDark(r, k)) g.fillRect((k + quiet) * cell, (r + quiet) * cell, cell, cell);
+      $("payPrevImg").src = c.toDataURL("image/png"); $("payPrev").classList.remove("hidden");
+    } catch (_) { $("payPrev").classList.add("hidden"); }
+  }
+  function renderPay() { $("payErr").classList.add("hidden"); }
+  function startSettingsListening() {
+    settingsUnsubs.forEach((u) => u()); settingsUnsubs = [];
+    settingsUnsubs.push(onSnapshot(doc(db, "settings", "orderFlow"), (snap) => {
+      if (!snap.exists() || typeof snap.data().autoAcceptOnline !== "boolean") { renderAuto(); return; }
+      const v = snap.data().autoAcceptOnline;
+      if (v !== autoOnline) { autoOnline = v; try { localStorage.setItem("mm_auto_online", v ? "1" : "0"); } catch (_) {} autoAcceptPending(); }
+      renderAuto();
+    }, () => renderAuto()));
+    settingsUnsubs.push(onSnapshot(doc(db, "settings", "payment"), (snap) => {
+      const d = snap.exists() ? snap.data() : null;
+      if (d && !payDirty) {
+        $("pUpi").value = d.upiId || ""; $("pName").value = d.payeeName || ""; $("pMc").value = d.merchantCode || "";
+        if (validUpi(d.upiId)) showPayPrev(d.upiId, d.payeeName, d.merchantCode);
+      }
+    }, () => {}));
+  }
+  ["pUpi", "pName", "pMc"].forEach((id) => $(id).addEventListener("input", () => { payDirty = true; }));
+
+  $("paySave").addEventListener("click", async () => {
+    const fail = (m) => { $("payErr").textContent = m; $("payErr").classList.remove("hidden"); };
+    $("payErr").classList.add("hidden");
+    const upi = $("pUpi").value.trim(), name = $("pName").value.trim() || "Momo Mama", mc = $("pMc").value.trim();
+    if (!validUpi(upi)) return fail("UPI ID ta thik kore likho, jemon shopname@bank");
+    if (mc && !/^\d{4}$/.test(mc)) return fail("Merchant code 4 digit-er hote hobe, na thakle faka rakho.");
+    const btn = $("paySave"); btn.disabled = true; btn.textContent = "Saving...";
+    try {
+      await setDoc(doc(db, "settings", "payment"), { upiId: upi, payeeName: name, merchantCode: mc, updatedAt: Date.now() });
+      payDirty = false; showPayPrev(upi, name, mc); toast("Payment account saved. Customer page-e ekhoni kaj korbe.");
+    } catch (err) {
+      fail((err.code === "permission-denied" ? "Firebase rules e settings write allow kora nei. " : "") + "Save hoy ni (" + (err.code || err.message) + ")");
+    } finally { btn.disabled = false; btn.textContent = "Save payment account"; }
+  });
+
+  // Reads the UPI ID out of a screenshot or photo of the shop's payment QR
+  $("pQrBtn").addEventListener("click", () => $("pQrFile").click());
+  $("pQrFile").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0]; e.target.value = "";
+    if (!file) return;
+    const fail = (m) => { $("payErr").textContent = m; $("payErr").classList.remove("hidden"); };
+    $("payErr").classList.add("hidden");
+    if (typeof jsQR === "undefined") return fail("QR reader load hoyni. Internet check kore page reload koro.");
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onerror = () => { URL.revokeObjectURL(url); fail("Chhobi-ta khola jay ni. Onno ekta try koro."); };
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, 1200 / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.max(1, Math.round(img.naturalWidth * scale)), h = Math.max(1, Math.round(img.naturalHeight * scale));
+      const c = document.createElement("canvas"); c.width = w; c.height = h;
+      const g = c.getContext("2d"); g.drawImage(img, 0, 0, w, h);
+      const code = jsQR(g.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: "attemptBoth" });
+      if (!code) return fail("Chhobi theke QR pawa jay ni. QR ta pura, spasto dekha jay emon screenshot dao.");
+      let q = null;
+      try { if (/^upi:\/\/pay/i.test(code.data)) q = new URLSearchParams(code.data.split("?")[1] || ""); } catch (_) {}
+      if (!q || !validUpi(q.get("pa"))) return fail("Eta UPI payment QR na. Bank/UPI app-er QR-er screenshot dao.");
+      $("pUpi").value = q.get("pa"); $("pName").value = q.get("pn") || $("pName").value; $("pMc").value = /^\d{4}$/.test(q.get("mc") || "") ? q.get("mc") : "";
+      payDirty = true;
+      toast("QR theke UPI ID pawa gechhe. Check kore Save payment account tap koro.");
+    };
+    img.src = url;
+  });
+  renderAuto();
 
   /* ---------- QR codes (each table opens the customer page with ?t=<table>) ---------- */
   const lsGet = (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } };
