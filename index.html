@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#C9302C">
-<title>Momo Mama - Order from your table</title>
+<title>Momo Mama - Order online</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
@@ -56,9 +56,6 @@
   .head-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 18px 20px 16px; }
   .brand { font-family: var(--head); font-weight: 800; font-size: 34px; line-height: 1; letter-spacing: -0.02em; }
   .brand small { display: block; font-family: var(--body); font-weight: 500; font-size: 14px; letter-spacing: 0; color: var(--muted); margin-top: 6px; }
-  .table-chip { text-align: right; }
-  .table-chip span { display: block; font-size: 13px; color: var(--muted); }
-  .table-chip strong { font-family: var(--head); font-weight: 800; font-size: 22px; line-height: 1.1; }
 
   /* Category filter */
   .cats { display: flex; gap: 8px; overflow-x: auto; padding: 14px 20px; scrollbar-width: none; position: sticky; top: 0; background: var(--bg); z-index: 5; }
@@ -121,6 +118,15 @@
 
   .toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: 500px; margin: 0 auto; background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 12px; z-index: 80; font-size: 14.5px; }
   .ghost { margin-top: 10px; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px 18px; font-weight: 600; }
+
+  /* Dine in / Takeaway */
+  .otype-wrap { margin-top: 18px; }
+  .otype-title { font-weight: 600; font-size: 14.5px; margin-bottom: 8px; }
+  .otype { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .otype button { border: 1.5px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px 10px; text-align: center; font-weight: 600; font-size: 16px; line-height: 1.25; }
+  .otype button small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .otype button[aria-pressed="true"] { border-color: var(--chili); background: #FCEDEC; color: var(--chili-dark); }
+  .otype button[aria-pressed="true"] small { color: var(--chili-dark); }
 
   /* Terms + privacy */
   .agree { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 14.5px; line-height: 1.4; }
@@ -192,7 +198,6 @@
   <div class="flags" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="wrap head-row">
     <div class="brand">Momo Mama<small>Order from your seat</small></div>
-    <div class="table-chip"><span>Your order is for</span><strong id="tableLabel">Takeaway</strong></div>
   </div>
 </header>
 
@@ -218,6 +223,13 @@
   <div class="sheet-in">
     <div class="sheet-head"><h2 id="sheetTitle">Your order</h2><button class="close" id="closeCart" aria-label="Close">&times;</button></div>
     <div id="cartLines"></div>
+    <div class="otype-wrap">
+      <div class="otype-title" id="otypeTitle">How would you like your order?</div>
+      <div class="otype" id="otype" role="group" aria-labelledby="otypeTitle">
+        <button type="button" data-type="dine" aria-pressed="true">Dine in<small>Eat here</small></button>
+        <button type="button" data-type="take" aria-pressed="false">Takeaway<small>Pack it to go</small></button>
+      </div>
+    </div>
     <label class="agree" for="agree"><input type="checkbox" id="agree"><span>I agree to the <a href="#terms" data-doc="terms">Terms &amp; Conditions</a> and the <a href="#privacy" data-doc="privacy">Privacy Policy</a>.</span></label>
     <div class="agree-hint" id="agreeHint">Tick the box above to enter your name and phone number.</div>
     <div class="field"><label for="custName">Your name <span class="req">*</span></label><input id="custName" autocomplete="given-name" placeholder="So we can call you" required disabled></div>
@@ -276,7 +288,7 @@
     <p>Please read these terms before you place an order on this page. By ticking the box and placing an order, you agree to them.</p>
 
     <h2>1. Who we are</h2>
-    <p>This ordering page is run by Momo Mama ("we", "us"). It lets you order food and drinks from your table or the counter. If anything here is unclear, please ask our staff at the counter.</p>
+    <p>This ordering page is run by Momo Mama ("we", "us"). It lets you order food and drinks to eat here (dine in) or to take away. If anything here is unclear, please ask our staff at the counter.</p>
 
     <h2>2. Placing an order</h2>
     <ul>
@@ -344,7 +356,7 @@
 
     <h2>1. What we collect</h2>
     <ul>
-      <li><b>Details you give us:</b> your name and phone number, your table number, the items you order, any notes you write, and the order total.</li>
+      <li><b>Details you give us:</b> your name and phone number, whether your order is dine in or takeaway, the items you order, any notes you write, and the order total.</li>
       <li><b>Payment information:</b> whether you chose cash or UPI, which UPI app or QR you used, and whether the order is marked paid. We do not collect or store your card numbers, bank account details or UPI PIN. Your UPI payment is handled by your own UPI app and bank.</li>
       <li><b>Information saved in your browser:</b> your cart and, while a payment is being confirmed, a reference to your order, so the page can carry on if you switch apps. This stays on your phone.</li>
     </ul>
@@ -430,11 +442,10 @@
   const params = new URLSearchParams(location.search);
   const debugOn = params.get("debug") === "1";
 
-  /* Table from the QR link: ?t=5 or ?table=5 */
-  const tableNum = parseInt(params.get("t") || params.get("table") || "", 10);
-  const isDineIn = Number.isFinite(tableNum) && tableNum > 0;
-  const tableName = isDineIn ? "Table " + String(tableNum).padStart(2, "0") : "Takeaway";
-  $("tableLabel").textContent = tableName;
+  /* Order type is picked in the cart. Dine in is used when the customer does not pick anything. */
+  let orderType = "dine";
+  const orderTypeName = () => (orderType === "dine" ? "Dine-in" : "Takeaway");
+  const isDineIn = () => orderType === "dine";
 
   const configured = !Object.values(firebaseConfig).some((v) => String(v).startsWith("PASTE"));
   let db = null;
@@ -513,7 +524,7 @@
   function calc() {
     const subtotal = round2(cartLines().reduce((s, l) => s + l.m.price * l.qty, 0));
     const gst = round2(subtotal * 0.05);
-    const service = isDineIn ? round2(subtotal * 0.05) : 0;
+    const service = isDineIn() ? round2(subtotal * 0.05) : 0;
     return { subtotal, gst, service, total: round2(subtotal + gst + service) };
   }
   function renderCartBar() {
@@ -525,13 +536,21 @@
   function renderSheet() {
     const c = calc();
     $("cartLines").innerHTML = cartLines().map((l) => `<div class="line-item"><div><b>${esc(l.m.name)}</b><small>${l.qty} x ${money(l.m.price)}</small></div><div>${money(l.m.price * l.qty)}</div></div>`).join("");
-    $("totals").innerHTML = `<div><span>Items</span><span>${money(c.subtotal)}</span></div><div><span>GST (5%)</span><span>${money(c.gst)}</span></div>${isDineIn ? `<div><span>Service charge (5%)</span><span>${money(c.service)}</span></div>` : ""}<div class="grand"><span>Total</span><span>${money(c.total)}</span></div>`;
+    $("totals").innerHTML = `<div><span>Items</span><span>${money(c.subtotal)}</span></div><div><span>GST (5%)</span><span>${money(c.gst)}</span></div>${isDineIn() ? `<div><span>Service charge (5%)</span><span>${money(c.service)}</span></div>` : ""}<div class="grand"><span>Total</span><span>${money(c.total)}</span></div>`;
   }
   const openSheet = () => { renderSheet(); updatePayState(); $("orderError").classList.add("hidden"); $("scrim").classList.add("open"); $("sheet").classList.add("open"); };
   const closeSheet = () => { $("scrim").classList.remove("open"); $("sheet").classList.remove("open"); };
   $("openCart").addEventListener("click", openSheet);
   $("closeCart").addEventListener("click", closeSheet);
   $("scrim").addEventListener("click", closeSheet);
+  function renderOrderType() {
+    document.querySelectorAll("#otype button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.type === orderType)));
+  }
+  function resetOrderType() { orderType = "dine"; renderOrderType(); }
+  $("otype").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-type]"); if (!b) return;
+    orderType = b.dataset.type; renderOrderType(); renderSheet(); renderCartBar(); // the service charge depends on the choice
+  });
 
   /* ---------------- Payment settings (UPI ID of the shop account) ---------------- */
   // The admin page saves the shop's UPI details in Firestore: settings/payment { upiId, payeeName, merchantCode }.
@@ -628,7 +647,7 @@
       tokenNumber: token,
       customerName: $("custName").value.trim(),
       customerPhone: $("custPhone").value.trim(),
-      tableNumber: tableName,
+      tableNumber: orderTypeName(), // saved in the same field the admin page already shows
       isDelivery: false,
       itemsJson: JSON.stringify(items),
       specialInstructions: $("notes").value.trim(),
@@ -661,9 +680,9 @@
   }
 
   /* ---------------- Waiting for payment / done screens ---------------- */
-  const PAY_KEY = "mm_pay_" + tableName;
+  const PAY_KEY = "mm_pay";
   let waitUnsub = null, slowTimer = null, curOrder = null, curApp = null, lastOnline = null;
-  const orderSig = (lines) => JSON.stringify([lines.map((l) => [l.m.id, l.qty]), $("custName").value.trim(), $("custPhone").value, $("notes").value.trim()]);
+  const orderSig = (lines) => JSON.stringify([lines.map((l) => [l.m.id, l.qty]), $("custName").value.trim(), $("custPhone").value, $("notes").value.trim(), orderType]);
 
   function showPanel(which) {
     $("overlay").classList.remove("hidden");
@@ -704,7 +723,7 @@
       const done = { token: d.tokenNumber || o.token, total: d.totalAmount || o.total };
       stopWaiting(); lastOnline = null;
       if (st === "CANCELLED") { showPanel("fail"); return; }
-      cart.clear(); closeSheet(); renderMenu();
+      cart.clear(); resetOrderType(); closeSheet(); renderMenu();
       showDone(done, true);
     }, () => {});
     slowTimer = setTimeout(() => {
@@ -759,7 +778,7 @@
     if (sending) return;
     const o = await createOrder(false, "Cash");
     if (!o) return;
-    cart.clear(); closeSheet(); renderMenu();
+    cart.clear(); resetOrderType(); closeSheet(); renderMenu();
     showDone(o, false);
   }
 
@@ -776,7 +795,7 @@
 
   /* If the page was reloaded while a payment was being confirmed (the UPI app can push the browser out of memory), pick the wait up again */
   try { localStorage.removeItem("mm_order"); } catch (_) {}
-  try { localStorage.removeItem("mm_order_" + tableName); } catch (_) {} // old tracking data
+  try { Object.keys(localStorage).forEach((k) => { if (k.startsWith("mm_order_") || k.startsWith("mm_pay_")) localStorage.removeItem(k); }); } catch (_) {} // old per-table data
   try {
     const saved = JSON.parse(localStorage.getItem(PAY_KEY) || "null");
     if (saved && saved.id && db && Date.now() - saved.at < 45 * 60 * 1000) startWaiting({ id: saved.id, token: saved.token, total: saved.total }, { resumed: true });
