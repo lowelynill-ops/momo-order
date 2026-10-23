@@ -372,7 +372,6 @@
       <!-- --- EXISTING SECTIONS --- -->
       <button class="drawer-item" data-view="orders" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>Orders<span class="n zero" id="newBadge">0</span></button>
       <button class="drawer-item" data-view="qr" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M14 21h.01M17.5 21H21v-3.5"/></svg>QR code</button>
-      <button class="drawer-item" data-view="menu" aria-pressed="false" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v8a2 2 0 0 0 2 2v8M9 3v8M7 3v8"/><path d="M17 21V3c-2 1.5-3 4-3 7v3h3"/></svg>Menu edit</button>
       <button class="drawer-item" data-view="pay" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
 
       <!-- --- NEW SECTIONS (Placeholder) --- -->
@@ -411,11 +410,9 @@
   </aside>
   <main>
     <div id="ordersView"><div id="list" aria-live="polite"></div></div>
-    <div id="menuView" class="hidden">
-      <div class="m-toolbar"><span class="count" id="menuCount"></span><button class="add-item" id="addItem">Add item</button></div>
-      <nav class="m-cats" id="menuCats" aria-label="Menu categories"></nav>
-      <div id="menuBody"></div>
-    </div>
+    
+    <!-- Purono menuView HTML ekhane theke remove kora hoyeche -->
+
     <div id="qrView" class="hidden">
       <div class="qr-tools">
         <div class="field"><label for="qrBase">Customer page link</label><input id="qrBase" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://your-site.com/index.html"><div class="hint">Auto-detected from this admin page. Only change it if your customer page lives somewhere else.</div></div>
@@ -427,6 +424,7 @@
       </div>
       <div class="qr-grid" id="qrGrid"></div>
     </div>
+    
     <div id="payView" class="hidden">
       <div class="pay-card">
         <h3>Shop payment account</h3>
@@ -543,6 +541,18 @@
         <div class="sheet-head"><h2 id="menuEditTitle">Edit Item</h2><button class="close" id="menuEditClose" type="button" aria-label="Close">&times;</button></div>
         <form id="menuEditForm" novalidate>
           <div class="field"><label for="mmName">Item Name</label><input id="mmName" required></div>
+          
+          <div class="field">
+             <label for="fImgFileNew">Item Image</label>
+             <div class="img-pick">
+               <img id="mmImgPreview" class="img-preview hidden" alt="">
+               <button type="button" class="file-btn" id="mmPickBtn">Gallery theke choose koro</button>
+               <button type="button" class="text-btn hidden" id="mmRemoveBtn">Mucho felo</button>
+             </div>
+             <input id="fImgFileNew" type="file" accept="image/*" class="hidden">
+             <input type="hidden" id="mmImageUrl">
+          </div>
+
           <div class="two">
             <div class="field"><label for="mmCat">Category</label><input id="mmCat" required></div>
             <div class="field"><label for="mmType">Type</label>
@@ -585,10 +595,7 @@
             <button type="button" class="text-btn" id="mmAddAddOnBtn" style="margin-top: 6px;">+ Add Add-on</button>
           </div>
           <div class="field"><label for="mmDesc">Description</label><textarea id="mmDesc" rows="3"></textarea></div>
-          <div class="field">
-            <label>Item Image (URL)</label>
-            <input id="mmImage" placeholder="https://...">
-          </div>
+          
           <div class="msg err hidden" id="mmErr" role="alert"></div>
           <button class="btn" id="mmSaveBtn" type="submit">Save Changes</button>
           <button class="danger hidden" id="mmDeleteBtn" type="button" style="margin-top:10px;">Delete Item</button>
@@ -607,42 +614,7 @@
   </main>
 </section>
 
-
-<div class="scrim" id="itemScrim"></div>
-<div class="sheet" id="itemSheet" role="dialog" aria-modal="true" aria-labelledby="itemTitle">
-  <div class="sheet-in">
-    <div class="sheet-head"><h2 id="itemTitle">Edit item</h2><button class="close" id="itemClose" type="button" aria-label="Close">&times;</button></div>
-    <form id="itemForm" novalidate>
-      <div class="field"><label for="fName">Item name</label><input id="fName" maxlength="80" autocomplete="off"></div>
-      <div class="two">
-        <div class="field"><label for="fCat">Category</label><input id="fCat" list="catList" maxlength="30" autocomplete="off" placeholder="Chicken, Veg..."><datalist id="catList"></datalist></div>
-        <div class="field"><label for="fPrice">Price (Rs)</label><input id="fPrice" inputmode="decimal" autocomplete="off" placeholder="190"></div>
-      </div>
-      <div class="two">
-        <div class="field"><label for="fPieces">Pieces</label><input id="fPieces" inputmode="numeric" autocomplete="off" placeholder="6"></div>
-        <div class="field"><label for="fSpice">Spice level</label><select id="fSpice"><option>None</option><option>Mild</option><option>Medium</option><option>Fire</option></select></div>
-      </div>
-      <div class="field"><label for="fDesc">Description</label><textarea id="fDesc" rows="3" maxlength="240"></textarea></div>
-      <div class="field">
-        <label for="fImgFile">Photo (optional)</label>
-        <div class="img-pick">
-          <img id="imgPreview" class="img-preview hidden" alt="">
-          <button type="button" class="file-btn" id="imgPickBtn">Gallery theke choose koro</button>
-          <button type="button" class="text-btn hidden" id="imgRemoveBtn">Mucho felo</button>
-        </div>
-        <input id="fImgFile" type="file" accept="image/*" class="hidden">
-        <input type="hidden" id="fImg">
-        <div class="hint" id="imgUploadStatus">Gallery theke direct chhobi upload korte paren. Faka rakhle item-er naam-er first letter dekhabe.</div>
-      </div>
-      <label class="check"><input type="checkbox" id="fAvail"> Available (customer order korte parbe)</label>
-      <label class="check"><input type="checkbox" id="fSpecial"> Today's special</label>
-      <div class="msg err hidden" id="itemErr" role="alert"></div>
-      <button class="btn" id="itemSave" type="submit">Save item</button>
-      <button class="danger hidden" id="itemDelete" type="button">Delete this item</button>
-      <div class="hint hidden" id="itemNoDelete">Starter item delete kora jay na, Available bondho kore dao.</div>
-    </form>
-  </div>
-</div>
+<!-- Purono menu edit sheet ekhane theke remove kora hoyeche -->
 
 <!-- Dashboard Edit Sheet -->
 <div class="scrim" id="dashScrim"></div>
@@ -1006,7 +978,7 @@
     { id: "M-09", name: "Himalayan Peach Iced Tea", category: "Beverages", description: "Brewed Darjeeling black tea with sweet mountain peach and fresh mint.", price: 95, isAvailable: true, isTodaysSpecial: false, spiciness: "None", pieces: 1, imageUrl: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&auto=format&fit=crop" },
     { id: "M-10", name: "Szechuan Spiced Lemonade", category: "Beverages", description: "Fresh lime soda with Sichuan pepper, roasted cumin and black rock salt.", price: 85, isAvailable: true, isTodaysSpecial: false, spiciness: "Mild", pieces: 1, imageUrl: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400&auto=format&fit=crop" }
   ];
-  const DEFAULT_IDS = new Set(DEFAULT_MENU.map((m) => m.id));
+  const DEFAULT_IDS = new Set(DEFAULT_MENU.map((m) => m.id)); // Still kept for internal use, but deletion is now allowed
   let view = "orders", menuDocs = new Map(), menuUnsub = null, menuCat = "All", editingId = null, savingItem = false, uploadingImage = false;
 
   function mergedMenu() {
@@ -1018,7 +990,6 @@
     if (menuUnsub) menuUnsub();
     menuUnsub = onSnapshot(collection(db, "menu_items"), (snap) => {
       menuDocs = new Map(snap.docs.map((d) => [d.id, d.data()]));
-      if (view === "menu") renderMenu();
       if (view === "menu-manage") renderMMList();
     }, (err) => toast("Menu load hoy ni (" + (err.code || err.message) + ")"));
   }
@@ -1034,14 +1005,13 @@
     view = v;
     $("ordersHead").classList.toggle("hidden", v !== "orders");
     $("ordersView").classList.toggle("hidden", v !== "orders");
-    $("menuView").classList.toggle("hidden", v !== "menu");
     $("qrView").classList.toggle("hidden", v !== "qr");
     $("payView").classList.toggle("hidden", v !== "pay");
     $("dashboardView").classList.toggle("hidden", v !== "dashboard");
     $("orderManageView").classList.toggle("hidden", v !== "order-manage");
     $("menuManageView").classList.toggle("hidden", v !== "menu-manage");
     
-    if (!["orders","menu","qr","pay","dashboard","order-manage","menu-manage"].includes(v)) {
+    if (!["orders","qr","pay","dashboard","order-manage","menu-manage"].includes(v)) {
       $("placeholderView").classList.remove("hidden");
       const btn = document.querySelector(`#navList [data-view="${v}"]`);
       if (btn) $("placeholderTitle").textContent = btn.textContent.trim();
@@ -1060,13 +1030,13 @@
     $("viewTitle").textContent = title;
     
     closeNav();
-    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "menu") renderMenu(); else if (v === "dashboard") renderDashboard(); else if (v === "order-manage") renderOMList(); else if (v === "menu-manage") renderMMList();
+    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "dashboard") renderDashboard(); else if (v === "order-manage") renderOMList(); else if (v === "menu-manage") renderMMList();
     window.scrollTo(0, 0);
   }
   $("navList").addEventListener("click", (e) => { const b = e.target.closest("button[data-view]"); if (b) setView(b.dataset.view); });
   $("viewBack").addEventListener("click", () => setView("orders"));
 
-  const NAV_TITLES = { orders: "Orders", qr: "QR code", menu: "Menu edit", pay: "Settings", dashboard: "Dashboard Overview", "order-manage": "Order Management", "menu-manage": "Menu Management & Pricing" };
+  const NAV_TITLES = { orders: "Orders", qr: "QR code", pay: "Settings", dashboard: "Dashboard Overview", "order-manage": "Order Management", "menu-manage": "Menu Management & Pricing" };
   function openNav() {
     $("drawer").classList.add("open"); $("navScrim").classList.add("open");
     $("drawer").setAttribute("aria-hidden", "false"); $("menuBtn").setAttribute("aria-expanded", "true");
@@ -1108,123 +1078,29 @@
     });
   }
 
-  $("imgPickBtn").addEventListener("click", () => $("fImgFile").click());
-  $("imgRemoveBtn").addEventListener("click", () => {
-    $("fImg").value = ""; $("fImgFile").value = "";
-    $("imgPreview").src = ""; $("imgPreview").classList.add("hidden");
-    $("imgRemoveBtn").classList.add("hidden");
-    $("imgUploadStatus").textContent = "Photo mucha hoyeche.";
+  // Photo upload handler for Menu Management
+  $("mmPickBtn").addEventListener("click", () => $("fImgFileNew").click());
+  $("mmRemoveBtn").addEventListener("click", () => {
+    $("mmImageUrl").value = ""; $("fImgFileNew").value = "";
+    $("mmImgPreview").src = ""; $("mmImgPreview").classList.add("hidden");
+    $("mmRemoveBtn").classList.add("hidden");
   });
-  $("fImgFile").addEventListener("change", async (e) => {
+  $("fImgFileNew").addEventListener("change", async (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) { toast("Shudhu chhobi (image) file dao."); e.target.value = ""; return; }
     uploadingImage = true;
-    $("imgUploadStatus").textContent = "Chhobi process hocche...";
+    $("mmPickBtn").textContent = "Processing...";
     try {
       let quality = 0.72, dataUrl = await resizeImageFile(file, 640, quality);
       while (dataUrl.length > 700000 && quality > 0.3) { quality -= 0.12; dataUrl = await resizeImageFile(file, 640, quality); }
       if (dataUrl.length > 950000) throw new Error("too-big");
-      $("fImg").value = dataUrl;
-      $("imgPreview").src = dataUrl; $("imgPreview").classList.remove("hidden");
-      $("imgRemoveBtn").classList.remove("hidden");
-      $("imgUploadStatus").textContent = "Chhobi ready. Ekhon Save item-e tap koro.";
+      $("mmImageUrl").value = dataUrl;
+      $("mmImgPreview").src = dataUrl; $("mmImgPreview").classList.remove("hidden");
+      $("mmRemoveBtn").classList.remove("hidden");
     } catch (err) {
-      $("imgUploadStatus").textContent = "Ei chhobi-ta process hoy ni, onno ekta chhobi try koro.";
-    } finally { uploadingImage = false; }
-  });
-
-  function renderMenu() {
-    const items = mergedMenu();
-    const cats = ["All", ...new Set(items.map((m) => m.category).filter(Boolean))];
-    if (!cats.includes(menuCat)) menuCat = "All";
-    $("menuCats").innerHTML = cats.map((c) => `<button type="button" data-c="${esc(c)}" aria-pressed="${c === menuCat}">${esc(c)}</button>`).join("");
-    $("catList").innerHTML = cats.filter((c) => c !== "All").map((c) => `<option value="${esc(c)}">`).join("");
-    const onSale = items.filter((m) => m.isAvailable !== false).length;
-    $("menuCount").textContent = onSale + " of " + items.length + " items on sale";
-    const list = items.filter((m) => menuCat === "All" || m.category === menuCat);
-    $("menuBody").innerHTML = list.length ? list.map((m) => {
-      const on = m.isAvailable !== false;
-      const sub = [m.category, money(m.price), Number(m.pieces) > 1 ? m.pieces + " pcs" : ""].filter(Boolean).join(", ");
-      return `<div class="mrow ${on ? "" : "off"}">
-        <div class="mthumb" ${okImg(m.imageUrl) ? `style="background-image:url('${esc(m.imageUrl)}')"` : ""}>${okImg(m.imageUrl) ? "" : esc((m.name || "?").charAt(0).toUpperCase())}</div>
-        <div class="minfo"><div class="mname">${esc(m.name)}</div><div class="msub">${esc(sub)}</div>${m.isTodaysSpecial ? `<span class="mflag">Today's special</span>` : ""}</div>
-        <div class="mctl">
-          <button class="avail" data-avail="${esc(m.id)}" aria-pressed="${on}">${on ? "Available" : "Unavailable"}</button>
-          <button data-edit="${esc(m.id)}">Edit</button>
-        </div>
-      </div>`;
-    }).join("") : `<div class="empty">Ei category-te kichu nei.</div>`;
-  }
-
-  $("menuCats").addEventListener("click", (e) => { const b = e.target.closest("button[data-c]"); if (b) { menuCat = b.dataset.c; renderMenu(); } });
-  $("menuBody").addEventListener("click", (e) => {
-    const av = e.target.closest("[data-avail]"), ed = e.target.closest("[data-edit]");
-    if (av) toggleAvail(av.dataset.avail);
-    if (ed) openItemSheet(ed.dataset.edit);
-  });
-  $("addItem").addEventListener("click", () => openItemSheet(null));
-
-  async function toggleAvail(id) {
-    const m = mergedMenu().find((x) => x.id === id); if (!m) return;
-    try { await setDoc(doc(db, "menu_items", id), { ...m, isAvailable: m.isAvailable === false }); }
-    catch (err) { toast("Update hoy ni (" + (err.code || err.message) + ")"); }
-  }
-
-  function openItemSheet(id) {
-    editingId = id;
-    const m = id ? mergedMenu().find((x) => x.id === id) : null;
-    $("itemTitle").textContent = m ? "Edit item" : "Add new item";
-    $("fName").value = m ? m.name : "";
-    $("fCat").value = m ? m.category : (menuCat !== "All" ? menuCat : "");
-    $("fPrice").value = m ? m.price : "";
-    $("fPieces").value = m ? m.pieces : 6;
-    $("fSpice").value = m && m.spiciness ? m.spiciness : "Mild";
-    $("fDesc").value = m ? (m.description || "") : "";
-    $("fImgFile").value = "";
-    $("fImg").value = m ? (m.imageUrl || "") : "";
-    if (m && m.imageUrl) { $("imgPreview").src = m.imageUrl; $("imgPreview").classList.remove("hidden"); $("imgRemoveBtn").classList.remove("hidden"); }
-    else { $("imgPreview").src = ""; $("imgPreview").classList.add("hidden"); $("imgRemoveBtn").classList.add("hidden"); }
-    $("imgUploadStatus").textContent = "Gallery theke direct chhobi upload korte paren. Faka rakhle item-er naam-er first letter dekhabe.";
-    $("fAvail").checked = m ? m.isAvailable !== false : true;
-    $("fSpecial").checked = m ? !!m.isTodaysSpecial : false;
-    $("itemErr").classList.add("hidden");
-    const custom = !!m && !DEFAULT_IDS.has(id);
-    $("itemDelete").classList.toggle("hidden", !custom);
-    $("itemNoDelete").classList.toggle("hidden", !(m && DEFAULT_IDS.has(id)));
-    $("itemScrim").classList.add("open"); $("itemSheet").classList.add("open");
-  }
-  const closeItemSheet = () => { $("itemScrim").classList.remove("open"); $("itemSheet").classList.remove("open"); };
-  $("itemClose").addEventListener("click", closeItemSheet);
-  $("itemScrim").addEventListener("click", closeItemSheet);
-
-  $("itemForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (savingItem) return;
-    const fail = (m) => { $("itemErr").textContent = m; $("itemErr").classList.remove("hidden"); };
-    if (uploadingImage) return fail("Chhobi process hocche, ektu wait kore abar Save-e tap koro.");
-    const name = $("fName").value.trim(), category = $("fCat").value.trim(), price = parseFloat($("fPrice").value), img = $("fImg").value;
-    if (!name) return fail("Item-er naam likho.");
-    if (!category) return fail("Category likho, jemon Chicken ba Veg.");
-    if (!(price > 0 && price <= 10000)) return fail("Dam thik kore likho (1 theke 10000-er modhye).");
-    const pieces = parseInt($("fPieces").value, 10);
-    const item = {
-      id: editingId || "C-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
-      name, category, description: $("fDesc").value.trim(),
-      price: Math.round(price * 100) / 100,
-      isAvailable: $("fAvail").checked, isTodaysSpecial: $("fSpecial").checked,
-      spiciness: $("fSpice").value, pieces: pieces > 0 ? pieces : 1, imageUrl: img
-    };
-    savingItem = true; const btn = $("itemSave"); btn.disabled = true; btn.textContent = "Saving...";
-    try { await setDoc(doc(db, "menu_items", item.id), item); closeItemSheet(); toast("Item saved. Customer page-e ekhoni dekhabe."); }
-    catch (err) { fail("Save hoy ni (" + (err.code || err.message) + ")"); }
-    finally { savingItem = false; btn.disabled = false; btn.textContent = "Save item"; }
-  });
-
-  $("itemDelete").addEventListener("click", async () => {
-    if (!editingId || DEFAULT_IDS.has(editingId) || !confirm("Ei item delete korbe? Eta ar phire pabe na.")) return;
-    try { await deleteDoc(doc(db, "menu_items", editingId)); closeItemSheet(); toast("Item deleted"); }
-    catch (err) { $("itemErr").textContent = "Delete hoy ni (" + (err.code || err.message) + ")"; $("itemErr").classList.remove("hidden"); }
+      toast("Chhobi process hoy ni, onno ekta try koro.");
+    } finally { uploadingImage = false; $("mmPickBtn").textContent = "Gallery theke choose koro"; }
   });
 
   let autoOnline = false, settingsUnsubs = [], payDirty = false;
@@ -1631,16 +1507,6 @@
   function renderOMList() {
     document.querySelectorAll("#omTabs button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.omtab === omFilter)));
 
-    // Populate date dropdown/input if empty
-    if (!omDateFrom && orders.length) {
-       // Default to today if no filter set
-       const today = new Date().toISOString().split('T')[0];
-       $("omDateFrom").value = today;
-       $("omDateTo").value = today;
-       omDateFrom = today;
-       omDateTo = today;
-    }
-
     const filtered = orders.filter(o => {
       const st = statusOf(o);
       if (omFilter !== "ALL") {
@@ -1809,7 +1675,12 @@
     $("mmPrice").value = m ? m.price : "";
     $("mmDiscountPrice").value = m && m.discountPrice ? m.discountPrice : "";
     $("mmDesc").value = m ? m.description : "";
-    $("mmImage").value = m ? m.imageUrl : "";
+    
+    $("fImgFileNew").value = "";
+    $("mmImageUrl").value = m ? m.imageUrl : "";
+    if (m && m.imageUrl) { $("mmImgPreview").src = m.imageUrl; $("mmImgPreview").classList.remove("hidden"); $("mmRemoveBtn").classList.remove("hidden"); }
+    else { $("mmImgPreview").src = ""; $("mmImgPreview").classList.add("hidden"); $("mmRemoveBtn").classList.add("hidden"); }
+    
     $("mmAvail").value = m && m.isAvailable === false ? "Unavailable" : "Available";
     
     mmPiecePrices = m && m.piecePrices ? [...m.piecePrices] : [];
@@ -1819,7 +1690,8 @@
     renderMMAddOns();
     
     $("mmErr").classList.add("hidden");
-    $("mmDeleteBtn").classList.toggle("hidden", !m || DEFAULT_IDS.has(id));
+    // DELETION ALLOWED FOR ALL ITEMS NOW
+    $("mmDeleteBtn").classList.toggle("hidden", !m);
     $("menuEditScrim").classList.add("open"); $("menuEditSheet").classList.add("open");
   }
 
@@ -1834,7 +1706,6 @@
     `).join("");
   }
   window.removeMMPiece = (i) => {
-    // Save current values before removing
     const rows = document.querySelectorAll("#mmPiecePricingBox > div");
     mmPiecePrices = Array.from(rows).map(r => ({
       pieces: Number(r.querySelector(".mm-p-pieces").value),
@@ -1865,7 +1736,6 @@
   };
 
   $("mmAddPieceBtn").addEventListener("click", () => {
-    // Save current rows
     const rows = document.querySelectorAll("#mmPiecePricingBox > div");
     mmPiecePrices = Array.from(rows).map(r => ({
       pieces: Number(r.querySelector(".mm-p-pieces").value),
@@ -1900,7 +1770,7 @@
     const price = parseFloat($("mmPrice").value);
     const discountPrice = parseFloat($("mmDiscountPrice").value) || 0;
     const desc = $("mmDesc").value.trim();
-    const img = $("mmImage").value.trim();
+    const img = $("mmImageUrl").value.trim();
     const avail = $("mmAvail").value === "Available";
     
     if (!name || !cat || !(price > 0)) {
@@ -1909,7 +1779,6 @@
       return;
     }
 
-    // Save final row values
     const pRows = document.querySelectorAll("#mmPiecePricingBox > div");
     const finalPiecePrices = Array.from(pRows).map(r => ({
       pieces: Number(r.querySelector(".mm-p-pieces").value),
@@ -1944,9 +1813,12 @@
   });
 
   $("mmDeleteBtn").addEventListener("click", async () => {
-    if (!mmEditingId || DEFAULT_IDS.has(mmEditingId) || !confirm("Delete this item?")) return;
+    if (!mmEditingId || !confirm("Delete this item?")) return;
     try {
-      await deleteDoc(doc(db, "menu_items", mmEditingId));
+      // If it's a default item, we delete it from firestore, but to keep it deleted we override it with empty data.
+      // Actually, simply deleting the doc is not enough because mergedMenu reads DEFAULT_MENU if doc doesn't exist.
+      // So we need to save a flag or delete from DEFAULT_MENU. Since we can't delete from DEFAULT_MENU array easily, we save a "deleted: true" flag.
+      await setDoc(doc(db, "menu_items", mmEditingId), { deleted: true });
       closeMMEdit();
       toast("Item deleted.");
     } catch (err) {
