@@ -205,6 +205,27 @@
   .pay-prev { display: flex; gap: 14px; align-items: center; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
   .pay-prev img { width: 120px; height: 120px; flex: none; background: #fff; border: 1px solid var(--line); border-radius: 10px; image-rendering: pixelated; }
 
+  /* Kitchen ticket (printed, never shown on screen) */
+  #ticket { display: none; }
+  .auto-row .auto-btn + .auto-btn { margin-top: 8px; }
+  @media print {
+    body.printing-ticket > *:not(#ticket) { display: none !important; }
+    body.printing-ticket { background: #fff !important; color: #000 !important; }
+    body.printing-ticket #ticket { display: block; page: ticket; font-family: "Courier New", Courier, monospace; color: #000; background: #fff; }
+    #ticket .tk-c { text-align: center; }
+    #ticket .tk-brand { font-size: 20px; font-weight: 700; text-align: center; }
+    #ticket .tk-sub { font-size: 13px; text-align: center; letter-spacing: .12em; }
+    #ticket .tk-token { font-size: 40px; font-weight: 800; text-align: center; line-height: 1.1; margin: 6px 0 2px; }
+    #ticket .tk-type { font-size: 22px; font-weight: 800; text-align: center; border: 2px solid #000; padding: 3px 0; margin: 6px 0; }
+    #ticket .tk-meta { font-size: 13px; }
+    #ticket hr { border: 0; border-top: 2px dashed #000; margin: 8px 0; }
+    #ticket .tk-item { font-size: 17px; font-weight: 700; margin: 5px 0; }
+    #ticket .tk-item small { display: block; font-size: 13px; font-weight: 400; }
+    #ticket .tk-note { font-size: 15px; font-weight: 700; border: 2px solid #000; padding: 5px; margin: 8px 0; }
+    #ticket .tk-pay { font-size: 15px; font-weight: 800; text-align: center; margin-top: 6px; }
+    #ticket .tk-end { font-size: 12px; text-align: center; margin-top: 8px; }
+  }
+
   /* QR codes */
   .qr-tools { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
   .qr-tools .field { margin-top: 0; margin-bottom: 12px; }
@@ -265,13 +286,17 @@
       <button data-view="orders" aria-pressed="true">Orders<span class="n zero" id="newBadge">0</span></button>
       <button data-view="menu" aria-pressed="false">Menu</button>
       <button data-view="qr" aria-pressed="false">QR codes</button>
-      <button data-view="pay" aria-pressed="false">Payment</button>
+      <button data-view="pay" aria-pressed="false">Settings</button>
     </div>
     <div id="ordersHead">
       <div class="stats" id="stats"></div>
       <div class="auto-row">
         <button class="auto-btn" id="autoBtn" type="button" role="switch" aria-checked="false">
           <span>Auto-accept online orders<small id="autoSub">Off. Online orders wait here for you to accept.</small></span>
+          <span class="sw" aria-hidden="true"></span>
+        </button>
+        <button class="auto-btn" id="printBtn" type="button" role="switch" aria-checked="true">
+          <span>Auto-print kitchen ticket<small id="printSub">On. Prints when an online order is paid or you tap Payment received. This device only.</small></span>
           <span class="sw" aria-hidden="true"></span>
         </button>
       </div>
@@ -312,6 +337,13 @@
         <div class="msg err hidden" id="payErr" role="alert"></div>
         <button class="btn" id="paySave" type="button">Save payment account</button>
         <div class="pay-prev hidden" id="payPrev"><img id="payPrevImg" alt="Test QR of the saved payment account"><div class="hint">Saved. Scan this with any UPI app to check the name that shows up. Do not pay from it, there is no amount.</div></div>
+      </div>
+      <div class="pay-card" style="margin-top:14px">
+        <h3>Kitchen ticket printer</h3>
+        <div class="hint">The ticket prints from this device's default printer. Keep Auto-print on only on the device that has the printer.</div>
+        <div class="field"><label for="paperW">Paper width</label><select id="paperW"><option value="80">80 mm</option><option value="58">58 mm</option></select></div>
+        <button class="btn" id="testPrint" type="button">Test print</button>
+        <div class="hint">Print dialog chara direct print korte: computer-er Chrome shortcut-e <b>--kiosk-printing</b> add kore Chrome abar chalu koro, ar thermal printer ta default printer koro. Na korle prottek print-e dialog ashbe, tokhon Print tap korte hobe.</div>
       </div>
     </div>
   </main>
@@ -369,10 +401,13 @@
 
 <div class="toast hidden" id="toast" role="status"></div>
 
+<style id="pageStyle"></style>
+<div id="ticket" aria-hidden="true"></div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { initializeFirestore, collection, query, orderBy, limit, onSnapshot, doc, updateDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { initializeFirestore, collection, query, orderBy, limit, onSnapshot, doc, updateDoc, setDoc, deleteDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyB2s_LZL6lLuWieNh-8O3aHWiUuFcEzfK0",
@@ -516,6 +551,7 @@
       updateBadge();
       if (view === "orders") render();
       autoAcceptPending();
+      autoPrintPending();
     }, (err) => {
       const denied = err.code === "permission-denied";
       $("list").innerHTML = `<div class="empty">${denied ? "Ei account-er orders dekhar permission nei. Firebase rules-e tomar email staff hisebe add kora ache kina dekho." : "Orders load hoy ni (" + esc(err.code || err.message) + ")"}</div>`;
@@ -574,7 +610,7 @@
       <ul class="items">${itemHtml || `<li><span>No item details</span></li>`}</ul>
       ${o.specialInstructions ? `<div class="note">${esc(o.specialInstructions)}</div>` : ""}
       ${o.autoAccepted && !isPaid && st !== "CANCELLED" ? `<div class="who">Auto-accepted online order. Check the payment in your UPI app (note: Momo Mama ${esc(String(o.tokenNumber || "").replace("#", ""))}).</div>` : ""}
-      <div class="pay-row"><div>${badge}${st !== "CANCELLED" ? ` <button class="bill-link" data-bill="${esc(o.id)}" type="button">Bill</button>` : ""}</div><div class="total">${money(o.totalAmount)}</div></div>
+      <div class="pay-row"><div>${badge}${st !== "CANCELLED" ? ` <button class="bill-link" data-bill="${esc(o.id)}" type="button">Bill</button> <button class="bill-link" data-print="${esc(o.id)}" type="button">Print</button>` : ""}${o.printedAt ? ` <span class="hint">Printed ${esc(new Date(Number(o.printedAt)).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }))}</span>` : ""}</div><div class="total">${money(o.totalAmount)}</div></div>
       ${!isPaid && st !== "CANCELLED" ? `<div class="mark-paid">Payment received:
         <button data-pay="PAID_CASH" data-id="${esc(o.id)}" ${busyNow ? "disabled" : ""}>Cash</button>
         <button data-pay="PAID_UPI" data-id="${esc(o.id)}" ${busyNow ? "disabled" : ""}>UPI</button>
@@ -688,9 +724,10 @@
   $("tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) { activeTab = b.dataset.tab; render(); window.scrollTo(0, 0); } });
   $("list").addEventListener("click", (e) => {
     const bill = e.target.closest("[data-bill]"); if (bill) { const o = orders.find((x) => x.id === bill.dataset.bill); if (o) openBill(o); return; }
+    const prt = e.target.closest("[data-print]"); if (prt) { const o = orders.find((x) => x.id === prt.dataset.print); if (o) printTicket(o); return; }
     const go = e.target.closest("[data-to]"), pay = e.target.closest("[data-pay]"), can = e.target.closest("[data-cancel]");
     if (go) update(go.dataset.id, { status: go.dataset.to });
-    if (pay) update(pay.dataset.id, { paymentStatus: pay.dataset.pay }, "Payment marked");
+    if (pay) update(pay.dataset.id, { paymentStatus: pay.dataset.pay, paidAt: Date.now() }, "Payment marked");
     if (can && confirm("Ei order cancel korbe?")) update(can.dataset.cancel, { status: "CANCELLED" }, "Order cancelled");
   });
 
@@ -911,7 +948,7 @@
       if (statusOf(o) !== "PAYMENT_PENDING" || autoBusy.has(o.id) || autoFailed.has(o.id) || ageMin(o) > AUTO_MAX_AGE_MIN) continue;
       autoBusy.add(o.id);
       try {
-        await updateDoc(doc(db, "orders", o.id), { status: "PREPARING", autoAccepted: true, acceptedAt: Date.now() });
+        await updateDoc(doc(db, "orders", o.id), { status: "PREPARING", autoAccepted: true, acceptedAt: Date.now(), paidAt: Date.now() });
         beep(); toast("Online order " + (o.tokenNumber || o.id) + " auto-accepted");
       } catch (err) {
         autoFailed.add(o.id);
@@ -929,6 +966,93 @@
     catch (err) { toast("Setting save hoy ni, ei device-e kaj korbe (" + (err.code || err.message) + ")"); }
     autoAcceptPending();
   });
+
+  /* ---------- Kitchen ticket printing ---------- */
+  // A ticket prints once per order, at the moment its payment is confirmed:
+  //  - an online order that the auto-accept switch accepted, or
+  //  - any order where you tap "Payment received" (Cash / UPI / Card).
+  // Staff carry the printed ticket to the kitchen. Orders are never sent to the kitchen on screen.
+  let autoPrint = true, paperW = "80";
+  try { autoPrint = localStorage.getItem("mm_auto_print") !== "0"; paperW = localStorage.getItem("mm_paper") === "58" ? "58" : "80"; } catch (_) {}
+  const PRINT_WINDOW_MS = 15 * 60 * 1000; // older paid orders are not auto-printed, so opening the page never reprints old orders
+  const printBusy = new Set();
+  let printChain = Promise.resolve();
+
+  function applyPaper() {
+    $("pageStyle").textContent = "@page ticket { size: " + paperW + "mm auto; margin: 3mm; }";
+    $("paperW").value = paperW;
+  }
+  function renderPrintSwitch() {
+    $("printBtn").setAttribute("aria-checked", String(autoPrint));
+    $("printSub").textContent = autoPrint
+      ? "On. Prints when an online order is paid or you tap Payment received. This device only."
+      : "Off. Nothing prints on this device. Use the Print button on an order.";
+  }
+  function renderTicket(o) {
+    const items = parseItems(o), pay = o.paymentStatus;
+    const payLine = pay in PAID ? PAID[pay].toUpperCase() : (o.autoAccepted ? "ONLINE ORDER (UPI)" : String(o.paymentMethod || "PAYMENT").toUpperCase() + " PENDING");
+    $("ticket").innerHTML = `<div class="tk-brand">MOMO MAMA</div><div class="tk-sub">KITCHEN ORDER</div>
+      <div class="tk-token">${esc(o.tokenNumber || o.id)}</div>
+      <div class="tk-type">${esc(String(o.tableNumber || "Takeaway").toUpperCase())}</div>
+      <div class="tk-meta">${esc(dateTimeStr(o.createdAt))}</div>
+      ${o.customerName ? `<div class="tk-meta">Name: ${esc(o.customerName)}</div>` : ""}
+      <hr>
+      ${items.map((it) => {
+        const add = Array.isArray(it.addOns) && it.addOns.length ? it.addOns.map((a) => typeof a === "string" ? a : (a && a.name) || "").filter(Boolean).join(", ") : "";
+        return `<div class="tk-item">${esc(it.quantity)} x ${esc(it.name)}${add ? `<small>+ ${esc(add)}</small>` : ""}${it.specialNote ? `<small>${esc(it.specialNote)}</small>` : ""}</div>`;
+      }).join("")}
+      <hr>
+      ${o.specialInstructions ? `<div class="tk-note">NOTE: ${esc(o.specialInstructions)}</div>` : ""}
+      <div class="tk-pay">${esc(payLine)}</div>
+      <div class="tk-meta tk-c">Total ${esc(money(o.totalAmount))}</div>
+      <div class="tk-end">Printed ${esc(dateTimeStr(Date.now()))}</div>`;
+  }
+  // Tickets print one after another, so two orders paid together do not clash
+  function printTicket(o) {
+    printChain = printChain.then(() => new Promise((resolve) => {
+      let finished = false;
+      const finish = () => { if (finished) return; finished = true; document.body.classList.remove("printing-ticket"); window.removeEventListener("afterprint", finish); resolve(); };
+      renderTicket(o);
+      document.body.classList.add("printing-ticket");
+      window.addEventListener("afterprint", finish);
+      setTimeout(() => { try { window.print(); } catch (_) { finish(); } }, 60);
+      setTimeout(finish, 120000);
+    }));
+    return printChain;
+  }
+  async function autoPrintPending() {
+    if (!autoPrint) return;
+    for (const o of orders) {
+      if (o.printedAt || statusOf(o) === "CANCELLED" || printBusy.has(o.id)) continue;
+      const paid = String(o.paymentStatus || "").startsWith("PAID") || o.autoAccepted === true;
+      if (!paid || !(Number(o.paidAt) > 0) || Date.now() - Number(o.paidAt) > PRINT_WINDOW_MS) continue;
+      printBusy.add(o.id);
+      try {
+        // Claim the ticket first so two open admin pages never print the same order twice
+        let won = false;
+        await runTransaction(db, async (tx) => {
+          const ref = doc(db, "orders", o.id), snap = await tx.get(ref);
+          if (!snap.exists() || snap.data().printedAt) return;
+          tx.update(ref, { printedAt: Date.now() }); won = true;
+        });
+        if (won) printTicket({ ...o, printedAt: Date.now() });
+      } catch (err) { toast("Auto-print hoy ni (" + (err.code || err.message) + ")"); }
+      finally { printBusy.delete(o.id); }
+    }
+  }
+  $("printBtn").addEventListener("click", () => {
+    autoPrint = !autoPrint;
+    try { localStorage.setItem("mm_auto_print", autoPrint ? "1" : "0"); } catch (_) {}
+    renderPrintSwitch(); toast(autoPrint ? "Auto-print on" : "Auto-print off");
+    if (autoPrint) autoPrintPending();
+  });
+  $("paperW").addEventListener("change", () => { paperW = $("paperW").value === "58" ? "58" : "80"; try { localStorage.setItem("mm_paper", paperW); } catch (_) {} applyPaper(); });
+  $("testPrint").addEventListener("click", () => printTicket({
+    id: "TEST", tokenNumber: "#MM-000", tableNumber: "Dine-in", createdAt: Date.now(), customerName: "Test",
+    itemsJson: JSON.stringify([{ name: "Test momo", quantity: 2, price: 0 }]), specialInstructions: "This is a test print",
+    paymentStatus: "PAID_CASH", totalAmount: 0
+  }));
+  applyPaper(); renderPrintSwitch();
 
   /* ---------- Shop payment account (the customer page reads settings/payment) ---------- */
   const validUpi = (v) => /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z][a-zA-Z0-9.-]{1,63}$/.test(String(v || "").trim());
