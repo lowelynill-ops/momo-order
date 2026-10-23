@@ -267,6 +267,22 @@
     .qr-name, .qr-brand, .qr-sub { color: #000; }
     .qr-actions { display: none; }
   }
+
+  /* Dashboard Styles */
+  .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .dash-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  .dash-title { font-size: 13.5px; color: var(--muted); font-weight: 500; margin-bottom: 6px; display: block; }
+  .dash-val { font-family: var(--head); font-weight: 800; font-size: 24px; line-height: 1.1; }
+  .dash-val.profit { color: var(--green); }
+  .dash-val.loss { color: var(--late); }
+  .chart-box { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 24px; }
+  .chart-title { font-family: var(--head); font-weight: 800; font-size: 18px; margin-bottom: 16px; display: flex; justify-content: space-between; }
+  .chart-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--line); font-size: 14.5px; }
+  .chart-row:last-child { border-bottom: 0; }
+  .dash-list { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  .dash-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .dash-list-item:last-child { border-bottom: 0; }
 </style>
 </head>
 <body>
@@ -405,6 +421,31 @@
       </div>
     </div>
     
+    <!-- Dashboard View -->
+    <div id="dashboardView" class="hidden">
+      <div class="dash-header">
+        <h2 style="font-family: var(--head); font-weight: 800; font-size: 24px;">Overview</h2>
+        <button class="icon-btn" id="editDashBtn" type="button">Edit Dashboard</button>
+      </div>
+      
+      <div class="dash-grid" id="dashStatsGrid">
+        <!-- Cards will be injected here -->
+      </div>
+
+      <div class="chart-box">
+        <div class="chart-title">Sales Summary</div>
+        <div class="chart-row"><span>Weekly Sales</span><b id="dashWeeklySales">Rs 0</b></div>
+        <div class="chart-row"><span>Monthly Sales</span><b id="dashMonthlySales">Rs 0</b></div>
+      </div>
+
+      <div class="dash-list">
+        <div class="chart-title">Recent Orders</div>
+        <div id="dashRecentList">
+          <!-- Recent orders will be injected here -->
+        </div>
+      </div>
+    </div>
+
     <!-- Placeholder View for New Modules -->
     <div id="placeholderView" class="hidden">
       <div class="pay-card" style="text-align: center; padding: 40px 20px;">
@@ -449,6 +490,21 @@
       <button class="btn" id="itemSave" type="submit">Save item</button>
       <button class="danger hidden" id="itemDelete" type="button">Delete this item</button>
       <div class="hint hidden" id="itemNoDelete">Starter item delete kora jay na, Available bondho kore dao.</div>
+    </form>
+  </div>
+</div>
+
+<!-- Dashboard Edit Sheet -->
+<div class="scrim" id="dashScrim"></div>
+<div class="sheet" id="dashSheet" role="dialog" aria-modal="true" aria-labelledby="dashTitle">
+  <div class="sheet-in">
+    <div class="sheet-head"><h2 id="dashTitle">Dashboard Settings</h2><button class="close" id="dashClose" type="button" aria-label="Close">&times;</button></div>
+    <form id="dashForm" novalidate>
+      <div class="field"><label for="dExpense">Total Expenses (Manual)</label><input id="dExpense" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+      <div class="field"><label for="dWeeklyTarget">Weekly Sales Target</label><input id="dWeeklyTarget" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+      <div class="field"><label for="dMonthlyTarget">Monthly Sales Target</label><input id="dMonthlyTarget" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+      <div class="msg err hidden" id="dashErr" role="alert"></div>
+      <button class="btn" id="dashSave" type="submit">Save Settings</button>
     </form>
   </div>
 </div>
@@ -590,9 +646,11 @@
       startListening();
       startMenuListening();
       startSettingsListening();
+      startDashboardListening();
     } else {
       if (unsub) { unsub(); unsub = null; }
       if (menuUnsub) { menuUnsub(); menuUnsub = null; }
+      if (dashUnsub) { dashUnsub(); dashUnsub = null; }
       settingsUnsubs.forEach((u) => u()); settingsUnsubs = [];
       menuDocs = new Map(); view = "orders";
       orders = []; firstSnapshot = true;
@@ -615,6 +673,7 @@
       firstSnapshot = false;
       updateBadge();
       if (view === "orders") render();
+      if (view === "dashboard") renderDashboard();
       autoAcceptPending();
       autoPrintPending();
     }, (err) => {
@@ -835,9 +894,10 @@
     $("menuView").classList.toggle("hidden", v !== "menu");
     $("qrView").classList.toggle("hidden", v !== "qr");
     $("payView").classList.toggle("hidden", v !== "pay");
+    $("dashboardView").classList.toggle("hidden", v !== "dashboard");
     
     // Hide placeholder if it's one of the old views
-    if (!["orders","menu","qr","pay"].includes(v)) {
+    if (!["orders","menu","qr","pay","dashboard"].includes(v)) {
       $("placeholderView").classList.remove("hidden");
       const btn = document.querySelector(`#navList [data-view="${v}"]`);
       if (btn) $("placeholderTitle").textContent = btn.textContent.trim();
@@ -856,14 +916,14 @@
     $("viewTitle").textContent = title;
     
     closeNav();
-    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "menu") renderMenu();
+    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "menu") renderMenu(); else if (v === "dashboard") renderDashboard();
     window.scrollTo(0, 0);
   }
   $("navList").addEventListener("click", (e) => { const b = e.target.closest("button[data-view]"); if (b) setView(b.dataset.view); });
   $("viewBack").addEventListener("click", () => setView("orders"));
 
   /* ---------- Side menu (three dots) ---------- */
-  const NAV_TITLES = { orders: "Orders", qr: "QR code", menu: "Menu edit", pay: "Settings" };
+  const NAV_TITLES = { orders: "Orders", qr: "QR code", menu: "Menu edit", pay: "Settings", dashboard: "Dashboard Overview" };
   function openNav() {
     $("drawer").classList.add("open"); $("navScrim").classList.add("open");
     $("drawer").setAttribute("aria-hidden", "false"); $("menuBtn").setAttribute("aria-expanded", "true");
@@ -1327,6 +1387,126 @@
 
   /* Keep the "x min ago" text and late highlight fresh */
   setInterval(() => { if (!$("boardView").classList.contains("hidden") && view === "orders") render(); }, 30000);
+
+  /* ---------- Dashboard Overview ---------- */
+  let dashSettings = { expenses: 0, weeklyTarget: 0, monthlyTarget: 0 }, dashUnsub = null, dashDirty = false;
+
+  function startDashboardListening() {
+    if (dashUnsub) dashUnsub();
+    dashUnsub = onSnapshot(doc(db, "settings", "dashboard"), (snap) => {
+      if (snap.exists() && !dashDirty) {
+        dashSettings = { ...dashSettings, ...snap.data() };
+        if (view === "dashboard") renderDashboard();
+      }
+    }, () => {});
+  }
+
+  function renderDashboard() {
+    if (!orders.length) {
+      $("dashStatsGrid").innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 20px;">No orders yet.</div>`;
+      $("dashRecentList").innerHTML = `<div style="text-align: center; color: var(--muted); padding: 10px;">No recent orders.</div>`;
+      return;
+    }
+
+    const now = Date.now();
+    const midnight = new Date(); midnight.setHours(0,0,0,0);
+    const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const monthAgo = now - 30 * 24 * 60 * 60 * 1000;
+    
+    // Filter active orders (not cancelled, not payment pending for today's sales)
+    const activeOrders = orders.filter(o => statusOf(o) !== "CANCELLED");
+    const validOrders = activeOrders.filter(o => statusOf(o) !== "PAYMENT_PENDING"); // confirmed orders only
+    
+    const todayOrders = validOrders.filter(o => Number(o.createdAt) >= midnight.getTime());
+    const todaySales = todayOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
+    const totalExpenses = Number(dashSettings.expenses) || 0;
+    const profit = todaySales - totalExpenses;
+
+    const pendingOrders = orders.filter(o => ["NEW", "PAYMENT_PENDING", "ACCEPTED", "PREPARING"].includes(statusOf(o))).length;
+    const completedOrders = orders.filter(o => statusOf(o) === "READY" || statusOf(o) === "COMPLETED").length; // assuming ready/completed are done
+
+    const weekOrders = validOrders.filter(o => Number(o.createdAt) >= weekAgo);
+    const weeklySales = weekOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
+    const monthOrders = validOrders.filter(o => Number(o.createdAt) >= monthAgo);
+    const monthlySales = monthOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
+
+    const recent = validOrders.slice(0, 5);
+
+    // Inject Stats
+    $("dashStatsGrid").innerHTML = `
+      <div class="dash-card"><span class="dash-title">Today's Total Sales</span><span class="dash-val">${money(todaySales)}</span></div>
+      <div class="dash-card"><span class="dash-title">Total Orders</span><span class="dash-val">${todayOrders.length}</span></div>
+      <div class="dash-card"><span class="dash-title">Pending Orders</span><span class="dash-val" style="color:var(--yellow)">${pendingOrders}</span></div>
+      <div class="dash-card"><span class="dash-title">Completed Orders</span><span class="dash-val" style="color:var(--green)">${completedOrders}</span></div>
+      <div class="dash-card"><span class="dash-title">Total Expenses (Manual)</span><span class="dash-val" style="color:var(--late)">${money(totalExpenses)}</span></div>
+      <div class="dash-card"><span class="dash-title">Estimated Profit/Loss</span><span class="dash-val ${profit >= 0 ? 'profit' : 'loss'}">${money(profit)}</span></div>
+    `;
+
+    // Inject Chart
+    $("dashWeeklySales").textContent = money(weeklySales);
+    $("dashMonthlySales").textContent = money(monthlySales);
+
+    // Inject Recent Orders
+    $("dashRecentList").innerHTML = recent.length ? recent.map(o => `
+      <div class="dash-list-item">
+        <div>
+          <b style="font-family: var(--head);">${esc(o.tokenNumber || o.id)}</b>
+          <span style="display:block; font-size: 13px; color: var(--muted);">${esc(o.customerName || "Guest")}</span>
+        </div>
+        <div style="text-align:right;">
+          <b>${money(o.totalAmount)}</b>
+          <span style="display:block; font-size: 12px; color: var(--muted);">${esc(STATUS_LABEL[statusOf(o)] || statusOf(o))}</span>
+        </div>
+      </div>
+    `).join("") : `<div style="text-align: center; color: var(--muted); padding: 10px;">No recent orders.</div>`;
+  }
+
+  // Edit Dashboard Modal Logic
+  function openDashEdit() {
+    dashDirty = false;
+    $("dExpense").value = dashSettings.expenses || 0;
+    $("dWeeklyTarget").value = dashSettings.weeklyTarget || 0;
+    $("dMonthlyTarget").value = dashSettings.monthlyTarget || 0;
+    $("dashErr").classList.add("hidden");
+    $("dashScrim").classList.add("open"); $("dashSheet").classList.add("open");
+  }
+  const closeDashEdit = () => { $("dashScrim").classList.remove("open"); $("dashSheet").classList.remove("open"); };
+  $("dashClose").addEventListener("click", closeDashEdit);
+  $("dashScrim").addEventListener("click", closeDashEdit);
+  $("editDashBtn").addEventListener("click", openDashEdit);
+
+  $("dashForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const exp = parseFloat($("dExpense").value) || 0;
+    const wTarget = parseFloat($("dWeeklyTarget").value) || 0;
+    const mTarget = parseFloat($("dMonthlyTarget").value) || 0;
+    
+    if (exp < 0 || wTarget < 0 || mTarget < 0) {
+      $("dashErr").textContent = "Values cannot be negative.";
+      $("dashErr").classList.remove("hidden");
+      return;
+    }
+
+    const btn = $("dashSave"); btn.disabled = true; btn.textContent = "Saving...";
+    try {
+      await setDoc(doc(db, "settings", "dashboard"), { 
+        expenses: exp, 
+        weeklyTarget: wTarget, 
+        monthlyTarget: mTarget, 
+        updatedAt: Date.now() 
+      });
+      dashDirty = true;
+      dashSettings = { expenses: exp, weeklyTarget: wTarget, monthlyTarget: mTarget };
+      renderDashboard();
+      closeDashEdit();
+      toast("Dashboard settings saved.");
+    } catch (err) {
+      $("dashErr").textContent = "Save failed (" + (err.code || err.message) + ")";
+      $("dashErr").classList.remove("hidden");
+    } finally {
+      btn.disabled = false; btn.textContent = "Save Settings";
+    }
+  });
 </script>
 </body>
 </html>
