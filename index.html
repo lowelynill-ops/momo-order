@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
     --bg: #F4F6F5;
@@ -119,6 +120,25 @@
   .toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: 500px; margin: 0 auto; background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 12px; z-index: 80; font-size: 14.5px; }
   .ghost { margin-top: 10px; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px 18px; font-weight: 600; }
 
+  /* My orders */
+  .hist-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 14px; font-weight: 600; font-size: 14.5px; white-space: nowrap; }
+  .hist-btn:active { background: var(--bg); }
+  .hcard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 12px; }
+  .hrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .htok { font-family: var(--head); font-weight: 800; font-size: 22px; letter-spacing: -0.01em; }
+  .hchip { font-size: 13px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); white-space: nowrap; }
+  .hchip.ok { background: #E7F4EC; border-color: #BFE0CB; color: #1F6B3E; }
+  .hchip.warn { background: #FFF7E0; border-color: var(--flag-yellow); color: #5a4200; }
+  .hchip.bad { background: #FCEDEC; border-color: #F0C2C0; color: var(--chili-dark); }
+  .hsub { color: var(--muted); font-size: 13.5px; margin-top: 4px; }
+  .hitems { list-style: none; padding: 0; margin: 10px 0; border-top: 1px solid var(--line); }
+  .hitems li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+  .hdl { display: block; width: 100%; margin-top: 12px; border: 1px solid var(--chili); background: var(--surface); color: var(--chili); border-radius: 12px; padding: 11px; font-weight: 600; font-size: 15.5px; }
+  .hdl:active { background: var(--bg); }
+  .hnote { margin-top: 10px; color: var(--muted); font-size: 14px; }
+  .hempty { text-align: center; padding: 48px 12px; color: var(--muted); }
+  .hempty b { display: block; color: var(--ink); font-family: var(--head); font-size: 20px; margin-bottom: 6px; }
+
   /* Dine in / Takeaway */
   .otype-wrap { margin-top: 18px; }
   .otype-title { font-weight: 600; font-size: 14.5px; margin-bottom: 8px; }
@@ -198,6 +218,7 @@
   <div class="flags" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="wrap head-row">
     <div class="brand">Momo Mama<small>Order from your seat</small></div>
+    <button class="hist-btn" id="histBtn" type="button">My orders</button>
   </div>
 </header>
 
@@ -249,6 +270,15 @@
   </div>
 </div>
 
+<div class="legal hidden" id="hist" role="dialog" aria-modal="true" aria-labelledby="histTitle">
+  <div class="legal-bar"><div class="legal-bar-in"><button class="legal-back" id="histBack" type="button">&larr; Back</button><b id="histTitle">My orders</b></div></div>
+  <div class="legal-doc">
+    <p class="upd">Your previous orders from this phone. Tap Download bill to get a PDF.</p>
+    <div id="histList"></div>
+    <p class="hnote">Orders are remembered on this phone only. If you clear your browser data or use another phone, they will not show here.</p>
+  </div>
+</div>
+
 <div class="overlay hidden" id="overlay" role="dialog" aria-modal="true" aria-labelledby="ovTitle">
   <div class="ov-in">
     <div id="ovWait">
@@ -269,6 +299,7 @@
       <div class="ov-tok" id="doneToken"></div>
       <p class="ov-msg" id="doneMsg"></p>
       <button class="ov-btn" id="doneBtn" type="button">Back to menu</button>
+      <button class="ghost" id="doneOrders" type="button">My orders and bill</button>
     </div>
     <div class="hidden" id="ovFail">
       <div class="tick bad" aria-hidden="true">!</div>
@@ -358,7 +389,7 @@
     <ul>
       <li><b>Details you give us:</b> your name and phone number, whether your order is dine in or takeaway, the items you order, any notes you write, and the order total.</li>
       <li><b>Payment information:</b> whether you chose cash or UPI, which UPI app or QR you used, and whether the order is marked paid. We do not collect or store your card numbers, bank account details or UPI PIN. Your UPI payment is handled by your own UPI app and bank.</li>
-      <li><b>Information saved in your browser:</b> your cart and, while a payment is being confirmed, a reference to your order, so the page can carry on if you switch apps. This stays on your phone.</li>
+      <li><b>Information saved in your browser:</b> your cart and, while a payment is being confirmed, a reference to your order, so the page can carry on if you switch apps, and a copy of your previous orders so you can see them and download bills. This stays on your phone.</li>
     </ul>
 
     <h2>2. Why we use it</h2>
@@ -405,7 +436,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { initializeFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { initializeFirestore, collection, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   /* ------------------------------------------------------------------
      STEP 1: paste your Firebase WEB app keys here.
@@ -638,7 +669,7 @@
     if (!lines.length) return null;
     setSending(true);
     $("orderError").classList.add("hidden");
-    pending = pending || { id: "WEB-" + Date.now().toString(36).toUpperCase(), token: "#MM-" + String(100 + Math.floor(Math.random() * 900)) };
+    pending = pending || { id: "WEB-" + Date.now().toString(36).toUpperCase() + randomId(), token: "#MM-" + String(100 + Math.floor(Math.random() * 900)) };
     const { id, token } = pending;
     const c = calc();
     const items = lines.map((l) => ({ id: l.m.id, name: l.m.name, quantity: l.qty, price: l.m.price, category: l.m.category, addOns: [], specialNote: "" }));
@@ -665,6 +696,7 @@
     };
     try {
       await withTimeout(setDoc(doc(db, "orders", id), order), 12000);
+      histSave(order);
       pending = null;
       setSending(false);
       return { id, token, total: c.total };
@@ -819,9 +851,9 @@
     showDoc(which);
   }
   function closeDoc() {
-    if (history.state && history.state.doc) history.back(); else { try { history.replaceState(null, "", location.pathname + location.search); } catch (_) {} hideDoc(); }
+    if (history.state && history.state.doc) history.back(); else { try { history.replaceState(null, "", location.pathname + location.search); } catch (_) {} hideDoc(); hideHist(); }
   }
-  window.addEventListener("popstate", () => { const h = location.hash.slice(1); if (DOCS[h]) showDoc(h); else hideDoc(); });
+  window.addEventListener("popstate", () => { const h = location.hash.slice(1); if (DOCS[h]) { hideHist(); showDoc(h); } else if (h === "orders") { hideDoc(); showHist(); } else { hideDoc(); hideHist(); } });
   document.addEventListener("click", (e) => {
     const l = e.target.closest("[data-doc]");
     if (l) { e.preventDefault(); openDoc(l.dataset.doc); return; }
@@ -829,6 +861,101 @@
   });
   $("legalBack").addEventListener("click", closeDoc);
   if (DOCS[location.hash.slice(1)]) showDoc(location.hash.slice(1)); // someone opened the link /#terms or /#privacy directly
+  else if (location.hash === "#orders") showHist();
+
+  /* ---------------- My orders (remembered on this phone) + PDF bill ---------------- */
+  const HIST_KEY = "mm_history", HIST_MAX = 30;
+  function randomId() {
+    try { const a = new Uint32Array(2); crypto.getRandomValues(a); return "-" + a[0].toString(36).toUpperCase() + a[1].toString(36).toUpperCase(); }
+    catch (_) { return "-" + Math.random().toString(36).slice(2, 10).toUpperCase(); }
+  }
+  function histLoad() { try { const a = JSON.parse(localStorage.getItem(HIST_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (_) { return []; } }
+  function histSave(order) {
+    try { const a = histLoad().filter((x) => x.id !== order.id); a.unshift(order); localStorage.setItem(HIST_KEY, JSON.stringify(a.slice(0, HIST_MAX))); } catch (_) {}
+  }
+  const ST_LABEL = { NEW: ["Order placed", "warn"], PAYMENT_PENDING: ["Waiting for payment", "warn"], ACCEPTED: ["Order received", "warn"], PREPARING: ["Being cooked", "warn"], READY: ["Ready to collect", "ok"], COMPLETED: ["Completed", "ok"], CANCELLED: ["Cancelled", "bad"] };
+  const dateStr = (ms) => new Date(Number(ms) || Date.now()).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
+  const itemsOf = (o) => { try { const a = JSON.parse(o.itemsJson || "[]"); return Array.isArray(a) ? a : []; } catch (_) { return []; } };
+  let histRows = [];
+
+  async function renderHistory() {
+    const box = $("histList"), local = histLoad();
+    if (!local.length) { box.innerHTML = `<div class="hempty"><b>No previous orders yet</b>Your orders will show up here after you place one.</div>`; histRows = []; return; }
+    box.innerHTML = `<div class="hempty">Loading your orders...</div>`;
+    // Fresh status from the server; if that fails the copy saved on this phone is shown
+    const rows = await Promise.all(local.map(async (lo) => {
+      if (!db) return lo;
+      try { const snap = await withTimeout(getDoc(doc(db, "orders", lo.id)), 8000); return snap.exists() ? { ...lo, ...snap.data() } : lo; } catch (_) { return lo; }
+    }));
+    // A payment that was never confirmed and is more than 45 minutes old was most likely abandoned
+    histRows = rows.filter((o) => !((o.status || "NEW") === "PAYMENT_PENDING" && Date.now() - Number(o.createdAt) > 45 * 60 * 1000))
+      .sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
+    if (!histRows.length) { box.innerHTML = `<div class="hempty"><b>No previous orders yet</b>Your orders will show up here after you place one.</div>`; return; }
+    box.innerHTML = histRows.map((o) => {
+      const st = o.status || "NEW", lab = ST_LABEL[st] || [st, "warn"];
+      const canBill = st !== "PAYMENT_PENDING" && st !== "CANCELLED";
+      return `<div class="hcard">
+        <div class="hrow"><span class="htok">${esc(o.tokenNumber || o.id)}</span><span class="hchip ${lab[1]}">${esc(lab[0])}</span></div>
+        <div class="hsub">${esc(dateStr(o.createdAt))} &middot; ${esc(o.tableNumber || "Takeaway")}</div>
+        <ul class="hitems">${itemsOf(o).map((it) => `<li><span>${esc(it.quantity)} x ${esc(it.name)}</span><span>${money(Number(it.price) * Number(it.quantity))}</span></li>`).join("")}</ul>
+        <div class="hrow"><span>Total</span><b>${money(o.totalAmount)}</b></div>
+        ${canBill ? `<button class="hdl" type="button" data-bill="${esc(o.id)}">Download bill (PDF)</button>`
+          : `<div class="hnote">${st === "CANCELLED" ? "This order was cancelled." : "We are still waiting to confirm your payment. The bill is available once it is confirmed."}</div>`}
+      </div>`;
+    }).join("");
+  }
+  function showHist() { $("hist").classList.remove("hidden"); $("hist").scrollTop = 0; document.body.style.overflow = "hidden"; $("histBack").focus(); renderHistory(); }
+  function hideHist() { $("hist").classList.add("hidden"); document.body.style.overflow = ""; }
+  function openHist() {
+    try { history.pushState({ doc: "orders" }, "", location.pathname + location.search + "#orders"); } catch (_) {}
+    showHist();
+  }
+  $("histBtn").addEventListener("click", openHist);
+  $("histBack").addEventListener("click", closeDoc);
+  $("doneOrders").addEventListener("click", () => { hideOverlay(); renderMenu(); openHist(); });
+  $("histList").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-bill]"); if (!b) return;
+    const o = histRows.find((x) => x.id === b.dataset.bill); if (o) downloadBill(o);
+  });
+
+  function downloadBill(o) {
+    if (!(window.jspdf && window.jspdf.jsPDF)) { toast("The PDF tool did not load. Check your internet and try again."); return; }
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: "pt", format: "a5" });
+    const W = pdf.internal.pageSize.getWidth(), M = 36; let y = 46;
+    const line = (t, size, bold, align) => { pdf.setFont("courier", bold ? "bold" : "normal"); pdf.setFontSize(size); pdf.text(t, align === "center" ? W / 2 : M, y, { align: align || "left" }); y += size * 1.35; };
+    const row = (a, b) => { pdf.setFont("courier", "normal"); pdf.setFontSize(10); pdf.text(a, M, y); pdf.text(b, W - M, y, { align: "right" }); y += 15; };
+    line("MOMO MAMA", 16, true, "center"); line("Kolkata", 10, false, "center"); y += 4;
+    pdf.setLineDashPattern([2, 2], 0); pdf.line(M, y, W - M, y); y += 16;
+    row("Bill / Token:", String(o.tokenNumber || o.id));
+    row("Order type:", o.tableNumber || "Takeaway");
+    row("Date & time:", dateStr(o.createdAt));
+    if (o.customerName) row("Name:", String(o.customerName));
+    pdf.line(M, y, W - M, y); y += 16;
+    pdf.setFont("courier", "bold"); pdf.setFontSize(10);
+    pdf.text("Item", M, y); pdf.text("Qty", W - 160, y, { align: "right" }); pdf.text("Rate", W - 90, y, { align: "right" }); pdf.text("Amt", W - M, y, { align: "right" }); y += 14;
+    pdf.setFont("courier", "normal");
+    itemsOf(o).forEach((it) => {
+      pdf.splitTextToSize(String(it.name || ""), W - M - 170).forEach((t, i) => {
+        pdf.text(t, M, y);
+        if (i === 0) {
+          pdf.text(String(it.quantity), W - 160, y, { align: "right" });
+          pdf.text(money(it.price).replace("Rs ", ""), W - 90, y, { align: "right" });
+          pdf.text(money(Number(it.price) * Number(it.quantity)).replace("Rs ", ""), W - M, y, { align: "right" });
+        }
+        y += 13;
+      });
+    });
+    pdf.line(M, y, W - M, y); y += 16;
+    row("Subtotal", money(o.subtotal));
+    row("GST (5%)", money(o.gstAmount));
+    if (Number(o.serviceCharge) > 0) row("Service charge", money(o.serviceCharge));
+    pdf.setFont("courier", "bold"); pdf.setFontSize(13); pdf.text("TOTAL", M, y); pdf.text(money(o.totalAmount), W - M, y, { align: "right" }); y += 20;
+    const paid = String(o.paymentStatus || "").startsWith("PAID"), method = o.paymentMethod || "Payment";
+    line(paid ? "Paid (" + method + ")" : (method === "Cash" ? "Cash - pay at the counter" : method + " - payment being confirmed"), 10, false);
+    y += 6; line("Thank you for visiting Momo Mama!", 9.5, false, "center"); line("Taxes as applicable. Computer-generated bill.", 8.5, false, "center");
+    pdf.save("MomoMama-Bill-" + String(o.tokenNumber || o.id).replace(/[^a-zA-Z0-9]/g, "") + ".pdf");
+  }
 
   renderMenu();
   updatePayState();
