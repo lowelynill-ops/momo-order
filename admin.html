@@ -268,7 +268,7 @@
     .qr-actions { display: none; }
   }
 
-  /* Dashboard Styles */
+  /* Dashboard & Modules Styles */
   .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
   .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
   .dash-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
@@ -283,6 +283,37 @@
   .dash-list { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
   .dash-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
   .dash-list-item:last-child { border-bottom: 0; }
+
+  /* Order Management Styles */
+  .om-filters { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+  .om-search { display: flex; gap: 8px; margin-bottom: 12px; }
+  .om-search input { flex: 1; padding: 10px; border: 1px solid var(--line); border-radius: 8px; }
+  .om-dates { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+  .om-dates input { padding: 6px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; }
+  .om-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; margin-bottom: 16px; }
+  .om-tabs::-webkit-scrollbar { display: none; }
+  .om-tabs button { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 14px; font-weight: 500; font-size: 14px; }
+  .om-tabs button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .om-list { display: flex; flex-direction: column; gap: 10px; }
+  .om-order-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s; }
+  .om-order-card:hover { background: var(--bg); }
+  .om-order-info { display: flex; flex-direction: column; gap: 4px; }
+  .om-order-token { font-family: var(--head); font-weight: 800; font-size: 18px; }
+  .om-order-meta { font-size: 13.5px; color: var(--muted); }
+  .om-order-total { font-family: var(--head); font-weight: 800; font-size: 18px; text-align: right; }
+  .om-status { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; margin-top: 4px; }
+  .om-status.new { background: var(--blue); color: #fff; }
+  .om-status.accepted { background: var(--yellow); color: #3a2a00; }
+  .om-status.preparing { background: #F97316; color: #fff; }
+  .om-status.ready { background: var(--green); color: #fff; }
+  .om-status.completed { background: var(--line); color: var(--ink); }
+  .om-status.cancelled { background: var(--chili-soft); color: var(--late); }
+  
+  .om-modal-body { display: flex; flex-direction: column; gap: 12px; }
+  .om-detail-row { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--line); padding-bottom: 8px; }
+  .om-detail-items { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 8px; }
+  .om-detail-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; }
+  .om-detail-total { display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; margin-top: 8px; padding-top: 8px; border-top: 2px solid var(--line); }
 </style>
 </head>
 <body>
@@ -442,6 +473,48 @@
         <div class="chart-title">Recent Orders</div>
         <div id="dashRecentList">
           <!-- Recent orders will be injected here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Management View -->
+    <div id="orderManageView" class="hidden">
+      <div class="dash-header">
+        <h2 style="font-family: var(--head); font-weight: 800; font-size: 24px;">All Orders</h2>
+      </div>
+      
+      <div class="om-filters">
+        <div class="om-search">
+          <input type="text" id="omSearchInput" placeholder="Search by Token, Name, or Phone...">
+        </div>
+        <div class="om-dates">
+          <span>From:</span><input type="date" id="omDateFrom">
+          <span>To:</span><input type="date" id="omDateTo">
+          <button class="icon-btn" id="omDateClear" style="padding: 4px 8px; font-size: 12px;">Clear</button>
+        </div>
+      </div>
+
+      <div class="om-tabs" id="omTabs">
+        <button data-omtab="ALL" aria-pressed="true">All Orders</button>
+        <button data-omtab="NEW" aria-pressed="false">Pending</button>
+        <button data-omtab="ACCEPTED" aria-pressed="false">Accepted</button>
+        <button data-omtab="PREPARING" aria-pressed="false">Preparing</button>
+        <button data-omtab="COMPLETED" aria-pressed="false">Completed</button>
+        <button data-omtab="CANCELLED" aria-pressed="false">Cancelled</button>
+      </div>
+
+      <div class="om-list" id="omList">
+        <!-- Orders will be injected here -->
+      </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="scrim" id="omDetailScrim"></div>
+    <div class="sheet" id="omDetailSheet" role="dialog" aria-modal="true">
+      <div class="sheet-in">
+        <div class="sheet-head"><h2>Order Details</h2><button class="close" id="omDetailClose" type="button" aria-label="Close">&times;</button></div>
+        <div class="om-modal-body" id="omDetailBody">
+          <!-- Details will be injected here -->
         </div>
       </div>
     </div>
@@ -674,6 +747,7 @@
       updateBadge();
       if (view === "orders") render();
       if (view === "dashboard") renderDashboard();
+      if (view === "order-manage") renderOMList();
       autoAcceptPending();
       autoPrintPending();
     }, (err) => {
@@ -683,7 +757,6 @@
   }
 
   const statusOf = (o) => o.status || "NEW";
-  // New = every order still being handled. Done = ready (last step), served and cancelled orders.
   function tabOf(o) {
     const st = statusOf(o);
     return st === "NEW" || st === "PAYMENT_PENDING" || st === "ACCEPTED" || st === "PREPARING" ? "new" : "done";
@@ -696,7 +769,6 @@
   const isLate = (o) => ["NEW", "ACCEPTED", "PREPARING"].includes(statusOf(o)) && ageMin(o) > (Number(o.targetReadyMinutes) || 15);
 
   function render() {
-    // Counts and stats
     const counts = {}; TABS.forEach((t) => counts[t.key] = orders.filter((o) => tabOf(o) === t.key).length);
     $("tabs").innerHTML = TABS.map((t) => `<button data-tab="${t.key}" aria-pressed="${t.key === activeTab}">${t.label}<span class="n ${t.key !== "done" && counts[t.key] ? "" : "zero"}">${counts[t.key]}</span></button>`).join("");
     const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
@@ -705,7 +777,7 @@
 
     let list = orders.filter((o) => tabOf(o) === activeTab);
     if (activeTab === "done") list = list.slice(0, 40);
-    else list = list.slice().reverse(); // oldest first so nothing waits
+    else list = list.slice().reverse();
     $("list").innerHTML = list.length ? list.map(card).join("") : `<div class="empty">${activeTab === "new" ? "No new orders right now." : "Nothing here."}</div>`;
   }
 
@@ -866,7 +938,6 @@
   const DEFAULT_IDS = new Set(DEFAULT_MENU.map((m) => m.id));
   let view = "orders", menuDocs = new Map(), menuUnsub = null, menuCat = "All", editingId = null, savingItem = false, uploadingImage = false;
 
-  // Same merge the customer page uses: starter items plus whatever is saved in Firestore
   function mergedMenu() {
     const byId = new Map(DEFAULT_MENU.map((m) => [m.id, { ...m }]));
     menuDocs.forEach((m, id) => byId.set(id, { ...byId.get(id), ...m, id }));
@@ -895,9 +966,9 @@
     $("qrView").classList.toggle("hidden", v !== "qr");
     $("payView").classList.toggle("hidden", v !== "pay");
     $("dashboardView").classList.toggle("hidden", v !== "dashboard");
+    $("orderManageView").classList.toggle("hidden", v !== "order-manage");
     
-    // Hide placeholder if it's one of the old views
-    if (!["orders","menu","qr","pay","dashboard"].includes(v)) {
+    if (!["orders","menu","qr","pay","dashboard","order-manage"].includes(v)) {
       $("placeholderView").classList.remove("hidden");
       const btn = document.querySelector(`#navList [data-view="${v}"]`);
       if (btn) $("placeholderTitle").textContent = btn.textContent.trim();
@@ -916,14 +987,13 @@
     $("viewTitle").textContent = title;
     
     closeNav();
-    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "menu") renderMenu(); else if (v === "dashboard") renderDashboard();
+    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "menu") renderMenu(); else if (v === "dashboard") renderDashboard(); else if (v === "order-manage") renderOMList();
     window.scrollTo(0, 0);
   }
   $("navList").addEventListener("click", (e) => { const b = e.target.closest("button[data-view]"); if (b) setView(b.dataset.view); });
   $("viewBack").addEventListener("click", () => setView("orders"));
 
-  /* ---------- Side menu (three dots) ---------- */
-  const NAV_TITLES = { orders: "Orders", qr: "QR code", menu: "Menu edit", pay: "Settings", dashboard: "Dashboard Overview" };
+  const NAV_TITLES = { orders: "Orders", qr: "QR code", menu: "Menu edit", pay: "Settings", dashboard: "Dashboard Overview", "order-manage": "Order Management" };
   function openNav() {
     $("drawer").classList.add("open"); $("navScrim").classList.add("open");
     $("drawer").setAttribute("aria-hidden", "false"); $("menuBtn").setAttribute("aria-expanded", "true");
@@ -937,14 +1007,10 @@
   $("drawerClose").addEventListener("click", closeNav);
   $("navScrim").addEventListener("click", closeNav);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeNav(); });
-  $("logoutBtn").addEventListener("click", () => { closeNav(); setView("orders"); }); // the sign-out itself is handled above
+  $("logoutBtn").addEventListener("click", () => { closeNav(); setView("orders"); });
 
-  // Accepts both real https links (old items) and the data: photos this page now saves.
   const okImg = (u) => /^(https?:|data:image\/)/i.test(String(u || ""));
 
-  // Shrinks a chosen photo in the browser itself (no server, no Firebase Storage) so it
-  // stays well inside Firestore's 1MB-per-document limit, then hands back a data: URL
-  // that can be saved directly on the menu item and shown immediately, everywhere.
   function resizeImageFile(file, maxDim, quality) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -1089,12 +1155,10 @@
   });
 
   /* ---------- Auto-accept online orders ---------- */
-  // Online orders arrive as PAYMENT_PENDING. With the switch on, a fresh one goes straight to
-  // "Cooking" and only "Mark ready" is left for staff. Cash orders always wait for staff.
   let autoOnline = false, settingsUnsubs = [], payDirty = false;
   try { autoOnline = localStorage.getItem("mm_auto_online") === "1"; } catch (_) {}
   const autoBusy = new Set(), autoFailed = new Set();
-  const AUTO_MAX_AGE_MIN = 20; // older unpaid online orders are left for staff to decide
+  const AUTO_MAX_AGE_MIN = 20;
 
   function renderAuto() {
     $("autoBtn").setAttribute("aria-checked", String(autoOnline));
@@ -1128,13 +1192,9 @@
   });
 
   /* ---------- Kitchen ticket printing ---------- */
-  // A ticket prints once per order, at the moment its payment is confirmed:
-  //  - an online order that the auto-accept switch accepted, or
-  //  - any order where you tap "Payment received" (Cash / UPI / Card).
-  // Staff carry the printed ticket to the kitchen. Orders are never sent to the kitchen on screen.
   let autoPrint = true, paperW = "80";
   try { autoPrint = localStorage.getItem("mm_auto_print") !== "0"; paperW = localStorage.getItem("mm_paper") === "58" ? "58" : "80"; } catch (_) {}
-  const PRINT_WINDOW_MS = 15 * 60 * 1000; // older paid orders are not auto-printed, so opening the page never reprints old orders
+  const PRINT_WINDOW_MS = 15 * 60 * 1000;
   const printBusy = new Set();
   let printChain = Promise.resolve();
 
@@ -1167,7 +1227,6 @@
       <div class="tk-meta tk-c">Total ${esc(money(o.totalAmount))}</div>
       <div class="tk-end">Printed ${esc(dateTimeStr(Date.now()))}</div>`;
   }
-  // Tickets print one after another, so two orders paid together do not clash
   function printTicket(o) {
     printChain = printChain.then(() => new Promise((resolve) => {
       let finished = false;
@@ -1188,7 +1247,6 @@
       if (!paid || !(Number(o.paidAt) > 0) || Date.now() - Number(o.paidAt) > PRINT_WINDOW_MS) continue;
       printBusy.add(o.id);
       try {
-        // Claim the ticket first so two open admin pages never print the same order twice
         let won = false;
         await runTransaction(db, async (tx) => {
           const ref = doc(db, "orders", o.id), snap = await tx.get(ref);
@@ -1262,7 +1320,6 @@
     } finally { btn.disabled = false; btn.textContent = "Save payment account"; }
   });
 
-  // Reads the UPI ID out of a screenshot or photo of the shop's payment QR
   $("pQrBtn").addEventListener("click", () => $("pQrFile").click());
   $("pQrFile").addEventListener("change", (e) => {
     const file = e.target.files && e.target.files[0]; e.target.value = "";
@@ -1291,14 +1348,13 @@
   });
   renderAuto();
 
-  /* ---------- QR code (one QR for everyone, it opens the customer page) ---------- */
+  /* ---------- QR code ---------- */
   const lsGet = (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} };
   const lsDel = (k) => { try { localStorage.removeItem(k); } catch (_) {} };
   const QR_BASE_KEY = "mm_qr_base";
   try { localStorage.removeItem("mm_qr_tables"); } catch (_) {}
 
-  // The customer page sits next to this admin page, so its link is this page's folder + index.html
   function autoBase() {
     try { const u = new URL("index.html", location.href); u.search = ""; u.hash = ""; return u.href; } catch (_) { return ""; }
   }
@@ -1310,7 +1366,6 @@
     return u.href;
   }
 
-  // Draws a crisp QR onto a canvas (black on white, with the quiet zone scanners need)
   function qrCanvas(text, cell) {
     const qr = qrcode(0, "M"); qr.addData(text); qr.make();
     const count = qr.getModuleCount(), quiet = 4, size = (count + quiet * 2) * cell;
@@ -1385,7 +1440,6 @@
   $("qrPrint").addEventListener("click", () => window.print());
   $("qrBase").value = lsGet(QR_BASE_KEY) || autoBase();
 
-  /* Keep the "x min ago" text and late highlight fresh */
   setInterval(() => { if (!$("boardView").classList.contains("hidden") && view === "orders") render(); }, 30000);
 
   /* ---------- Dashboard Overview ---------- */
@@ -1413,9 +1467,8 @@
     const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
     const monthAgo = now - 30 * 24 * 60 * 60 * 1000;
     
-    // Filter active orders (not cancelled, not payment pending for today's sales)
     const activeOrders = orders.filter(o => statusOf(o) !== "CANCELLED");
-    const validOrders = activeOrders.filter(o => statusOf(o) !== "PAYMENT_PENDING"); // confirmed orders only
+    const validOrders = activeOrders.filter(o => statusOf(o) !== "PAYMENT_PENDING");
     
     const todayOrders = validOrders.filter(o => Number(o.createdAt) >= midnight.getTime());
     const todaySales = todayOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
@@ -1423,7 +1476,7 @@
     const profit = todaySales - totalExpenses;
 
     const pendingOrders = orders.filter(o => ["NEW", "PAYMENT_PENDING", "ACCEPTED", "PREPARING"].includes(statusOf(o))).length;
-    const completedOrders = orders.filter(o => statusOf(o) === "READY" || statusOf(o) === "COMPLETED").length; // assuming ready/completed are done
+    const completedOrders = orders.filter(o => statusOf(o) === "READY" || statusOf(o) === "COMPLETED").length;
 
     const weekOrders = validOrders.filter(o => Number(o.createdAt) >= weekAgo);
     const weeklySales = weekOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
@@ -1432,7 +1485,6 @@
 
     const recent = validOrders.slice(0, 5);
 
-    // Inject Stats
     $("dashStatsGrid").innerHTML = `
       <div class="dash-card"><span class="dash-title">Today's Total Sales</span><span class="dash-val">${money(todaySales)}</span></div>
       <div class="dash-card"><span class="dash-title">Total Orders</span><span class="dash-val">${todayOrders.length}</span></div>
@@ -1442,11 +1494,9 @@
       <div class="dash-card"><span class="dash-title">Estimated Profit/Loss</span><span class="dash-val ${profit >= 0 ? 'profit' : 'loss'}">${money(profit)}</span></div>
     `;
 
-    // Inject Chart
     $("dashWeeklySales").textContent = money(weeklySales);
     $("dashMonthlySales").textContent = money(monthlySales);
 
-    // Inject Recent Orders
     $("dashRecentList").innerHTML = recent.length ? recent.map(o => `
       <div class="dash-list-item">
         <div>
@@ -1461,7 +1511,6 @@
     `).join("") : `<div style="text-align: center; color: var(--muted); padding: 10px;">No recent orders.</div>`;
   }
 
-  // Edit Dashboard Modal Logic
   function openDashEdit() {
     dashDirty = false;
     $("dExpense").value = dashSettings.expenses || 0;
@@ -1506,6 +1555,129 @@
     } finally {
       btn.disabled = false; btn.textContent = "Save Settings";
     }
+  });
+
+  /* ---------- Order Management ---------- */
+  let omFilter = "ALL", omSearch = "", omDateFrom = "", omDateTo = "";
+
+  function renderOMList() {
+    // Update active tab
+    document.querySelectorAll("#omTabs button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.omtab === omFilter)));
+
+    const filtered = orders.filter(o => {
+      // Tab Filter
+      const st = statusOf(o);
+      if (omFilter !== "ALL") {
+        if (omFilter === "NEW" && st !== "NEW" && st !== "PAYMENT_PENDING") return false;
+        if (omFilter === "ACCEPTED" && st !== "ACCEPTED") return false;
+        if (omFilter === "PREPARING" && st !== "PREPARING") return false;
+        if (omFilter === "COMPLETED" && st !== "READY" && st !== "COMPLETED") return false;
+        if (omFilter === "CANCELLED" && st !== "CANCELLED") return false;
+      }
+
+      // Search Filter
+      if (omSearch) {
+        const term = omSearch.toLowerCase();
+        const token = String(o.tokenNumber || "").toLowerCase();
+        const name = String(o.customerName || "").toLowerCase();
+        const phone = String(o.customerPhone || "").toLowerCase();
+        if (!token.includes(term) && !name.includes(term) && !phone.includes(term)) return false;
+      }
+
+      // Date Filter
+      const oDate = new Date(Number(o.createdAt));
+      if (omDateFrom) {
+        const from = new Date(omDateFrom); from.setHours(0,0,0,0);
+        if (oDate < from) return false;
+      }
+      if (omDateTo) {
+        const to = new Date(omDateTo); to.setHours(23,59,59,999);
+        if (oDate > to) return false;
+      }
+
+      return true;
+    });
+
+    if (!filtered.length) {
+      $("omList").innerHTML = `<div class="empty" style="padding: 20px;">No orders found matching your filters.</div>`;
+      return;
+    }
+
+    $("omList").innerHTML = filtered.map(o => {
+      const st = statusOf(o);
+      let stClass = "new", stText = "New";
+      if (st === "PAYMENT_PENDING") { stClass = "new"; stText = "Payment Pending"; }
+      else if (st === "ACCEPTED") { stClass = "accepted"; stText = "Accepted"; }
+      else if (st === "PREPARING") { stClass = "preparing"; stText = "Preparing"; }
+      else if (st === "READY" || st === "COMPLETED") { stClass = "ready"; stText = "Completed"; }
+      else if (st === "CANCELLED") { stClass = "cancelled"; stText = "Cancelled"; }
+
+      return `<div class="om-order-card" data-omid="${esc(o.id)}">
+        <div class="om-order-info">
+          <span class="om-order-token">${esc(o.tokenNumber || o.id)}</span>
+          <span class="om-order-meta">${esc(o.customerName || "Guest")} &middot; ${ageText(ageMin(o))}</span>
+          <div><span class="om-status ${stClass}">${stText}</span></div>
+        </div>
+        <div class="om-order-total">${money(o.totalAmount)}</div>
+      </div>`;
+    }).join("");
+  }
+
+  function openOMDetails(id) {
+    const o = orders.find(x => x.id === id);
+    if (!o) return;
+
+    const items = parseItems(o);
+    const isPaid = (o.paymentStatus || "").startsWith("PAID");
+    
+    $("omDetailBody").innerHTML = `
+      <div class="om-detail-row"><span>Token:</span><b>${esc(o.tokenNumber || o.id)}</b></div>
+      <div class="om-detail-row"><span>Customer:</span><span>${esc(o.customerName || "Guest")} ${o.customerPhone ? '&middot; ' + esc(o.customerPhone) : ''}</span></div>
+      <div class="om-detail-row"><span>Date:</span><span>${esc(dateTimeStr(o.createdAt))}</span></div>
+      <div class="om-detail-row"><span>Type:</span><span>${esc(o.tableNumber || "Takeaway")}</span></div>
+      <div class="om-detail-row"><span>Payment:</span><span>${isPaid ? 'Paid' : 'Pending'} (${esc(o.paymentMethod || "Unknown")})</span></div>
+      <div class="om-detail-row"><span>Status:</span><b>${esc(STATUS_LABEL[statusOf(o)] || statusOf(o))}</b></div>
+      
+      <div class="om-detail-items">
+        <p style="font-weight:600; margin-bottom:6px;">Items:</p>
+        ${items.map(i => `<div class="om-detail-item"><span>${i.quantity} x ${esc(i.name)}</span><span>${money(i.price * i.quantity)}</span></div>`).join("")}
+        <div class="om-detail-total"><span>Total</span><span>${money(o.totalAmount)}</span></div>
+      </div>
+      ${o.specialInstructions ? `<div class="note" style="margin-top:12px;">Note: ${esc(o.specialInstructions)}</div>` : ""}
+      
+      ${statusOf(o) !== "CANCELLED" && statusOf(o) !== "READY" && statusOf(o) !== "COMPLETED" ? `
+        <div style="margin-top: 16px; display: flex; gap: 8px;">
+          <button class="primary" style="flex:1; padding: 10px; font-size: 14px;" onclick="document.getElementById('omDetailClose').click(); update('${esc(o.id)}', { status: 'ACCEPTED' }, 'Order accepted');">Accept</button>
+          <button class="primary" style="flex:1; padding: 10px; font-size: 14px; background: var(--green);" onclick="document.getElementById('omDetailClose').click(); update('${esc(o.id)}', { status: 'PREPARING' }, 'Preparing started');">Prepare</button>
+          <button class="primary" style="flex:1; padding: 10px; font-size: 14px; background: var(--blue);" onclick="document.getElementById('omDetailClose').click(); update('${esc(o.id)}', { status: 'READY' }, 'Order ready');">Ready</button>
+        </div>
+      ` : ""}
+    `;
+
+    $("omDetailScrim").classList.add("open"); $("omDetailSheet").classList.add("open");
+  }
+
+  const closeOMDetails = () => { $("omDetailScrim").classList.remove("open"); $("omDetailSheet").classList.remove("open"); };
+  $("omDetailClose").addEventListener("click", closeOMDetails);
+  $("omDetailScrim").addEventListener("click", closeOMDetails);
+
+  $("omTabs").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-omtab]");
+    if (b) { omFilter = b.dataset.omtab; renderOMList(); }
+  });
+
+  $("omSearchInput").addEventListener("input", (e) => { omSearch = e.target.value.trim(); renderOMList(); });
+  $("omDateFrom").addEventListener("change", (e) => { omDateFrom = e.target.value; renderOMList(); });
+  $("omDateTo").addEventListener("change", (e) => { omDateTo = e.target.value; renderOMList(); });
+  $("omDateClear").addEventListener("click", () => { 
+    $("omDateFrom").value = ""; $("omDateTo").value = ""; 
+    omDateFrom = ""; omDateTo = ""; 
+    renderOMList(); 
+  });
+
+  $("omList").addEventListener("click", (e) => {
+    const card = e.target.closest("[data-omid]");
+    if (card) openOMDetails(card.dataset.omid);
   });
 </script>
 </body>
