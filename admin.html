@@ -288,8 +288,9 @@
   .om-filters { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
   .om-search { display: flex; gap: 8px; margin-bottom: 12px; }
   .om-search input { flex: 1; padding: 10px; border: 1px solid var(--line); border-radius: 8px; }
+  .om-dates-row { display: flex; flex-direction: column; gap: 8px; }
   .om-dates { display: flex; gap: 8px; align-items: center; font-size: 14px; }
-  .om-dates input { padding: 6px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; }
+  .om-dates input { padding: 6px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; flex: 1; }
   .om-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; margin-bottom: 16px; }
   .om-tabs::-webkit-scrollbar { display: none; }
   .om-tabs button { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 14px; font-weight: 500; font-size: 14px; }
@@ -371,7 +372,7 @@
       <!-- --- EXISTING SECTIONS --- -->
       <button class="drawer-item" data-view="orders" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>Orders<span class="n zero" id="newBadge">0</span></button>
       <button class="drawer-item" data-view="qr" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M14 21h.01M17.5 21H21v-3.5"/></svg>QR code</button>
-      <button class="drawer-item" data-view="menu" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v8a2 2 0 0 0 2 2v8M9 3v8M7 3v8"/><path d="M17 21V3c-2 1.5-3 4-3 7v3h3"/></svg>Menu edit</button>
+      <button class="drawer-item" data-view="menu" aria-pressed="false" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v8a2 2 0 0 0 2 2v8M9 3v8M7 3v8"/><path d="M17 21V3c-2 1.5-3 4-3 7v3h3"/></svg>Menu edit</button>
       <button class="drawer-item" data-view="pay" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
 
       <!-- --- NEW SECTIONS (Placeholder) --- -->
@@ -487,10 +488,12 @@
         <div class="om-search">
           <input type="text" id="omSearchInput" placeholder="Search by Token, Name, or Phone...">
         </div>
-        <div class="om-dates">
-          <span>From:</span><input type="date" id="omDateFrom">
-          <span>To:</span><input type="date" id="omDateTo">
-          <button class="icon-btn" id="omDateClear" style="padding: 4px 8px; font-size: 12px;">Clear</button>
+        <div class="om-dates-row">
+          <div class="om-dates">
+            <span>From:</span><input type="date" id="omDateFrom">
+            <span>To:</span><input type="date" id="omDateTo">
+          </div>
+          <button class="icon-btn" id="omDateClear" style="width: 100%; padding: 8px; font-size: 13px;">Clear Dates</button>
         </div>
       </div>
 
@@ -516,6 +519,80 @@
         <div class="om-modal-body" id="omDetailBody">
           <!-- Details will be injected here -->
         </div>
+      </div>
+    </div>
+
+    <!-- Menu Management View -->
+    <div id="menuManageView" class="hidden">
+      <div class="dash-header">
+        <h2 style="font-family: var(--head); font-weight: 800; font-size: 24px;">Menu Management</h2>
+        <button class="icon-btn" id="addMenuItemBtn" style="background: var(--chili); color: #fff; border: none;">+ Add Item</button>
+      </div>
+      
+      <div class="m-cats" id="mmCats"></div>
+      
+      <div class="om-list" id="mmList">
+        <!-- Menu items will be injected here -->
+      </div>
+    </div>
+
+    <!-- Menu Item Edit Modal -->
+    <div class="scrim" id="menuEditScrim"></div>
+    <div class="sheet" id="menuEditSheet" role="dialog" aria-modal="true">
+      <div class="sheet-in">
+        <div class="sheet-head"><h2 id="menuEditTitle">Edit Item</h2><button class="close" id="menuEditClose" type="button" aria-label="Close">&times;</button></div>
+        <form id="menuEditForm" novalidate>
+          <div class="field"><label for="mmName">Item Name</label><input id="mmName" required></div>
+          <div class="two">
+            <div class="field"><label for="mmCat">Category</label><input id="mmCat" required></div>
+            <div class="field"><label for="mmType">Type</label>
+              <select id="mmType">
+                <option value="Veg">Veg</option>
+                <option value="Non-Veg">Non-Veg</option>
+              </select>
+            </div>
+          </div>
+          <div class="two">
+            <div class="field"><label for="mmSegment">Segment</label>
+              <select id="mmSegment">
+                <option value="Regular">Regular</option>
+                <option value="Premium">Premium</option>
+              </select>
+            </div>
+            <div class="field"><label for="mmAvail">Availability</label>
+              <select id="mmAvail">
+                <option value="Available">Available</option>
+                <option value="Unavailable">Unavailable</option>
+              </select>
+            </div>
+          </div>
+          <div class="two">
+            <div class="field"><label for="mmPrice">Base Price (Rs)</label><input id="mmPrice" type="number" inputmode="decimal" required></div>
+            <div class="field"><label for="mmDiscountPrice">Discounted Price (Rs)</label><input id="mmDiscountPrice" type="number" inputmode="decimal" placeholder="Optional"></div>
+          </div>
+          <div class="field">
+            <label>Piece-wise Pricing</label>
+            <div id="mmPiecePricingBox" style="display: flex; flex-direction: column; gap: 6px;">
+               <!-- Piece pricing rows will be added here dynamically -->
+            </div>
+            <button type="button" class="text-btn" id="mmAddPieceBtn" style="margin-top: 6px;">+ Add Piece Price</button>
+          </div>
+          <div class="field">
+            <label>Add-ons (Optional)</label>
+            <div id="mmAddOnsBox" style="display: flex; flex-direction: column; gap: 6px;">
+               <!-- Add-ons will be added here -->
+            </div>
+            <button type="button" class="text-btn" id="mmAddAddOnBtn" style="margin-top: 6px;">+ Add Add-on</button>
+          </div>
+          <div class="field"><label for="mmDesc">Description</label><textarea id="mmDesc" rows="3"></textarea></div>
+          <div class="field">
+            <label>Item Image (URL)</label>
+            <input id="mmImage" placeholder="https://...">
+          </div>
+          <div class="msg err hidden" id="mmErr" role="alert"></div>
+          <button class="btn" id="mmSaveBtn" type="submit">Save Changes</button>
+          <button class="danger hidden" id="mmDeleteBtn" type="button" style="margin-top:10px;">Delete Item</button>
+        </form>
       </div>
     </div>
 
@@ -626,7 +703,6 @@
     { key: "new", label: "New" },
     { key: "done", label: "Done" }
   ];
-  // Ready is the last step. There is no "Served" step any more.
   const NEXT = {
     NEW: { to: "ACCEPTED", label: "Order received" },
     PAYMENT_PENDING: { to: "ACCEPTED", label: "Order received" },
@@ -644,7 +720,6 @@
   let audioCtx = null;
   const busy = new Set();
 
-  /* ---------- Sound ---------- */
   function unlockAudio() {
     try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === "suspended") audioCtx.resume(); } catch (_) {}
   }
@@ -670,14 +745,12 @@
     if (soundOn) { unlockAudio(); beep(); }
   });
 
-  /* ---------- Toast ---------- */
   let toastTimer;
   function toast(msg) {
     const t = $("toast"); t.textContent = msg; t.classList.remove("hidden");
     clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add("hidden"), 4500);
   }
 
-  /* ---------- Auth ---------- */
   const authMsg = (code) => ({
     "auth/invalid-credential": "Email ba password thik na. Abar try koro.",
     "auth/wrong-password": "Email ba password thik na. Abar try koro.",
@@ -732,7 +805,6 @@
     }
   });
 
-  /* ---------- Orders ---------- */
   function startListening() {
     if (unsub) unsub();
     firstSnapshot = true;
@@ -748,6 +820,7 @@
       if (view === "orders") render();
       if (view === "dashboard") renderDashboard();
       if (view === "order-manage") renderOMList();
+      if (view === "menu-manage") renderMMList();
       autoAcceptPending();
       autoPrintPending();
     }, (err) => {
@@ -819,7 +892,6 @@
     finally { busy.delete(id); render(); }
   }
 
-  /* ---------- Bill (same layout the customer sees) ---------- */
   const dateTimeStr = (ms) => { try { return new Date(Number(ms)).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }); } catch (_) { return ""; } };
   function billRowsHtml(o) {
     return parseItems(o).map((i) => {
@@ -922,7 +994,6 @@
     if (can && confirm("Ei order cancel korbe?")) update(can.dataset.cancel, { status: "CANCELLED" }, "Order cancelled");
   });
 
-  /* ---------- Menu management ---------- */
   const DEFAULT_MENU = [
     { id: "M-01", name: "Himalayan Steamed Chicken Momo", category: "Chicken", description: "Juicy minced chicken with ginger, scallions and mountain spices. Served with fiery red sesame chutney.", price: 190, isAvailable: true, isTodaysSpecial: true, spiciness: "Medium", pieces: 6, imageUrl: "https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?w=400&auto=format&fit=crop" },
     { id: "M-02", name: "Kurkure Paneer Crispy Momo", category: "Paneer", description: "Fresh cottage cheese filling with a crunchy panko coating, fried golden. Served with garlic mint mayo.", price: 180, isAvailable: true, isTodaysSpecial: false, spiciness: "Mild", pieces: 6, imageUrl: "https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?w=400&auto=format&fit=crop" },
@@ -948,6 +1019,7 @@
     menuUnsub = onSnapshot(collection(db, "menu_items"), (snap) => {
       menuDocs = new Map(snap.docs.map((d) => [d.id, d.data()]));
       if (view === "menu") renderMenu();
+      if (view === "menu-manage") renderMMList();
     }, (err) => toast("Menu load hoy ni (" + (err.code || err.message) + ")"));
   }
 
@@ -967,8 +1039,9 @@
     $("payView").classList.toggle("hidden", v !== "pay");
     $("dashboardView").classList.toggle("hidden", v !== "dashboard");
     $("orderManageView").classList.toggle("hidden", v !== "order-manage");
+    $("menuManageView").classList.toggle("hidden", v !== "menu-manage");
     
-    if (!["orders","menu","qr","pay","dashboard","order-manage"].includes(v)) {
+    if (!["orders","menu","qr","pay","dashboard","order-manage","menu-manage"].includes(v)) {
       $("placeholderView").classList.remove("hidden");
       const btn = document.querySelector(`#navList [data-view="${v}"]`);
       if (btn) $("placeholderTitle").textContent = btn.textContent.trim();
@@ -987,13 +1060,13 @@
     $("viewTitle").textContent = title;
     
     closeNav();
-    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "menu") renderMenu(); else if (v === "dashboard") renderDashboard(); else if (v === "order-manage") renderOMList();
+    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "menu") renderMenu(); else if (v === "dashboard") renderDashboard(); else if (v === "order-manage") renderOMList(); else if (v === "menu-manage") renderMMList();
     window.scrollTo(0, 0);
   }
   $("navList").addEventListener("click", (e) => { const b = e.target.closest("button[data-view]"); if (b) setView(b.dataset.view); });
   $("viewBack").addEventListener("click", () => setView("orders"));
 
-  const NAV_TITLES = { orders: "Orders", qr: "QR code", menu: "Menu edit", pay: "Settings", dashboard: "Dashboard Overview", "order-manage": "Order Management" };
+  const NAV_TITLES = { orders: "Orders", qr: "QR code", menu: "Menu edit", pay: "Settings", dashboard: "Dashboard Overview", "order-manage": "Order Management", "menu-manage": "Menu Management & Pricing" };
   function openNav() {
     $("drawer").classList.add("open"); $("navScrim").classList.add("open");
     $("drawer").setAttribute("aria-hidden", "false"); $("menuBtn").setAttribute("aria-expanded", "true");
@@ -1154,7 +1227,6 @@
     catch (err) { $("itemErr").textContent = "Delete hoy ni (" + (err.code || err.message) + ")"; $("itemErr").classList.remove("hidden"); }
   });
 
-  /* ---------- Auto-accept online orders ---------- */
   let autoOnline = false, settingsUnsubs = [], payDirty = false;
   try { autoOnline = localStorage.getItem("mm_auto_online") === "1"; } catch (_) {}
   const autoBusy = new Set(), autoFailed = new Set();
@@ -1191,7 +1263,6 @@
     autoAcceptPending();
   });
 
-  /* ---------- Kitchen ticket printing ---------- */
   let autoPrint = true, paperW = "80";
   try { autoPrint = localStorage.getItem("mm_auto_print") !== "0"; paperW = localStorage.getItem("mm_paper") === "58" ? "58" : "80"; } catch (_) {}
   const PRINT_WINDOW_MS = 15 * 60 * 1000;
@@ -1272,7 +1343,6 @@
   }));
   applyPaper(); renderPrintSwitch();
 
-  /* ---------- Shop payment account (the customer page reads settings/payment) ---------- */
   const validUpi = (v) => /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z][a-zA-Z0-9.-]{1,63}$/.test(String(v || "").trim());
   function showPayPrev(upi, name, mc) {
     try {
@@ -1348,7 +1418,6 @@
   });
   renderAuto();
 
-  /* ---------- QR code ---------- */
   const lsGet = (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} };
   const lsDel = (k) => { try { localStorage.removeItem(k); } catch (_) {} };
@@ -1442,7 +1511,6 @@
 
   setInterval(() => { if (!$("boardView").classList.contains("hidden") && view === "orders") render(); }, 30000);
 
-  /* ---------- Dashboard Overview ---------- */
   let dashSettings = { expenses: 0, weeklyTarget: 0, monthlyTarget: 0 }, dashUnsub = null, dashDirty = false;
 
   function startDashboardListening() {
@@ -1561,11 +1629,19 @@
   let omFilter = "ALL", omSearch = "", omDateFrom = "", omDateTo = "";
 
   function renderOMList() {
-    // Update active tab
     document.querySelectorAll("#omTabs button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.omtab === omFilter)));
 
+    // Populate date dropdown/input if empty
+    if (!omDateFrom && orders.length) {
+       // Default to today if no filter set
+       const today = new Date().toISOString().split('T')[0];
+       $("omDateFrom").value = today;
+       $("omDateTo").value = today;
+       omDateFrom = today;
+       omDateTo = today;
+    }
+
     const filtered = orders.filter(o => {
-      // Tab Filter
       const st = statusOf(o);
       if (omFilter !== "ALL") {
         if (omFilter === "NEW" && st !== "NEW" && st !== "PAYMENT_PENDING") return false;
@@ -1575,7 +1651,6 @@
         if (omFilter === "CANCELLED" && st !== "CANCELLED") return false;
       }
 
-      // Search Filter
       if (omSearch) {
         const term = omSearch.toLowerCase();
         const token = String(o.tokenNumber || "").toLowerCase();
@@ -1584,7 +1659,6 @@
         if (!token.includes(term) && !name.includes(term) && !phone.includes(term)) return false;
       }
 
-      // Date Filter
       const oDate = new Date(Number(o.createdAt));
       if (omDateFrom) {
         const from = new Date(omDateFrom); from.setHours(0,0,0,0);
@@ -1678,6 +1752,207 @@
   $("omList").addEventListener("click", (e) => {
     const card = e.target.closest("[data-omid]");
     if (card) openOMDetails(card.dataset.omid);
+  });
+
+  /* ---------- Menu Management ---------- */
+  let mmCat = "All";
+  let mmEditingId = null;
+  
+  // Modal state arrays
+  let mmPiecePrices = [];
+  let mmAddOns = [];
+
+  function renderMMList() {
+    const items = mergedMenu();
+    const cats = ["All", ...new Set(items.map((m) => m.category).filter(Boolean))];
+    if (!cats.includes(mmCat)) mmCat = "All";
+    
+    $("mmCats").innerHTML = cats.map((c) => `<button type="button" data-mmc="${esc(c)}" aria-pressed="${c === mmCat}">${esc(c)}</button>`).join("");
+    
+    const list = items.filter((m) => mmCat === "All" || m.category === mmCat);
+    
+    $("mmList").innerHTML = list.map(m => {
+      return `<div class="mrow">
+        <div class="minfo">
+          <div class="mname">${esc(m.name)}</div>
+          <div class="msub">${esc(m.category)} &middot; ${money(m.price)}</div>
+          <div style="margin-top: 4px;">
+            <span class="badge ${m.isAvailable !== false ? 'paid' : 'cancelled'}">${m.isAvailable !== false ? 'Available' : 'Unavailable'}</span>
+          </div>
+        </div>
+        <div class="mctl">
+          <button data-mmedit="${esc(m.id)}">Edit</button>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  $("mmCats").addEventListener("click", (e) => { 
+    const b = e.target.closest("button[data-mmc]"); 
+    if (b) { mmCat = b.dataset.mmc; renderMMList(); } 
+  });
+
+  $("mmList").addEventListener("click", (e) => {
+    const ed = e.target.closest("[data-mmedit]");
+    if (ed) openMMEdit(ed.dataset.mmedit);
+  });
+
+  function openMMEdit(id) {
+    mmEditingId = id;
+    const m = id ? mergedMenu().find((x) => x.id === id) : null;
+    $("menuEditTitle").textContent = m ? "Edit Item" : "Add New Item";
+    
+    $("mmName").value = m ? m.name : "";
+    $("mmCat").value = m ? m.category : "";
+    $("mmType").value = m && m.type ? m.type : "Veg";
+    $("mmSegment").value = m && m.segment ? m.segment : "Regular";
+    $("mmPrice").value = m ? m.price : "";
+    $("mmDiscountPrice").value = m && m.discountPrice ? m.discountPrice : "";
+    $("mmDesc").value = m ? m.description : "";
+    $("mmImage").value = m ? m.imageUrl : "";
+    $("mmAvail").value = m && m.isAvailable === false ? "Unavailable" : "Available";
+    
+    mmPiecePrices = m && m.piecePrices ? [...m.piecePrices] : [];
+    mmAddOns = m && m.addOns ? [...m.addOns] : [];
+    
+    renderMMPiecePrices();
+    renderMMAddOns();
+    
+    $("mmErr").classList.add("hidden");
+    $("mmDeleteBtn").classList.toggle("hidden", !m || DEFAULT_IDS.has(id));
+    $("menuEditScrim").classList.add("open"); $("menuEditSheet").classList.add("open");
+  }
+
+  function renderMMPiecePrices() {
+    const box = $("mmPiecePricingBox");
+    box.innerHTML = mmPiecePrices.map((p, i) => `
+      <div style="display:flex; gap:6px; align-items:center;">
+        <input type="number" value="${esc(p.pieces)}" placeholder="Pieces" style="flex:1; padding:8px; border:1px solid var(--line); border-radius:8px;" class="mm-p-pieces">
+        <input type="number" value="${esc(p.price)}" placeholder="Price" style="flex:1; padding:8px; border:1px solid var(--line); border-radius:8px;" class="mm-p-price">
+        <button type="button" class="text-btn" onclick="removeMMPiece(${i})" style="color:var(--late);">Remove</button>
+      </div>
+    `).join("");
+  }
+  window.removeMMPiece = (i) => {
+    // Save current values before removing
+    const rows = document.querySelectorAll("#mmPiecePricingBox > div");
+    mmPiecePrices = Array.from(rows).map(r => ({
+      pieces: Number(r.querySelector(".mm-p-pieces").value),
+      price: Number(r.querySelector(".mm-p-price").value)
+    }));
+    mmPiecePrices.splice(i, 1);
+    renderMMPiecePrices();
+  };
+
+  function renderMMAddOns() {
+    const box = $("mmAddOnsBox");
+    box.innerHTML = mmAddOns.map((a, i) => `
+      <div style="display:flex; gap:6px; align-items:center;">
+        <input type="text" value="${esc(a.name)}" placeholder="Add-on Name" style="flex:2; padding:8px; border:1px solid var(--line); border-radius:8px;" class="mm-a-name">
+        <input type="number" value="${esc(a.price)}" placeholder="Price" style="flex:1; padding:8px; border:1px solid var(--line); border-radius:8px;" class="mm-a-price">
+        <button type="button" class="text-btn" onclick="removeMMAddOn(${i})" style="color:var(--late);">Remove</button>
+      </div>
+    `).join("");
+  }
+  window.removeMMAddOn = (i) => {
+    const rows = document.querySelectorAll("#mmAddOnsBox > div");
+    mmAddOns = Array.from(rows).map(r => ({
+      name: r.querySelector(".mm-a-name").value,
+      price: Number(r.querySelector(".mm-a-price").value)
+    }));
+    mmAddOns.splice(i, 1);
+    renderMMAddOns();
+  };
+
+  $("mmAddPieceBtn").addEventListener("click", () => {
+    // Save current rows
+    const rows = document.querySelectorAll("#mmPiecePricingBox > div");
+    mmPiecePrices = Array.from(rows).map(r => ({
+      pieces: Number(r.querySelector(".mm-p-pieces").value),
+      price: Number(r.querySelector(".mm-p-price").value)
+    }));
+    mmPiecePrices.push({ pieces: "", price: "" });
+    renderMMPiecePrices();
+  });
+
+  $("mmAddAddOnBtn").addEventListener("click", () => {
+    const rows = document.querySelectorAll("#mmAddOnsBox > div");
+    mmAddOns = Array.from(rows).map(r => ({
+      name: r.querySelector(".mm-a-name").value,
+      price: Number(r.querySelector(".mm-a-price").value)
+    }));
+    mmAddOns.push({ name: "", price: "" });
+    renderMMAddOns();
+  });
+
+  const closeMMEdit = () => { $("menuEditScrim").classList.remove("open"); $("menuEditSheet").classList.remove("open"); };
+  $("menuEditClose").addEventListener("click", closeMMEdit);
+  $("menuEditScrim").addEventListener("click", closeMMEdit);
+
+  $("addMenuItemBtn").addEventListener("click", () => openMMEdit(null));
+
+  $("menuEditForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = $("mmName").value.trim();
+    const cat = $("mmCat").value.trim();
+    const type = $("mmType").value;
+    const segment = $("mmSegment").value;
+    const price = parseFloat($("mmPrice").value);
+    const discountPrice = parseFloat($("mmDiscountPrice").value) || 0;
+    const desc = $("mmDesc").value.trim();
+    const img = $("mmImage").value.trim();
+    const avail = $("mmAvail").value === "Available";
+    
+    if (!name || !cat || !(price > 0)) {
+      $("mmErr").textContent = "Please fill required fields (Name, Category, Base Price).";
+      $("mmErr").classList.remove("hidden");
+      return;
+    }
+
+    // Save final row values
+    const pRows = document.querySelectorAll("#mmPiecePricingBox > div");
+    const finalPiecePrices = Array.from(pRows).map(r => ({
+      pieces: Number(r.querySelector(".mm-p-pieces").value),
+      price: Number(r.querySelector(".mm-p-price").value)
+    })).filter(p => p.pieces > 0 && p.price > 0);
+
+    const aRows = document.querySelectorAll("#mmAddOnsBox > div");
+    const finalAddOns = Array.from(aRows).map(r => ({
+      name: r.querySelector(".mm-a-name").value.trim(),
+      price: Number(r.querySelector(".mm-a-price").value)
+    })).filter(a => a.name && a.price >= 0);
+
+    const btn = $("mmSaveBtn"); btn.disabled = true; btn.textContent = "Saving...";
+    try {
+      const item = {
+        id: mmEditingId || "C-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+        name, category: cat, type, segment, price, 
+        discountPrice: discountPrice > 0 ? discountPrice : null,
+        piecePrices: finalPiecePrices, addOns: finalAddOns,
+        description: desc, isAvailable: avail,
+        imageUrl: img, isTodaysSpecial: false, spiciness: "Mild", pieces: 6
+      };
+      await setDoc(doc(db, "menu_items", item.id), item);
+      closeMMEdit();
+      toast("Menu item saved.");
+    } catch (err) {
+      $("mmErr").textContent = "Save failed: " + (err.code || err.message);
+      $("mmErr").classList.remove("hidden");
+    } finally {
+      btn.disabled = false; btn.textContent = "Save Changes";
+    }
+  });
+
+  $("mmDeleteBtn").addEventListener("click", async () => {
+    if (!mmEditingId || DEFAULT_IDS.has(mmEditingId) || !confirm("Delete this item?")) return;
+    try {
+      await deleteDoc(doc(db, "menu_items", mmEditingId));
+      closeMMEdit();
+      toast("Item deleted.");
+    } catch (err) {
+      $("mmErr").textContent = "Delete failed: " + (err.code || err.message);
+      $("mmErr").classList.remove("hidden");
+    }
   });
 </script>
 </body>
