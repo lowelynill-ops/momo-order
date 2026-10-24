@@ -1144,6 +1144,68 @@
       </div>
     </div>
 
+    <!-- Sales Reports View -->
+    <div id="salesReportsView" class="hidden">
+      <div class="dash-header" style="align-items: flex-start; flex-direction: column; gap: 12px;">
+        <div style="display: flex; justify-content: space-between; width: 100%;">
+          <h2 style="font-family: var(--head); font-weight: 800; font-size: 24px;">Sales Reports & Analytics</h2>
+          <button class="icon-btn" id="salesExportBtn" style="background: var(--chili); color: #fff; border: none;">Export Data</button>
+        </div>
+      </div>
+
+      <div class="om-filters">
+        <div class="om-dates-row">
+          <div class="om-dates">
+            <span>From:</span><input type="date" id="salesDateFrom">
+            <span>To:</span><input type="date" id="salesDateTo">
+          </div>
+          <button class="icon-btn" id="salesDateClear" style="width: 100%; padding: 8px; font-size: 13px;">Clear Dates</button>
+        </div>
+      </div>
+
+      <!-- Sales Summary Cards -->
+      <div class="dash-grid">
+        <div class="dash-card"><span class="dash-title">Total Sales Revenue</span><span class="dash-val" id="salesTotalRevenue">Rs 0</span></div>
+        <div class="dash-card"><span class="dash-title">Average Order Value</span><span class="dash-val" id="salesAOV">Rs 0</span></div>
+        <div class="dash-card"><span class="dash-title">Sales Growth (%)</span><span class="dash-val" id="salesGrowth">0%</span></div>
+        <div class="dash-card"><span class="dash-title">Total Orders</span><span class="dash-val" id="salesOrderCount">0</span></div>
+      </div>
+
+      <div class="chart-box">
+        <div class="chart-title">Best-Selling Items (Top 5)</div>
+        <div class="chart-container" id="salesBestItems"></div>
+      </div>
+
+      <div class="chart-box">
+        <div class="chart-title">Category-wise Sales</div>
+        <div class="chart-container" id="salesCategoryChart"></div>
+      </div>
+
+      <div class="chart-box">
+        <div class="chart-title">Peak Sales Hours</div>
+        <div class="chart-container" id="salesPeakHours"></div>
+      </div>
+
+      <div class="chart-box">
+        <div class="chart-title">Sales Channel</div>
+        <div class="chart-container" id="salesChannelChart"></div>
+      </div>
+
+      <div class="pay-card" style="margin-bottom: 16px;">
+        <h3 style="font-size: 18px; margin-bottom: 8px;">Item-wise Sales</h3>
+        <div id="salesItemList" style="font-size: 14px;">
+          <!-- Item-wise list injected here -->
+        </div>
+      </div>
+
+      <div class="pay-card" style="margin-bottom: 16px;">
+        <h3 style="font-size: 18px; margin-bottom: 8px;">Customer-wise Sales</h3>
+        <div id="salesCustList" style="font-size: 14px;">
+          <!-- Customer list injected here -->
+        </div>
+      </div>
+    </div>
+
     <!-- Placeholder View for New Modules -->
     <div id="placeholderView" class="hidden">
       <div class="pay-card" style="text-align: center; padding: 40px 20px;">
@@ -1348,6 +1410,7 @@
       if (view === "payments-tx") renderTxList();
       if (view === "finance-exp") renderExpList();
       if (view === "pnl-reports") renderPnl();
+      if (view === "sales-reports") renderSalesReports();
       autoAcceptPending();
       autoPrintPending();
     }, (err) => {
@@ -1594,8 +1657,9 @@
     $("paymentsTxView").classList.toggle("hidden", v !== "payments-tx");
     $("financeExpView").classList.toggle("hidden", v !== "finance-exp");
     $("pnlView").classList.toggle("hidden", v !== "pnl-reports");
+    $("salesReportsView").classList.toggle("hidden", v !== "sales-reports");
     
-    if (!["orders","qr","pay","dashboard","order-manage","menu-manage","crm","billing","payments-tx","finance-exp","pnl-reports"].includes(v)) {
+    if (!["orders","qr","pay","dashboard","order-manage","menu-manage","crm","billing","payments-tx","finance-exp","pnl-reports","sales-reports"].includes(v)) {
       $("placeholderView").classList.remove("hidden");
       const btn = document.querySelector(`#navList [data-view="${v}"]`);
       if (btn) $("placeholderTitle").textContent = btn.textContent.trim();
@@ -1614,13 +1678,13 @@
     $("viewTitle").textContent = title;
     
     closeNav();
-    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "dashboard") renderDashboard(); else if (v === "order-manage") renderOMList(); else if (v === "menu-manage") renderMMList(); else if (v === "crm") renderCRMList(); else if (v === "billing") renderBillingList(); else if (v === "payments-tx") renderTxList(); else if (v === "finance-exp") renderExpList(); else if (v === "pnl-reports") renderPnl();
+    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "dashboard") renderDashboard(); else if (v === "order-manage") renderOMList(); else if (v === "menu-manage") renderMMList(); else if (v === "crm") renderCRMList(); else if (v === "billing") renderBillingList(); else if (v === "payments-tx") renderTxList(); else if (v === "finance-exp") renderExpList(); else if (v === "pnl-reports") renderPnl(); else if (v === "sales-reports") renderSalesReports();
     window.scrollTo(0, 0);
   }
   $("navList").addEventListener("click", (e) => { const b = e.target.closest("button[data-view]"); if (b) setView(b.dataset.view); });
   $("viewBack").addEventListener("click", () => setView("orders"));
 
-  const NAV_TITLES = { orders: "Orders", qr: "QR code", pay: "Settings", dashboard: "Dashboard Overview", "order-manage": "Order Management", "menu-manage": "Menu Management & Pricing", crm: "Customer Management (CRM)", billing: "Billing & Invoices", "payments-tx": "Payments & Transactions", "finance-exp": "Finance & Expenses", "pnl-reports": "Profit & Loss Reports" };
+  const NAV_TITLES = { orders: "Orders", qr: "QR code", pay: "Settings", dashboard: "Dashboard Overview", "order-manage": "Order Management", "menu-manage": "Menu Management & Pricing", crm: "Customer Management (CRM)", billing: "Billing & Invoices", "payments-tx": "Payments & Transactions", "finance-exp": "Finance & Expenses", "pnl-reports": "Profit & Loss Reports", "sales-reports": "Sales Reports & Analytics" };
   function openNav() {
     $("drawer").classList.add("open"); $("navScrim").classList.add("open");
     $("drawer").setAttribute("aria-hidden", "false"); $("menuBtn").setAttribute("aria-expanded", "true");
@@ -2000,7 +2064,6 @@
     const todayOrders = validOrders.filter(o => Number(o.createdAt) >= midnight.getTime());
     const todaySales = todayOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
     
-    // SYNC: Use expenses data
     const totalExpenses = expenses.filter(e => e.category !== "Cash In" && e.status === "PAID").reduce((s, e) => s + Number(e.amount || 0), 0);
     const profit = todaySales - totalExpenses;
 
@@ -3628,7 +3691,6 @@
   }
 
   function renderPnl() {
-    // Filter by Date Range
     const filterDate = (item) => {
       const d = Number(item.createdAt || item.date);
       if (pnlDateFrom) { const from = new Date(pnlDateFrom); from.setHours(0,0,0,0); if (d < from.getTime()) return false; }
@@ -3639,27 +3701,15 @@
     const validOrders = orders.filter(o => statusOf(o) !== "CANCELLED" && statusOf(o) !== "PAYMENT_PENDING" && filterDate(o));
     const validExpenses = expenses.filter(e => e.category !== "Cash In" && filterDate(e));
 
-    // 1. Total Sales Revenue (from Orders)
     const revenue = validOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
-
-    // 2. Total Expenses (from Expenses)
     const totalExp = validExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
-
-    // 3. Gross Profit (Revenue - COGS)
     const cogs = validExpenses.filter(e => ["Raw Materials", "Purchase"].includes(e.category)).reduce((s, e) => s + Number(e.amount || 0), 0);
     const grossProfit = revenue - cogs;
-
-    // 4. Net Profit (Revenue - Total Expenses)
     const netProfit = revenue - totalExp;
-
-    // 10 & 11. Operating Expenses
     const opExCategories = ["Rent", "Salary", "Electricity", "Water", "Utility Bill", "Packaging", "Delivery", "Maintenance", "Staff Advance", "Supplier Payment", "Other"];
     const opEx = validExpenses.filter(e => opExCategories.includes(e.category)).reduce((s, e) => s + Number(e.amount || 0), 0);
-
-    // 13. Profit Margin
     const actualMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
 
-    // Render Cards
     $("pnlRevenue").textContent = money(revenue);
     $("pnlTotalExp").textContent = money(totalExp);
     $("pnlGrossProfit").textContent = money(grossProfit);
@@ -3669,7 +3719,6 @@
     $("pnlOpEx").textContent = money(opEx);
     $("pnlMargin").textContent = actualMargin.toFixed(1) + "%";
 
-    // 12. Sales vs Expenses Chart
     const maxSE = Math.max(revenue, totalExp, 1);
     $("pnlSalesVsExp").innerHTML = `
       <div class="chart-bar-row">
@@ -3684,7 +3733,6 @@
       </div>
     `;
 
-    // 14. Expense Breakdown by Category
     const catTotals = {};
     validExpenses.forEach(e => {
       catTotals[e.category] = (catTotals[e.category] || 0) + Number(e.amount || 0);
@@ -3699,7 +3747,6 @@
       </div>
     `).join("") : `<div style="text-align: center; color: var(--muted); padding: 10px;">No expense data.</div>`;
 
-    // 5. Daily P&L (Last 7 days)
     const dailyMap = {};
     for (let i = 6; i >= 0; i--) {
       const d = new Date(); d.setDate(d.getDate() - i); d.setHours(0,0,0,0);
@@ -3722,7 +3769,6 @@
       return `<div class="chart-row"><span>${k}</span><b style="color: ${p >= 0 ? 'var(--green)' : 'var(--late)'}">${p >= 0 ? '+' : ''}${money(p)}</b></div>`;
     }).join("");
 
-    // 15. Month-to-Month Profit Comparison
     const monthMap = {};
     for (let i = 5; i >= 0; i--) {
       const d = new Date(); d.setMonth(d.getMonth() - i);
@@ -3751,7 +3797,6 @@
     }).join("");
   }
 
-  // P&L Settings Modal
   function openPnlSettings() {
     $("pnlMarginInput").value = pnlSettings.targetMargin || 20;
     $("pnlErr").classList.add("hidden");
@@ -3810,6 +3855,167 @@
     const a = document.createElement("a");
     a.href = url;
     a.download = "MomoMama-PnL.csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  });
+
+  /* ---------- Sales Reports & Analytics ---------- */
+  let salesDateFrom = "", salesDateTo = "";
+
+  function renderSalesReports() {
+    const filterDate = (item) => {
+      const d = Number(item.createdAt || item.date);
+      if (salesDateFrom) { const from = new Date(salesDateFrom); from.setHours(0,0,0,0); if (d < from.getTime()) return false; }
+      if (salesDateTo) { const to = new Date(salesDateTo); to.setHours(23,59,59,999); if (d > to.getTime()) return false; }
+      return true;
+    };
+
+    const validOrders = orders.filter(o => statusOf(o) !== "CANCELLED" && statusOf(o) !== "PAYMENT_PENDING" && filterDate(o));
+    
+    // 1. Total Sales Revenue
+    const totalRevenue = validOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
+    $("salesTotalRevenue").textContent = money(totalRevenue);
+    $("salesOrderCount").textContent = validOrders.length;
+
+    // 6. Average Order Value
+    const aov = validOrders.length > 0 ? totalRevenue / validOrders.length : 0;
+    $("salesAOV").textContent = money(aov);
+
+    // 10. Sales Growth (Month-over-Month)
+    const now = new Date();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
+    const thisMonthOrders = validOrders.filter(o => Number(o.createdAt) >= thisMonthStart);
+    const lastMonthOrders = validOrders.filter(o => Number(o.createdAt) >= lastMonthStart && Number(o.createdAt) < thisMonthStart);
+    const thisMonthRev = thisMonthOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
+    const lastMonthRev = lastMonthOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
+    let growth = 0;
+    if (lastMonthRev > 0) growth = ((thisMonthRev - lastMonthRev) / lastMonthRev) * 100;
+    else if (thisMonthRev > 0) growth = 100;
+    $("salesGrowth").textContent = (growth >= 0 ? '+' : '') + growth.toFixed(1) + "%";
+    $("salesGrowth").style.color = growth >= 0 ? 'var(--green)' : 'var(--late)';
+
+    // Item Sales Aggregation
+    const itemMap = {};
+    validOrders.forEach(o => {
+      parseItems(o).forEach(it => {
+        const key = it.name;
+        if (!itemMap[key]) itemMap[key] = { name: key, qty: 0, revenue: 0, category: it.category || "Other" };
+        itemMap[key].qty += Number(it.quantity || 0);
+        itemMap[key].revenue += Number(it.price || 0) * Number(it.quantity || 0);
+      });
+    });
+    const allItems = Object.values(itemMap).sort((a, b) => b.qty - a.qty);
+
+    // 2. Best-Selling Items (Top 5)
+    const top5 = allItems.slice(0, 5);
+    const maxQty = top5.length ? top5[0].qty : 1;
+    $("salesBestItems").innerHTML = top5.map(it => `
+      <div class="chart-bar-row">
+        <div class="chart-bar-label" title="${esc(it.name)}">${esc(it.name)}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill" style="width: ${(it.qty/maxQty)*100}%"></div></div>
+        <div class="chart-bar-val" style="width:50px;">${it.qty}</div>
+      </div>
+    `).join("");
+
+    // 3. Item-wise Sales List
+    $("salesItemList").innerHTML = allItems.length ? allItems.map(it => `
+      <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line);">
+        <div><b>${esc(it.name)}</b><span style="font-size:12px; color:var(--muted); margin-left:8px;">(${esc(it.category)})</span></div>
+        <div>${it.qty} x → <b>${money(it.revenue)}</b></div>
+      </div>
+    `).join("") : `<div class="hint">No data.</div>`;
+
+    // 4. Category-wise Sales
+    const catMap = {};
+    validOrders.forEach(o => {
+      parseItems(o).forEach(it => {
+        const cat = it.category || "Other";
+        catMap[cat] = (catMap[cat] || 0) + (Number(it.price || 0) * Number(it.quantity || 0));
+      });
+    });
+    const cats = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
+    const maxCat = cats.length ? cats[0][1] : 1;
+    $("salesCategoryChart").innerHTML = cats.map(([name, amt]) => `
+      <div class="chart-bar-row">
+        <div class="chart-bar-label">${esc(name)}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill" style="width: ${(amt/maxCat)*100}%; background: var(--green);"></div></div>
+        <div class="chart-bar-val" style="width:60px;">${money(amt)}</div>
+      </div>
+    `).join("");
+
+    // 5. Peak Sales Hours
+    const hourMap = {};
+    for (let i = 0; i < 24; i++) hourMap[i] = 0;
+    validOrders.forEach(o => {
+      const h = new Date(Number(o.createdAt)).getHours();
+      hourMap[h]++;
+    });
+    const maxHour = Math.max(...Object.values(hourMap), 1);
+    $("salesPeakHours").innerHTML = Object.entries(hourMap).filter(([h, n]) => n > 0).map(([h, n]) => {
+      const hr = Number(h);
+      const label = hr === 0 ? "12AM" : hr < 12 ? hr + "AM" : hr === 12 ? "12PM" : (hr - 12) + "PM";
+      return `<div class="chart-bar-row">
+        <div class="chart-bar-label">${label}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill" style="width: ${(n/maxHour)*100}%; background: var(--blue);"></div></div>
+        <div class="chart-bar-val">${n}</div>
+      </div>`;
+    }).join("");
+
+    // 7. Customer-wise Sales
+    const custMap = {};
+    validOrders.forEach(o => {
+      const phone = String(o.customerPhone || "").trim();
+      const name = String(o.customerName || "Guest").trim();
+      if (!phone) return;
+      if (!custMap[phone]) custMap[phone] = { name, phone, total: 0, count: 0 };
+      custMap[phone].total += Number(o.totalAmount || 0);
+      custMap[phone].count++;
+    });
+    const custs = Object.values(custMap).sort((a, b) => b.total - a.total).slice(0, 10);
+    $("salesCustList").innerHTML = custs.length ? custs.map(c => `
+      <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line);">
+        <div><b>${esc(c.name)}</b><span style="font-size:12px; color:var(--muted); margin-left:8px;">(${esc(c.phone)})</span></div>
+        <div>${c.count} orders → <b>${money(c.total)}</b></div>
+      </div>
+    `).join("") : `<div class="hint">No data.</div>`;
+
+    // 8. Sales Channel-wise Report
+    const channelMap = {};
+    validOrders.forEach(o => {
+      const channel = o.salesChannel || "Walk-in / Direct";
+      channelMap[channel] = (channelMap[channel] || 0) + Number(o.totalAmount || 0);
+    });
+    const chans = Object.entries(channelMap).sort((a, b) => b[1] - a[1]);
+    const maxChan = chans.length ? chans[0][1] : 1;
+    $("salesChannelChart").innerHTML = chans.map(([name, amt]) => `
+      <div class="chart-bar-row">
+        <div class="chart-bar-label">${esc(name)}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill" style="width: ${(amt/maxChan)*100}%; background: var(--chili);"></div></div>
+        <div class="chart-bar-val" style="width:60px;">${money(amt)}</div>
+      </div>
+    `).join("");
+  }
+
+  $("salesDateFrom").addEventListener("change", (e) => { salesDateFrom = e.target.value; renderSalesReports(); });
+  $("salesDateTo").addEventListener("change", (e) => { salesDateTo = e.target.value; renderSalesReports(); });
+  $("salesDateClear").addEventListener("click", () => {
+    $("salesDateFrom").value = ""; $("salesDateTo").value = "";
+    salesDateFrom = ""; salesDateTo = "";
+    renderSalesReports();
+  });
+
+  $("salesExportBtn").addEventListener("click", () => {
+    const validOrders = orders.filter(o => statusOf(o) !== "CANCELLED" && statusOf(o) !== "PAYMENT_PENDING");
+    let csv = "Order ID,Date,Customer,Amount,Status\n";
+    validOrders.forEach(o => {
+      csv += `"${o.tokenNumber || o.id}","${dateTimeStr(o.createdAt)}","${(o.customerName || "Guest").replace(/"/g, '""')}",${o.totalAmount},"${statusOf(o)}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "MomoMama-SalesReport.csv";
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   });
