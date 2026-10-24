@@ -1198,7 +1198,33 @@
 
   async function update(id, fields, okMsg) {
     busy.add(id); render();
-    try { await updateDoc(doc(db, "orders", id), fields); if (okMsg) toast(okMsg); }
+    try {
+      await updateDoc(doc(db, "orders", id), fields);
+      if (okMsg) toast(okMsg);
+      
+      // AUTO CREATE TRANSACTION LOGIC
+      if (fields.paymentStatus && String(fields.paymentStatus).startsWith("PAID")) {
+        const o = orders.find(x => x.id === id);
+        if (o) {
+          const existingTx = transactions.find(t => t.orderId === id);
+          if (!existingTx) {
+            const methodMap = { "PAID_CASH": "Cash", "PAID_UPI": "UPI", "PAID_CARD": "Online" };
+            const method = methodMap[fields.paymentStatus] || "Cash";
+            const txId = "TXN-" + Date.now().toString().slice(-6);
+            await setDoc(doc(db, "transactions", txId), {
+              txId,
+              orderId: id,
+              customerName: o.customerName || "Guest",
+              amount: o.totalAmount || 0,
+              method,
+              status: "SUCCESS",
+              createdAt: Date.now(),
+              updatedAt: Date.now()
+            });
+          }
+        }
+      }
+    }
     catch (err) { toast("Update hoy ni (" + (err.code || err.message) + ")"); }
     finally { busy.delete(id); render(); }
   }
@@ -2261,7 +2287,6 @@
   function renderCRMList() {
     const allCustomers = getAllCustomers();
     
-    // Render Charts
     const bySpend = [...allCustomers].sort((a, b) => (b.totalSpending || 0) - (a.totalSpending || 0)).slice(0, 5);
     const maxSpend = bySpend.length && bySpend[0].totalSpending > 0 ? bySpend[0].totalSpending : 1;
     $("crmSpendChart").innerHTML = bySpend.map(c => `
@@ -2282,7 +2307,6 @@
       </div>
     `).join("");
 
-    // Render List
     const filtered = allCustomers.filter(c => {
       if (crmSearch) {
         const term = crmSearch.toLowerCase();
@@ -2726,6 +2750,26 @@
       };
 
       await setDoc(doc(db, "invoices", invEditingId || invoiceNo), docData);
+
+      // AUTO CREATE TRANSACTION LOGIC
+      if (docData.status === "PAID") {
+        const existingTx = transactions.find(t => t.invoiceNo === invoiceNo);
+        if (!existingTx) {
+          const txId = "TXN-" + Date.now().toString().slice(-6);
+          await setDoc(doc(db, "transactions", txId), {
+            txId,
+            orderId: docData.orderId || "",
+            invoiceNo: invoiceNo,
+            customerName: name,
+            amount: total,
+            method: docData.paymentMethod,
+            status: "SUCCESS",
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          });
+        }
+      }
+
       closeInvEdit();
       toast("Invoice saved.");
     } catch (err) {
@@ -2881,7 +2925,6 @@
   function renderTxList() {
     document.querySelectorAll("#txTabs button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.txtab === txFilter)));
 
-    // Summary Cards
     const success = transactions.filter(t => t.status === "SUCCESS");
     const total = success.reduce((s, t) => s + Number(t.amount || 0), 0);
     const cash = success.filter(t => t.method === "Cash").reduce((s, t) => s + Number(t.amount || 0), 0);
@@ -2893,7 +2936,6 @@
     $("txUpiReceived").textContent = money(upi);
     $("txOnlineReceived").textContent = money(online);
 
-    // Summary
     const todayStart = new Date(); todayStart.setHours(0,0,0,0);
     const todayTx = transactions.filter(t => Number(t.createdAt) >= todayStart.getTime() && t.status === "SUCCESS");
     const todayTotal = todayTx.reduce((s, t) => s + Number(t.amount || 0), 0);
@@ -2902,7 +2944,6 @@
       <div style="display:flex; justify-content:space-between;"><span>Today's Collection:</span><b>${money(todayTotal)}</b></div>
     `;
 
-    // List
     const filtered = transactions.filter(t => {
       if (txFilter !== "ALL" && t.status !== txFilter) return false;
       
