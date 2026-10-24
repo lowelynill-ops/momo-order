@@ -138,7 +138,6 @@
   .toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: 500px; margin: 0 auto; background: var(--ink); color: var(--surface); padding: 12px 16px; border-radius: 12px; z-index: 90; font-size: 14.5px; }
 
   /* View switcher */
-  /* Side menu (opened from the three dots) */
   .menu-btn { position: relative; width: 42px; height: 38px; padding: 0; display: grid; place-items: center; }
   .menu-btn svg { width: 20px; height: 20px; }
   .menu-btn .dot { position: absolute; top: 3px; right: 3px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--chili); color: #fff; font-size: 11px; font-weight: 700; line-height: 16px; text-align: center; }
@@ -315,6 +314,16 @@
   .om-detail-items { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 8px; }
   .om-detail-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; }
   .om-detail-total { display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; margin-top: 8px; padding-top: 8px; border-top: 2px solid var(--line); }
+
+  /* CRM styles */
+  .crm-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .crm-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .crm-name { font-family: var(--head); font-weight: 800; font-size: 18px; line-height: 1.2; }
+  .crm-phone { color: var(--muted); font-size: 14px; }
+  .crm-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 14px; color: var(--muted); margin-top: 4px; }
+  .crm-stats b { color: var(--ink); font-weight: 600; }
+  .crm-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .crm-actions button { flex: 1; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px; font-size: 13px; font-weight: 500; }
 </style>
 </head>
 <body>
@@ -369,12 +378,10 @@
     <div class="drawer-head"><b>Momo Mama</b><button class="icon-btn" id="drawerClose" type="button" aria-label="Close menu">&#10005;</button></div>
     <nav class="drawer-nav" id="navList">
       
-      <!-- --- EXISTING SECTIONS --- -->
       <button class="drawer-item" data-view="orders" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>Orders<span class="n zero" id="newBadge">0</span></button>
       <button class="drawer-item" data-view="qr" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M14 21h.01M17.5 21H21v-3.5"/></svg>QR code</button>
       <button class="drawer-item" data-view="pay" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
 
-      <!-- --- NEW SECTIONS (Placeholder) --- -->
       <div style="margin: 12px 12px 4px; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Management Modules</div>
       <button class="drawer-item" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>1. Dashboard Overview</button>
       <button class="drawer-item" data-view="order-manage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>2. Order Management</button>
@@ -411,8 +418,6 @@
   <main>
     <div id="ordersView"><div id="list" aria-live="polite"></div></div>
     
-    <!-- Purono menuView HTML ekhane theke remove kora hoyeche -->
-
     <div id="qrView" class="hidden">
       <div class="qr-tools">
         <div class="field"><label for="qrBase">Customer page link</label><input id="qrBase" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://your-site.com/index.html"><div class="hint">Auto-detected from this admin page. Only change it if your customer page lives somewhere else.</div></div>
@@ -603,6 +608,56 @@
       </div>
     </div>
 
+    <!-- CRM View -->
+    <div id="crmView" class="hidden">
+      <div class="dash-header">
+        <h2 style="font-family: var(--head); font-weight: 800; font-size: 24px;">Customer Management</h2>
+        <button class="icon-btn" id="crmExportBtn" style="background: var(--green); color: #fff; border: none;">Export Data</button>
+      </div>
+      
+      <div class="om-filters">
+        <div class="om-search">
+          <input type="text" id="crmSearchInput" placeholder="Search by Customer Name or Phone...">
+        </div>
+        <div class="om-dates-row">
+          <div class="om-dates">
+            <span>From:</span><input type="date" id="crmDateFrom">
+            <span>To:</span><input type="date" id="crmDateTo">
+          </div>
+          <button class="icon-btn" id="crmDateClear" style="width: 100%; padding: 8px; font-size: 13px;">Clear Dates</button>
+        </div>
+      </div>
+
+      <div class="om-list" id="crmList">
+        <!-- Customers will be injected here -->
+      </div>
+    </div>
+
+    <!-- CRM Edit Modal -->
+    <div class="scrim" id="crmEditScrim"></div>
+    <div class="sheet" id="crmEditSheet" role="dialog" aria-modal="true">
+      <div class="sheet-in">
+        <div class="sheet-head"><h2 id="crmEditTitle">Edit Customer</h2><button class="close" id="crmEditClose" type="button" aria-label="Close">&times;</button></div>
+        <form id="crmEditForm" novalidate>
+          <div class="field"><label for="crmNameInput">Customer Name</label><input id="crmNameInput" required></div>
+          <div class="field"><label for="crmPhoneInput">Phone Number</label><input id="crmPhoneInput" required></div>
+          <div class="msg err hidden" id="crmErr" role="alert"></div>
+          <button class="btn" id="crmSaveBtn" type="submit">Save Changes</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- CRM History Modal -->
+    <div class="scrim" id="crmHistScrim"></div>
+    <div class="sheet" id="crmHistSheet" role="dialog" aria-modal="true">
+      <div class="sheet-in">
+        <div class="sheet-head"><h2>Order History</h2><button class="close" id="crmHistClose" type="button" aria-label="Close">&times;</button></div>
+        <div class="om-modal-body" id="crmHistBody">
+          <!-- History will be injected here -->
+        </div>
+      </div>
+    </div>
+
     <!-- Placeholder View for New Modules -->
     <div id="placeholderView" class="hidden">
       <div class="pay-card" style="text-align: center; padding: 40px 20px;">
@@ -614,8 +669,6 @@
   </main>
 </section>
 
-<!-- Purono menu edit sheet ekhane theke remove kora hoyeche -->
-
 <!-- Dashboard Edit Sheet -->
 <div class="scrim" id="dashScrim"></div>
 <div class="sheet" id="dashSheet" role="dialog" aria-modal="true" aria-labelledby="dashTitle">
@@ -623,6 +676,7 @@
     <div class="sheet-head"><h2 id="dashTitle">Dashboard Settings</h2><button class="close" id="dashClose" type="button" aria-label="Close">&times;</button></div>
     <form id="dashForm" novalidate>
       <div class="field"><label for="dExpense">Total Expenses (Manual)</label><input id="dExpense" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+      <div class="field"><label for="dExpenseReason">Expense Reason</label><input id="dExpenseReason" autocomplete="off" placeholder="e.g. Ingredients, Rent"></div>
       <div class="field"><label for="dWeeklyTarget">Weekly Sales Target</label><input id="dWeeklyTarget" inputmode="decimal" autocomplete="off" placeholder="0"></div>
       <div class="field"><label for="dMonthlyTarget">Monthly Sales Target</label><input id="dMonthlyTarget" inputmode="decimal" autocomplete="off" placeholder="0"></div>
       <div class="msg err hidden" id="dashErr" role="alert"></div>
@@ -793,6 +847,7 @@
       if (view === "dashboard") renderDashboard();
       if (view === "order-manage") renderOMList();
       if (view === "menu-manage") renderMMList();
+      if (view === "crm") renderCRMList();
       autoAcceptPending();
       autoPrintPending();
     }, (err) => {
@@ -978,13 +1033,12 @@
     { id: "M-09", name: "Himalayan Peach Iced Tea", category: "Beverages", description: "Brewed Darjeeling black tea with sweet mountain peach and fresh mint.", price: 95, isAvailable: true, isTodaysSpecial: false, spiciness: "None", pieces: 1, imageUrl: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&auto=format&fit=crop" },
     { id: "M-10", name: "Szechuan Spiced Lemonade", category: "Beverages", description: "Fresh lime soda with Sichuan pepper, roasted cumin and black rock salt.", price: 85, isAvailable: true, isTodaysSpecial: false, spiciness: "Mild", pieces: 1, imageUrl: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400&auto=format&fit=crop" }
   ];
-  const DEFAULT_IDS = new Set(DEFAULT_MENU.map((m) => m.id)); // Still kept for internal use, but deletion is now allowed
   let view = "orders", menuDocs = new Map(), menuUnsub = null, menuCat = "All", editingId = null, savingItem = false, uploadingImage = false;
 
   function mergedMenu() {
     const byId = new Map(DEFAULT_MENU.map((m) => [m.id, { ...m }]));
     menuDocs.forEach((m, id) => byId.set(id, { ...byId.get(id), ...m, id }));
-    return [...byId.values()];
+    return [...byId.values()].filter(m => !m.deleted);
   }
   function startMenuListening() {
     if (menuUnsub) menuUnsub();
@@ -1010,8 +1064,9 @@
     $("dashboardView").classList.toggle("hidden", v !== "dashboard");
     $("orderManageView").classList.toggle("hidden", v !== "order-manage");
     $("menuManageView").classList.toggle("hidden", v !== "menu-manage");
+    $("crmView").classList.toggle("hidden", v !== "crm");
     
-    if (!["orders","qr","pay","dashboard","order-manage","menu-manage"].includes(v)) {
+    if (!["orders","qr","pay","dashboard","order-manage","menu-manage","crm"].includes(v)) {
       $("placeholderView").classList.remove("hidden");
       const btn = document.querySelector(`#navList [data-view="${v}"]`);
       if (btn) $("placeholderTitle").textContent = btn.textContent.trim();
@@ -1030,13 +1085,13 @@
     $("viewTitle").textContent = title;
     
     closeNav();
-    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "dashboard") renderDashboard(); else if (v === "order-manage") renderOMList(); else if (v === "menu-manage") renderMMList();
+    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "dashboard") renderDashboard(); else if (v === "order-manage") renderOMList(); else if (v === "menu-manage") renderMMList(); else if (v === "crm") renderCRMList();
     window.scrollTo(0, 0);
   }
   $("navList").addEventListener("click", (e) => { const b = e.target.closest("button[data-view]"); if (b) setView(b.dataset.view); });
   $("viewBack").addEventListener("click", () => setView("orders"));
 
-  const NAV_TITLES = { orders: "Orders", qr: "QR code", pay: "Settings", dashboard: "Dashboard Overview", "order-manage": "Order Management", "menu-manage": "Menu Management & Pricing" };
+  const NAV_TITLES = { orders: "Orders", qr: "QR code", pay: "Settings", dashboard: "Dashboard Overview", "order-manage": "Order Management", "menu-manage": "Menu Management & Pricing", crm: "Customer Management (CRM)" };
   function openNav() {
     $("drawer").classList.add("open"); $("navScrim").classList.add("open");
     $("drawer").setAttribute("aria-hidden", "false"); $("menuBtn").setAttribute("aria-expanded", "true");
@@ -1078,7 +1133,6 @@
     });
   }
 
-  // Photo upload handler for Menu Management
   $("mmPickBtn").addEventListener("click", () => $("fImgFileNew").click());
   $("mmRemoveBtn").addEventListener("click", () => {
     $("mmImageUrl").value = ""; $("fImgFileNew").value = "";
@@ -1387,7 +1441,7 @@
 
   setInterval(() => { if (!$("boardView").classList.contains("hidden") && view === "orders") render(); }, 30000);
 
-  let dashSettings = { expenses: 0, weeklyTarget: 0, monthlyTarget: 0 }, dashUnsub = null, dashDirty = false;
+  let dashSettings = { expenses: 0, expenseReason: "", weeklyTarget: 0, monthlyTarget: 0 }, dashUnsub = null, dashDirty = false;
 
   function startDashboardListening() {
     if (dashUnsub) dashUnsub();
@@ -1434,7 +1488,7 @@
       <div class="dash-card"><span class="dash-title">Total Orders</span><span class="dash-val">${todayOrders.length}</span></div>
       <div class="dash-card"><span class="dash-title">Pending Orders</span><span class="dash-val" style="color:var(--yellow)">${pendingOrders}</span></div>
       <div class="dash-card"><span class="dash-title">Completed Orders</span><span class="dash-val" style="color:var(--green)">${completedOrders}</span></div>
-      <div class="dash-card"><span class="dash-title">Total Expenses (Manual)</span><span class="dash-val" style="color:var(--late)">${money(totalExpenses)}</span></div>
+      <div class="dash-card"><span class="dash-title">Total Expenses (Manual)</span><span class="dash-val" style="color:var(--late)">${money(totalExpenses)}</span>${dashSettings.expenseReason ? `<small style="display:block; font-size:11px; color:var(--muted);">${esc(dashSettings.expenseReason)}</small>` : ""}</div>
       <div class="dash-card"><span class="dash-title">Estimated Profit/Loss</span><span class="dash-val ${profit >= 0 ? 'profit' : 'loss'}">${money(profit)}</span></div>
     `;
 
@@ -1458,6 +1512,7 @@
   function openDashEdit() {
     dashDirty = false;
     $("dExpense").value = dashSettings.expenses || 0;
+    $("dExpenseReason").value = dashSettings.expenseReason || "";
     $("dWeeklyTarget").value = dashSettings.weeklyTarget || 0;
     $("dMonthlyTarget").value = dashSettings.monthlyTarget || 0;
     $("dashErr").classList.add("hidden");
@@ -1471,6 +1526,7 @@
   $("dashForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const exp = parseFloat($("dExpense").value) || 0;
+    const expReason = $("dExpenseReason").value.trim();
     const wTarget = parseFloat($("dWeeklyTarget").value) || 0;
     const mTarget = parseFloat($("dMonthlyTarget").value) || 0;
     
@@ -1484,12 +1540,13 @@
     try {
       await setDoc(doc(db, "settings", "dashboard"), { 
         expenses: exp, 
+        expenseReason: expReason,
         weeklyTarget: wTarget, 
         monthlyTarget: mTarget, 
         updatedAt: Date.now() 
       });
       dashDirty = true;
-      dashSettings = { expenses: exp, weeklyTarget: wTarget, monthlyTarget: mTarget };
+      dashSettings = { expenses: exp, expenseReason: expReason, weeklyTarget: wTarget, monthlyTarget: mTarget };
       renderDashboard();
       closeDashEdit();
       toast("Dashboard settings saved.");
@@ -1624,7 +1681,6 @@
   let mmCat = "All";
   let mmEditingId = null;
   
-  // Modal state arrays
   let mmPiecePrices = [];
   let mmAddOns = [];
 
@@ -1690,7 +1746,6 @@
     renderMMAddOns();
     
     $("mmErr").classList.add("hidden");
-    // DELETION ALLOWED FOR ALL ITEMS NOW
     $("mmDeleteBtn").classList.toggle("hidden", !m);
     $("menuEditScrim").classList.add("open"); $("menuEditSheet").classList.add("open");
   }
@@ -1815,15 +1870,227 @@
   $("mmDeleteBtn").addEventListener("click", async () => {
     if (!mmEditingId || !confirm("Delete this item?")) return;
     try {
-      // If it's a default item, we delete it from firestore, but to keep it deleted we override it with empty data.
-      // Actually, simply deleting the doc is not enough because mergedMenu reads DEFAULT_MENU if doc doesn't exist.
-      // So we need to save a flag or delete from DEFAULT_MENU. Since we can't delete from DEFAULT_MENU array easily, we save a "deleted: true" flag.
       await setDoc(doc(db, "menu_items", mmEditingId), { deleted: true });
       closeMMEdit();
       toast("Item deleted.");
     } catch (err) {
       $("mmErr").textContent = "Delete failed: " + (err.code || err.message);
       $("mmErr").classList.remove("hidden");
+    }
+  });
+
+  /* ---------- CRM (Customer Management) ---------- */
+  let crmSearch = "", crmDateFrom = "", crmDateTo = "";
+  let crmCurrentEditId = null;
+  let crmCurrentHistOrders = [];
+
+  function getCustomers() {
+    const map = new Map();
+    orders.forEach(o => {
+      const phone = String(o.customerPhone || "").trim();
+      const name = String(o.customerName || "Guest").trim();
+      if (!phone) return; // Skip orders without phone numbers
+
+      if (!map.has(phone)) {
+        map.set(phone, {
+          phone,
+          name,
+          orders: [],
+          totalSpending: 0,
+          cancelledCount: 0
+        });
+      }
+      const c = map.get(phone);
+      c.orders.push(o);
+      if (statusOf(o) !== "CANCELLED") {
+         c.totalSpending += Number(o.totalAmount || 0);
+      } else {
+         c.cancelledCount++;
+      }
+      // Keep the latest name used
+      if (name !== "Guest") c.name = name;
+    });
+
+    // Calculate derived fields
+    const list = Array.from(map.values());
+    list.forEach(c => {
+      c.orders.sort((a, b) => Number(a.createdAt) - Number(b.createdAt)); // Oldest first
+      c.totalOrders = c.orders.length;
+      c.firstOrder = Number(c.orders[0].createdAt);
+      c.lastOrder = Number(c.orders[c.orders.length - 1].createdAt);
+      
+      // Favourite items
+      const itemCounts = {};
+      c.orders.forEach(o => {
+        if (statusOf(o) === "CANCELLED") return;
+        parseItems(o).forEach(item => {
+          const n = item.name;
+          itemCounts[n] = (itemCounts[n] || 0) + Number(item.quantity || 1);
+        });
+      });
+      let topItem = "-", maxQty = 0;
+      for (const [name, qty] of Object.entries(itemCounts)) {
+        if (qty > maxQty) { maxQty = qty; topItem = name; }
+      }
+      c.favouriteItem = topItem;
+    });
+    return list;
+  }
+
+  function renderCRMList() {
+    const allCustomers = getCustomers();
+    
+    const filtered = allCustomers.filter(c => {
+      if (crmSearch) {
+        const term = crmSearch.toLowerCase();
+        if (!c.name.toLowerCase().includes(term) && !c.phone.includes(term)) return false;
+      }
+      
+      // Check if customer has at least one order in the date range
+      if (crmDateFrom || crmDateTo) {
+        let inRange = false;
+        for (const o of c.orders) {
+          const oDate = new Date(Number(o.createdAt));
+          let match = true;
+          if (crmDateFrom) {
+            const from = new Date(crmDateFrom); from.setHours(0,0,0,0);
+            if (oDate < from) match = false;
+          }
+          if (crmDateTo) {
+            const to = new Date(crmDateTo); to.setHours(23,59,59,999);
+            if (oDate > to) match = false;
+          }
+          if (match) { inRange = true; break; }
+        }
+        if (!inRange) return false;
+      }
+      return true;
+    });
+
+    if (!filtered.length) {
+      $("crmList").innerHTML = `<div class="empty" style="padding: 20px;">No customers found.</div>`;
+      return;
+    }
+
+    $("crmList").innerHTML = filtered.map(c => {
+      return `<div class="crm-card">
+        <div class="crm-header">
+          <div>
+            <div class="crm-name">${esc(c.name)}</div>
+            <div class="crm-phone">${esc(c.phone)}</div>
+          </div>
+          <button class="icon-btn" style="padding: 6px 10px; font-size:13px;" data-crm-edit="${esc(c.phone)}">Edit</button>
+        </div>
+        <div class="crm-stats">
+          <div>Total Orders: <b>${c.totalOrders}</b></div>
+          <div>Total Spend: <b>${money(c.totalSpending)}</b></div>
+          <div>First Order: <b>${dateTimeStr(c.firstOrder).split(',')[0]}</b></div>
+          <div>Last Order: <b>${dateTimeStr(c.lastOrder).split(',')[0]}</b></div>
+          <div>Cancelled: <b>${c.cancelledCount}</b></div>
+          <div>Favourite: <b>${esc(c.favouriteItem)}</b></div>
+        </div>
+        <div class="crm-actions">
+          <button data-crm-hist="${esc(c.phone)}">Order History</button>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  $("crmSearchInput").addEventListener("input", (e) => { crmSearch = e.target.value.trim(); renderCRMList(); });
+  $("crmDateFrom").addEventListener("change", (e) => { crmDateFrom = e.target.value; renderCRMList(); });
+  $("crmDateTo").addEventListener("change", (e) => { crmDateTo = e.target.value; renderCRMList(); });
+  $("crmDateClear").addEventListener("click", () => { 
+    $("crmDateFrom").value = ""; $("crmDateTo").value = ""; 
+    crmDateFrom = ""; crmDateTo = ""; 
+    renderCRMList(); 
+  });
+
+  $("crmExportBtn").addEventListener("click", () => {
+    const list = getCustomers();
+    let csv = "Name,Phone,Total Orders,Total Spending,First Order Date,Last Order Date,Cancelled Orders,Favourite Item\n";
+    list.forEach(c => {
+      csv += `"${c.name.replace(/"/g, '""')}","${c.phone}",${c.totalOrders},${c.totalSpending},"${dateTimeStr(c.firstOrder)}","${dateTimeStr(c.lastOrder)}",${c.cancelledCount},"${c.favouriteItem.replace(/"/g, '""')}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "MomoMama-Customers.csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  });
+
+  $("crmList").addEventListener("click", (e) => {
+    const ed = e.target.closest("[data-crm-edit]");
+    const hist = e.target.closest("[data-crm-hist]");
+    if (ed) {
+      const list = getCustomers();
+      const c = list.find(x => x.phone === ed.dataset.crmEdit);
+      if (c) {
+        crmCurrentEditId = c.phone;
+        $("crmNameInput").value = c.name;
+        $("crmPhoneInput").value = c.phone;
+        $("crmErr").classList.add("hidden");
+        $("crmEditTitle").textContent = "Edit Customer";
+        $("crmEditScrim").classList.add("open"); $("crmEditSheet").classList.add("open");
+      }
+    }
+    if (hist) {
+      const list = getCustomers();
+      const c = list.find(x => x.phone === hist.dataset.crmHist);
+      if (c) {
+        crmCurrentHistOrders = c.orders;
+        $("crmHistBody").innerHTML = c.orders.slice().reverse().map(o => `
+          <div style="border-bottom:1px solid var(--line); padding-bottom:8px; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; font-weight:600;">
+              <span>${esc(o.tokenNumber || o.id)}</span>
+              <span>${money(o.totalAmount)}</span>
+            </div>
+            <div style="font-size:13px; color:var(--muted); margin-bottom:4px;">${esc(dateTimeStr(o.createdAt))} &middot; ${esc(STATUS_LABEL[statusOf(o)] || statusOf(o))}</div>
+            <div style="font-size:14px;">${parseItems(o).map(i => `${i.quantity}x ${esc(i.name)}`).join(", ")}</div>
+          </div>
+        `).join("");
+        $("crmHistScrim").classList.add("open"); $("crmHistSheet").classList.add("open");
+      }
+    }
+  });
+
+  const closeCrmEdit = () => { $("crmEditScrim").classList.remove("open"); $("crmEditSheet").classList.remove("open"); };
+  $("crmEditClose").addEventListener("click", closeCrmEdit);
+  $("crmEditScrim").addEventListener("click", closeCrmEdit);
+
+  const closeCrmHist = () => { $("crmHistScrim").classList.remove("open"); $("crmHistSheet").classList.remove("open"); };
+  $("crmHistClose").addEventListener("click", closeCrmHist);
+  $("crmHistScrim").addEventListener("click", closeCrmHist);
+
+  $("crmEditForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const newName = $("crmNameInput").value.trim();
+    const newPhone = $("crmPhoneInput").value.trim();
+    if (!newName || !newPhone) {
+      $("crmErr").textContent = "Name and Phone are required.";
+      $("crmErr").classList.remove("hidden");
+      return;
+    }
+
+    const btn = $("crmSaveBtn"); btn.disabled = true; btn.textContent = "Saving...";
+    try {
+      // Update all orders with the old phone number
+      const list = getCustomers();
+      const customer = list.find(x => x.phone === crmCurrentEditId);
+      if (customer) {
+        const updates = customer.orders.map(async (o) => {
+          await updateDoc(doc(db, "orders", o.id), { customerName: newName, customerPhone: newPhone });
+        });
+        await Promise.all(updates);
+      }
+      closeCrmEdit();
+      toast("Customer details updated.");
+    } catch (err) {
+      $("crmErr").textContent = "Update failed: " + (err.code || err.message);
+      $("crmErr").classList.remove("hidden");
+    } finally {
+      btn.disabled = false; btn.textContent = "Save Changes";
     }
   });
 </script>
