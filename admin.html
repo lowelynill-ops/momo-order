@@ -339,6 +339,16 @@
   .tx-id { font-family: var(--head); font-weight: 800; font-size: 16px; }
   .tx-meta { font-size: 13px; color: var(--muted); }
   .tx-amount { font-family: var(--head); font-weight: 800; font-size: 18px; text-align: right; }
+
+  /* Expenses */
+  .exp-summary-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center; }
+  .exp-summary-title { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .exp-summary-val { font-family: var(--head); font-weight: 800; font-size: 20px; }
+  .exp-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; margin-bottom: 10px; }
+  .exp-info { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .exp-title { font-family: var(--head); font-weight: 800; font-size: 16px; }
+  .exp-meta { font-size: 13px; color: var(--muted); }
+  .exp-amount { font-family: var(--head); font-weight: 800; font-size: 18px; text-align: right; }
 </style>
 </head>
 <body>
@@ -934,6 +944,140 @@
       </div>
     </div>
 
+    <!-- Finance & Expenses View -->
+    <div id="financeExpView" class="hidden">
+      <div class="dash-header" style="align-items: flex-start; flex-direction: column; gap: 12px;">
+        <div style="display: flex; justify-content: space-between; width: 100%;">
+          <h2 style="font-family: var(--head); font-weight: 800; font-size: 24px;">Finance & Expenses</h2>
+          <button class="icon-btn" id="createExpBtn" style="background: var(--chili); color: #fff; border: none;">+ Add Expense</button>
+        </div>
+        <div style="width: 100%; display: flex; gap: 8px; justify-content: flex-end;">
+          <button class="icon-btn" id="expExportBtn" style="font-size:13px;">Export Data</button>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="dash-grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px;">
+        <div class="exp-summary-card"><div class="exp-summary-title">Today</div><div class="exp-summary-val" id="expToday">Rs 0</div></div>
+        <div class="exp-summary-card"><div class="exp-summary-title">This Month</div><div class="exp-summary-val" id="expMonth">Rs 0</div></div>
+        <div class="exp-summary-card"><div class="exp-summary-title">Pending Due</div><div class="exp-summary-val" style="color:var(--late)" id="expPending">Rs 0</div></div>
+      </div>
+      <div class="dash-grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 0;">
+        <div class="exp-summary-card"><div class="exp-summary-title">Cash In (Income)</div><div class="exp-summary-val" style="color:var(--green)" id="expCashIn">Rs 0</div></div>
+        <div class="exp-summary-card"><div class="exp-summary-title">Cash Out</div><div class="exp-summary-val" style="color:var(--late)" id="expCashOut">Rs 0</div></div>
+      </div>
+
+      <div class="om-filters">
+        <div class="om-search">
+          <input type="text" id="expSearchInput" placeholder="Search by Title, Note, Category...">
+        </div>
+        <div class="om-dates-row">
+          <div class="om-dates">
+            <span>From:</span><input type="date" id="expDateFrom">
+            <span>To:</span><input type="date" id="expDateTo">
+          </div>
+          <button class="icon-btn" id="expDateClear" style="width: 100%; padding: 8px; font-size: 13px;">Clear Dates</button>
+        </div>
+        <div class="field" style="margin-top: 8px;">
+          <select id="expFilterCat">
+            <option value="ALL">All Categories</option>
+            <option value="Rent">Rent</option>
+            <option value="Salary">Salary</option>
+            <option value="Raw Materials">Raw Materials</option>
+            <option value="Electricity">Electricity</option>
+            <option value="Water">Water</option>
+            <option value="Packaging">Packaging</option>
+            <option value="Delivery">Delivery</option>
+            <option value="Maintenance">Maintenance</option>
+            <option value="Supplier Payment">Supplier Payment</option>
+            <option value="Purchase">Purchase</option>
+            <option value="Utility Bill">Utility Bill</option>
+            <option value="Staff Advance">Staff Advance</option>
+            <option value="Cash In">Cash In (Income)</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="om-list" id="expList">
+        <!-- Expenses will be injected here -->
+      </div>
+    </div>
+
+    <!-- Create/Edit Expense Modal -->
+    <div class="scrim" id="expEditScrim"></div>
+    <div class="sheet" id="expEditSheet" role="dialog" aria-modal="true">
+      <div class="sheet-in">
+        <div class="sheet-head"><h2 id="expEditTitle">Add Expense</h2><button class="close" id="expEditClose" type="button" aria-label="Close">&times;</button></div>
+        <form id="expEditForm" novalidate>
+          <div class="two">
+            <div class="field"><label for="expDateInput">Date</label><input id="expDateInput" type="date" required></div>
+            <div class="field"><label for="expAmountInput">Amount (Rs)</label><input id="expAmountInput" type="number" inputmode="decimal" required></div>
+          </div>
+          <div class="field"><label for="expCatInput">Category</label>
+            <select id="expCatInput">
+              <option value="Rent">Rent</option>
+              <option value="Salary">Salary</option>
+              <option value="Raw Materials">Raw Materials</option>
+              <option value="Electricity">Electricity</option>
+              <option value="Water">Water</option>
+              <option value="Packaging">Packaging</option>
+              <option value="Delivery">Delivery</option>
+              <option value="Maintenance">Maintenance</option>
+              <option value="Supplier Payment">Supplier Payment</option>
+              <option value="Purchase">Purchase</option>
+              <option value="Utility Bill">Utility Bill</option>
+              <option value="Staff Advance">Staff Advance</option>
+              <option value="Cash In">Cash In (Income)</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="field"><label for="expTitleInput">Title / Note</label><input id="expTitleInput" required placeholder="e.g. Chicken stock purchase"></div>
+
+          <div class="two">
+            <div class="field"><label for="expMethodInput">Payment Method</label>
+              <select id="expMethodInput">
+                <option value="Cash">Cash</option>
+                <option value="UPI">UPI</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Card">Card</option>
+              </select>
+            </div>
+            <div class="field"><label for="expStatusInput">Status</label>
+              <select id="expStatusInput">
+                <option value="PAID">Paid</option>
+                <option value="PENDING">Pending (Due)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+             <label for="expReceiptFile">Expense Receipt Upload</label>
+             <div class="img-pick">
+               <img id="expReceiptPreview" class="img-preview hidden" alt="">
+               <button type="button" class="file-btn" id="expReceiptPickBtn">Gallery theke choose koro</button>
+               <button type="button" class="text-btn hidden" id="expReceiptRemoveBtn">Mucho felo</button>
+             </div>
+             <input id="expReceiptFile" type="file" accept="image/*" class="hidden">
+             <input type="hidden" id="expReceiptBase64">
+          </div>
+
+          <div class="msg err hidden" id="expErr" role="alert"></div>
+          <button class="btn" id="expSaveBtn" type="submit">Save Expense</button>
+          <button class="danger hidden" id="expDeleteBtn" type="button" style="margin-top:10px;">Delete Expense</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- View Receipt Modal -->
+    <div class="scrim" id="expViewScrim"></div>
+    <div class="sheet" id="expViewSheet" role="dialog" aria-modal="true">
+      <div class="sheet-in">
+        <div class="sheet-head"><h2>Expense Receipt</h2><button class="close" id="expViewClose" type="button" aria-label="Close">&times;</button></div>
+        <img id="expViewImg" src="" alt="Receipt" style="width: 100%; border-radius: 12px; border: 1px solid var(--line);">
+      </div>
+    </div>
+
     <!-- Placeholder View for New Modules -->
     <div id="placeholderView" class="hidden">
       <div class="pay-card" style="text-align: center; padding: 40px 20px;">
@@ -1098,6 +1242,7 @@
       startCrmListening();
       startBillingListening();
       startTxListening();
+      startExpListening();
     } else {
       if (unsub) { unsub(); unsub = null; }
       if (menuUnsub) { menuUnsub(); menuUnsub = null; }
@@ -1105,6 +1250,7 @@
       if (crmUnsub) { crmUnsub(); crmUnsub = null; }
       if (billingUnsub) { billingUnsub(); billingUnsub = null; }
       if (txUnsub) { txUnsub(); txUnsub = null; }
+      if (expUnsub) { expUnsub(); expUnsub = null; }
       settingsUnsubs.forEach((u) => u()); settingsUnsubs = [];
       menuDocs = new Map(); view = "orders";
       orders = []; firstSnapshot = true;
@@ -1132,6 +1278,7 @@
       if (view === "crm") renderCRMList();
       if (view === "billing") renderBillingList();
       if (view === "payments-tx") renderTxList();
+      if (view === "finance-exp") renderExpList();
       autoAcceptPending();
       autoPrintPending();
     }, (err) => {
@@ -1202,7 +1349,6 @@
       await updateDoc(doc(db, "orders", id), fields);
       if (okMsg) toast(okMsg);
       
-      // AUTO CREATE TRANSACTION LOGIC
       if (fields.paymentStatus && String(fields.paymentStatus).startsWith("PAID")) {
         const o = orders.find(x => x.id === id);
         if (o) {
@@ -1377,8 +1523,9 @@
     $("crmView").classList.toggle("hidden", v !== "crm");
     $("billingView").classList.toggle("hidden", v !== "billing");
     $("paymentsTxView").classList.toggle("hidden", v !== "payments-tx");
+    $("financeExpView").classList.toggle("hidden", v !== "finance-exp");
     
-    if (!["orders","qr","pay","dashboard","order-manage","menu-manage","crm","billing","payments-tx"].includes(v)) {
+    if (!["orders","qr","pay","dashboard","order-manage","menu-manage","crm","billing","payments-tx","finance-exp"].includes(v)) {
       $("placeholderView").classList.remove("hidden");
       const btn = document.querySelector(`#navList [data-view="${v}"]`);
       if (btn) $("placeholderTitle").textContent = btn.textContent.trim();
@@ -1397,13 +1544,13 @@
     $("viewTitle").textContent = title;
     
     closeNav();
-    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "dashboard") renderDashboard(); else if (v === "order-manage") renderOMList(); else if (v === "menu-manage") renderMMList(); else if (v === "crm") renderCRMList(); else if (v === "billing") renderBillingList(); else if (v === "payments-tx") renderTxList();
+    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "dashboard") renderDashboard(); else if (v === "order-manage") renderOMList(); else if (v === "menu-manage") renderMMList(); else if (v === "crm") renderCRMList(); else if (v === "billing") renderBillingList(); else if (v === "payments-tx") renderTxList(); else if (v === "finance-exp") renderExpList();
     window.scrollTo(0, 0);
   }
   $("navList").addEventListener("click", (e) => { const b = e.target.closest("button[data-view]"); if (b) setView(b.dataset.view); });
   $("viewBack").addEventListener("click", () => setView("orders"));
 
-  const NAV_TITLES = { orders: "Orders", qr: "QR code", pay: "Settings", dashboard: "Dashboard Overview", "order-manage": "Order Management", "menu-manage": "Menu Management & Pricing", crm: "Customer Management (CRM)", billing: "Billing & Invoices", "payments-tx": "Payments & Transactions" };
+  const NAV_TITLES = { orders: "Orders", qr: "QR code", pay: "Settings", dashboard: "Dashboard Overview", "order-manage": "Order Management", "menu-manage": "Menu Management & Pricing", crm: "Customer Management (CRM)", billing: "Billing & Invoices", "payments-tx": "Payments & Transactions", "finance-exp": "Finance & Expenses" };
   function openNav() {
     $("drawer").classList.add("open"); $("navScrim").classList.add("open");
     $("drawer").setAttribute("aria-hidden", "false"); $("menuBtn").setAttribute("aria-expanded", "true");
@@ -2751,7 +2898,6 @@
 
       await setDoc(doc(db, "invoices", invEditingId || invoiceNo), docData);
 
-      // AUTO CREATE TRANSACTION LOGIC
       if (docData.status === "PAID") {
         const existingTx = transactions.find(t => t.invoiceNo === invoiceNo);
         if (!existingTx) {
@@ -2840,7 +2986,6 @@
 
   const closeInvView = () => { $("invViewScrim").classList.remove("open"); $("invViewSheet").classList.remove("open"); };
   $("invViewClose").addEventListener("click", closeInvView);
-  $("invViewScrim").addEventListener("click", closeInvView);
   $("invViewScrim").addEventListener("click", closeInvView);
 
   $("invViewPrintBtn").addEventListener("click", () => {
@@ -3160,6 +3305,239 @@
     const a = document.createElement("a");
     a.href = url;
     a.download = "MomoMama-Transactions.csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  });
+
+  /* ---------- Finance & Expenses ---------- */
+  let expenses = [], expUnsub = null;
+  let expFilter = "ALL", expSearch = "", expDateFrom = "", expDateTo = "";
+  let expEditingId = null;
+
+  function startExpListening() {
+    if (expUnsub) expUnsub();
+    expUnsub = onSnapshot(collection(db, "expenses"), (snap) => {
+      expenses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (view === "finance-exp") renderExpList();
+    }, (err) => toast("Expenses load hoy ni (" + (err.code || err.message) + ")"));
+  }
+
+  function renderExpList() {
+    // Summary Calculations
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+    const todayExp = expenses.filter(e => Number(e.date) >= todayStart && e.category !== "Cash In");
+    const monthExp = expenses.filter(e => Number(e.date) >= monthStart && e.category !== "Cash In");
+    const pendingExp = expenses.filter(e => e.status === "PENDING" && e.category !== "Cash In");
+    
+    // Cash In / Out Logic
+    const cashIn = expenses.filter(e => e.category === "Cash In").reduce((s, e) => s + Number(e.amount || 0), 0);
+    const cashOut = expenses.filter(e => e.category !== "Cash In").reduce((s, e) => s + Number(e.amount || 0), 0);
+
+    $("expToday").textContent = money(todayExp.reduce((s, e) => s + Number(e.amount || 0), 0));
+    $("expMonth").textContent = money(monthExp.reduce((s, e) => s + Number(e.amount || 0), 0));
+    $("expPending").textContent = money(pendingExp.reduce((s, e) => s + Number(e.amount || 0), 0));
+    $("expCashIn").textContent = money(cashIn);
+    $("expCashOut").textContent = money(cashOut);
+
+    // Filtered List
+    const filtered = expenses.filter(e => {
+      if (expFilter !== "ALL" && e.category !== expFilter) return false;
+      
+      if (expSearch) {
+        const term = expSearch.toLowerCase();
+        const title = String(e.title || "").toLowerCase();
+        const cat = String(e.category || "").toLowerCase();
+        const note = String(e.note || "").toLowerCase();
+        if (!title.includes(term) && !cat.includes(term) && !note.includes(term)) return false;
+      }
+
+      const eDate = new Date(Number(e.date));
+      if (expDateFrom) {
+        const from = new Date(expDateFrom); from.setHours(0,0,0,0);
+        if (eDate < from) return false;
+      }
+      if (expDateTo) {
+        const to = new Date(expDateTo); to.setHours(23,59,59,999);
+        if (eDate > to) return false;
+      }
+
+      return true;
+    });
+
+    filtered.sort((a, b) => Number(b.date) - Number(a.date));
+
+    if (!filtered.length) {
+      $("expList").innerHTML = `<div class="empty" style="padding: 20px;">No expenses found.</div>`;
+      return;
+    }
+
+    $("expList").innerHTML = filtered.map(e => {
+      const stClass = e.status === "PAID" ? "ready" : "cancelled";
+      const stText = e.status === "PAID" ? "Paid" : "Pending";
+      const isIncome = e.category === "Cash In";
+      
+      return `<div class="exp-card" data-expid="${esc(e.id)}">
+        <div class="exp-info">
+          <span class="exp-title">${esc(e.title)}</span>
+          <span class="exp-meta">${esc(e.category)} &middot; ${esc(dateTimeStr(e.date).split(',')[0])} &middot; ${esc(e.method || "Cash")}</span>
+          <div><span class="om-status ${stClass}">${stText}</span></div>
+        </div>
+        <div class="exp-amount" style="color: ${isIncome ? 'var(--green)' : 'var(--ink)'}">${isIncome ? '+' : '-'}${money(e.amount)}</div>
+      </div>`;
+    }).join("");
+  }
+
+  function openExpEdit(id) {
+    expEditingId = id;
+    const isNew = !id;
+    const e = id ? expenses.find(x => x.id === id) : null;
+    
+    $("expEditTitle").textContent = isNew ? "Add Expense" : "Edit Expense";
+    $("expDateInput").value = e ? new Date(Number(e.date)).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+    $("expAmountInput").value = e ? e.amount : "";
+    $("expCatInput").value = e ? e.category : "Raw Materials";
+    $("expTitleInput").value = e ? e.title : "";
+    $("expMethodInput").value = e ? e.method : "Cash";
+    $("expStatusInput").value = e ? e.status : "PAID";
+    
+    $("expReceiptFile").value = "";
+    $("expReceiptBase64").value = e ? (e.receiptBase64 || "") : "";
+    if (e && e.receiptBase64) {
+      $("expReceiptPreview").src = e.receiptBase64;
+      $("expReceiptPreview").classList.remove("hidden");
+      $("expReceiptRemoveBtn").classList.remove("hidden");
+    } else {
+      $("expReceiptPreview").src = "";
+      $("expReceiptPreview").classList.add("hidden");
+      $("expReceiptRemoveBtn").classList.add("hidden");
+    }
+
+    $("expErr").classList.add("hidden");
+    $("expDeleteBtn").classList.toggle("hidden", isNew);
+    $("expEditScrim").classList.add("open"); $("expEditSheet").classList.add("open");
+  }
+
+  $("createExpBtn").addEventListener("click", () => openExpEdit(null));
+
+  $("expReceiptPickBtn").addEventListener("click", () => $("expReceiptFile").click());
+  $("expReceiptRemoveBtn").addEventListener("click", () => {
+    $("expReceiptBase64").value = "";
+    $("expReceiptFile").value = "";
+    $("expReceiptPreview").src = "";
+    $("expReceiptPreview").classList.add("hidden");
+    $("expReceiptRemoveBtn").classList.add("hidden");
+  });
+  $("expReceiptFile").addEventListener("change", async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast("Shudhu chhobi (image) file dao."); e.target.value = ""; return; }
+    $("expReceiptPickBtn").textContent = "Processing...";
+    try {
+      let quality = 0.72, dataUrl = await resizeImageFile(file, 640, quality);
+      while (dataUrl.length > 700000 && quality > 0.3) { quality -= 0.12; dataUrl = await resizeImageFile(file, 640, quality); }
+      if (dataUrl.length > 950000) throw new Error("too-big");
+      $("expReceiptBase64").value = dataUrl;
+      $("expReceiptPreview").src = dataUrl; $("expReceiptPreview").classList.remove("hidden");
+      $("expReceiptRemoveBtn").classList.remove("hidden");
+    } catch (err) {
+      toast("Chhobi process hoy ni, onno ekta try koro.");
+    } finally { $("expReceiptPickBtn").textContent = "Gallery theke choose koro"; }
+  });
+
+  $("expEditForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const dateStr = $("expDateInput").value;
+    const amount = parseFloat($("expAmountInput").value);
+    const cat = $("expCatInput").value;
+    const title = $("expTitleInput").value.trim();
+    if (!dateStr || !(amount > 0) || !title) { $("expErr").textContent = "Please fill valid date, amount and title."; $("expErr").classList.remove("hidden"); return; }
+
+    const btn = $("expSaveBtn"); btn.disabled = true; btn.textContent = "Saving...";
+    try {
+      const existing = expEditingId ? expenses.find(x => x.id === expEditingId) : null;
+      const expId = existing ? existing.id : "EXP-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      
+      const docData = {
+        date: new Date(dateStr).getTime(),
+        amount,
+        category: cat,
+        title,
+        method: $("expMethodInput").value,
+        status: $("expStatusInput").value,
+        receiptBase64: $("expReceiptBase64").value || "",
+        createdAt: existing ? existing.createdAt : Date.now(),
+        updatedAt: Date.now()
+      };
+
+      await setDoc(doc(db, "expenses", expId), docData);
+      closeExpEdit();
+      toast("Expense saved.");
+    } catch (err) {
+      $("expErr").textContent = "Save failed: " + (err.code || err.message);
+      $("expErr").classList.remove("hidden");
+    } finally {
+      btn.disabled = false; btn.textContent = "Save Expense";
+    }
+  });
+
+  $("expDeleteBtn").addEventListener("click", async () => {
+    if (!expEditingId || !confirm("Delete this expense?")) return;
+    try {
+      await deleteDoc(doc(db, "expenses", expEditingId));
+      closeExpEdit();
+      toast("Expense deleted.");
+    } catch (err) {
+      $("expErr").textContent = "Delete failed: " + (err.code || err.message);
+      $("expErr").classList.remove("hidden");
+    }
+  });
+
+  const closeExpEdit = () => { $("expEditScrim").classList.remove("open"); $("expEditSheet").classList.remove("open"); };
+  $("expEditClose").addEventListener("click", closeExpEdit);
+  $("expEditScrim").addEventListener("click", closeExpEdit);
+
+  $("expList").addEventListener("click", (e) => {
+    const card = e.target.closest("[data-expid]");
+    if (card) {
+      const exp = expenses.find(x => x.id === card.dataset.expid);
+      if (exp) {
+        if (exp.receiptBase64) {
+          $("expViewImg").src = exp.receiptBase64;
+          $("expViewScrim").classList.add("open"); $("expViewSheet").classList.add("open");
+        } else {
+          openExpEdit(exp.id);
+        }
+      }
+    }
+  });
+
+  const closeExpView = () => { $("expViewScrim").classList.remove("open"); $("expViewSheet").classList.remove("open"); };
+  $("expViewClose").addEventListener("click", closeExpView);
+  $("expViewScrim").addEventListener("click", closeExpView);
+
+  $("expSearchInput").addEventListener("input", (e) => { expSearch = e.target.value.trim(); renderExpList(); });
+  $("expDateFrom").addEventListener("change", (e) => { expDateFrom = e.target.value; renderExpList(); });
+  $("expDateTo").addEventListener("change", (e) => { expDateTo = e.target.value; renderExpList(); });
+  $("expDateClear").addEventListener("click", () => { 
+    $("expDateFrom").value = ""; $("expDateTo").value = ""; 
+    expDateFrom = ""; expDateTo = ""; 
+    renderExpList(); 
+  });
+  $("expFilterCat").addEventListener("change", (e) => { expFilter = e.target.value; renderExpList(); });
+
+  $("expExportBtn").addEventListener("click", () => {
+    let csv = "Date,Title,Category,Amount,Method,Status\n";
+    expenses.forEach(e => {
+      csv += `"${new Date(Number(e.date)).toLocaleDateString('en-IN')}","${(e.title || "").replace(/"/g, '""')}","${e.category}",${e.amount},"${e.method}","${e.status}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "MomoMama-Expenses.csv";
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   });
