@@ -308,7 +308,7 @@
   .om-status.ready { background: var(--green); color: #fff; }
   .om-status.completed { background: var(--line); color: var(--ink); }
   .om-status.cancelled { background: var(--chili-soft); color: var(--late); }
-  
+
   .om-modal-body { display: flex; flex-direction: column; gap: 12px; }
   .om-detail-row { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--line); padding-bottom: 8px; }
   .om-detail-items { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 8px; }
@@ -316,7 +316,7 @@
   .om-detail-total { display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; margin-top: 8px; padding-top: 8px; border-top: 2px solid var(--line); }
 
   /* CRM styles */
-  .crm-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .crm-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; cursor: pointer; }
   .crm-header { display: flex; justify-content: space-between; align-items: flex-start; }
   .crm-name { font-family: var(--head); font-weight: 800; font-size: 18px; line-height: 1.2; }
   .crm-phone { color: var(--muted); font-size: 14px; }
@@ -324,6 +324,14 @@
   .crm-stats b { color: var(--ink); font-weight: 600; }
   .crm-actions { display: flex; gap: 8px; margin-top: 8px; }
   .crm-actions button { flex: 1; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px; font-size: 13px; font-weight: 500; }
+
+  /* Analytics Bar Chart */
+  .chart-container { display: flex; flex-direction: column; gap: 10px; }
+  .chart-bar-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .chart-bar-label { width: 100px; flex: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chart-bar-track { flex: 1; background: var(--line); height: 16px; border-radius: 8px; overflow: hidden; }
+  .chart-bar-fill { background: var(--chili); height: 100%; border-radius: 8px; transition: width 0.4s; }
+  .chart-bar-val { width: 30px; text-align: right; font-weight: 600; flex: none; }
 </style>
 </head>
 <body>
@@ -473,6 +481,14 @@
         <div class="chart-row"><span>Monthly Sales</span><b id="dashMonthlySales">Rs 0</b></div>
       </div>
 
+      <!-- Popular Items Chart -->
+      <div class="chart-box">
+        <div class="chart-title">Popular Items (Live)</div>
+        <div class="chart-container" id="dashPopularItems">
+          <!-- Chart bars will be injected here -->
+        </div>
+      </div>
+
       <div class="dash-list">
         <div class="chart-title">Recent Orders</div>
         <div id="dashRecentList">
@@ -610,9 +626,14 @@
 
     <!-- CRM View -->
     <div id="crmView" class="hidden">
-      <div class="dash-header">
-        <h2 style="font-family: var(--head); font-weight: 800; font-size: 24px;">Customer Management</h2>
-        <button class="icon-btn" id="crmExportBtn" style="background: var(--green); color: #fff; border: none;">Export Data</button>
+      <div class="dash-header" style="align-items: flex-start; flex-direction: column; gap: 12px;">
+        <div style="display: flex; justify-content: space-between; width: 100%;">
+          <h2 style="font-family: var(--head); font-weight: 800; font-size: 24px;">Customer Management</h2>
+          <button class="icon-btn" id="crmAddBtn" style="background: var(--chili); color: #fff; border: none;">+ Add Customer</button>
+        </div>
+        <div style="width: 100%; display: flex; gap: 8px; justify-content: flex-end;">
+          <button class="icon-btn" id="crmExportBtn" style="font-size:13px;">Export Data</button>
+        </div>
       </div>
       
       <div class="om-filters">
@@ -628,6 +649,22 @@
         </div>
       </div>
 
+      <!-- Revisited Customers Report -->
+      <div class="pay-card" style="margin-bottom: 16px;">
+        <h3 style="font-size: 18px; margin-bottom: 8px;">Revisit Report</h3>
+        <div class="hint" style="margin-bottom: 8px;">Check who revisited between specific dates.</div>
+        <div class="om-dates-row">
+          <div class="om-dates">
+            <span>From:</span><input type="date" id="crmRevFrom">
+            <span>To:</span><input type="date" id="crmRevTo">
+          </div>
+          <button class="btn" id="crmRevBtn" style="margin-top: 8px; padding: 10px; font-size: 14px;">Check Revisits</button>
+        </div>
+        <div id="crmRevResults" style="margin-top: 12px; font-size: 14px; display: none;">
+          <!-- Results injected here -->
+        </div>
+      </div>
+
       <div class="om-list" id="crmList">
         <!-- Customers will be injected here -->
       </div>
@@ -637,12 +674,20 @@
     <div class="scrim" id="crmEditScrim"></div>
     <div class="sheet" id="crmEditSheet" role="dialog" aria-modal="true">
       <div class="sheet-in">
-        <div class="sheet-head"><h2 id="crmEditTitle">Edit Customer</h2><button class="close" id="crmEditClose" type="button" aria-label="Close">&times;</button></div>
+        <div class="sheet-head"><h2 id="crmEditTitle">Customer Details</h2><button class="close" id="crmEditClose" type="button" aria-label="Close">&times;</button></div>
         <form id="crmEditForm" novalidate>
           <div class="field"><label for="crmNameInput">Customer Name</label><input id="crmNameInput" required></div>
           <div class="field"><label for="crmPhoneInput">Phone Number</label><input id="crmPhoneInput" required></div>
+          <div class="field"><label for="crmNotesInput">Notes (Optional)</label><textarea id="crmNotesInput" rows="2" placeholder="VIP, likes extra spicy..."></textarea></div>
+          
+          <div style="background: var(--bg); border-radius: 12px; padding: 12px; margin-top: 14px; font-size: 14px; display: flex; flex-direction: column; gap: 6px;" id="crmStatsBox">
+             <!-- Stats populated here -->
+          </div>
+
           <div class="msg err hidden" id="crmErr" role="alert"></div>
           <button class="btn" id="crmSaveBtn" type="submit">Save Changes</button>
+          <button class="danger hidden" id="crmDeleteBtn" type="button" style="margin-top:10px;">Delete Customer</button>
+          <div class="hint hidden" id="crmDeleteHint" style="margin-top: 10px; color: var(--late);">Note: Deleting a customer removes them from this list, but past order data remains safe.</div>
         </form>
       </div>
     </div>
@@ -706,7 +751,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { initializeFirestore, collection, query, orderBy, limit, onSnapshot, doc, updateDoc, setDoc, deleteDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { initializeFirestore, collection, query, orderBy, limit, onSnapshot, doc, updateDoc, setDoc, deleteDoc, runTransaction, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyB2s_LZL6lLuWieNh-8O3aHWiUuFcEzfK0",
@@ -819,10 +864,12 @@
       startMenuListening();
       startSettingsListening();
       startDashboardListening();
+      startCrmListening();
     } else {
       if (unsub) { unsub(); unsub = null; }
       if (menuUnsub) { menuUnsub(); menuUnsub = null; }
       if (dashUnsub) { dashUnsub(); dashUnsub = null; }
+      if (crmUnsub) { crmUnsub(); crmUnsub = null; }
       settingsUnsubs.forEach((u) => u()); settingsUnsubs = [];
       menuDocs = new Map(); view = "orders";
       orders = []; firstSnapshot = true;
@@ -1495,6 +1542,24 @@
     $("dashWeeklySales").textContent = money(weeklySales);
     $("dashMonthlySales").textContent = money(monthlySales);
 
+    // Popular Items Chart
+    const itemCounts = {};
+    validOrders.forEach(o => {
+      parseItems(o).forEach(i => {
+        const n = i.name;
+        itemCounts[n] = (itemCounts[n] || 0) + Number(i.quantity || 1);
+      });
+    });
+    const sortedItems = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]).slice(0, 5); // Top 5
+    const maxQty = sortedItems.length ? sortedItems[0][1] : 1;
+    $("dashPopularItems").innerHTML = sortedItems.length ? sortedItems.map(([name, qty]) => `
+      <div class="chart-bar-row">
+        <div class="chart-bar-label" title="${esc(name)}">${esc(name)}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill" style="width: ${(qty/maxQty)*100}%"></div></div>
+        <div class="chart-bar-val">${qty}</div>
+      </div>
+    `).join("") : `<div style="text-align: center; color: var(--muted); padding: 10px;">No item data.</div>`;
+
     $("dashRecentList").innerHTML = recent.length ? recent.map(o => `
       <div class="dash-list-item">
         <div>
@@ -1881,51 +1946,74 @@
 
   /* ---------- CRM (Customer Management) ---------- */
   let crmSearch = "", crmDateFrom = "", crmDateTo = "";
-  let crmCurrentEditId = null;
+  let crmCurrentEditPhone = null;
   let crmCurrentHistOrders = [];
+  let crmUnsub = null;
+  let crmManualData = new Map(); // phone -> { notes, manualDeleted }
 
-  function getCustomers() {
+  function startCrmListening() {
+    if (crmUnsub) crmUnsub();
+    crmUnsub = onSnapshot(collection(db, "customers"), (snap) => {
+      crmManualData.clear();
+      snap.docs.forEach(d => {
+        crmManualData.set(d.id, d.data());
+      });
+      if (view === "crm") renderCRMList();
+    }, (err) => toast("CRM data load hoy ni (" + (err.code || err.message) + ")"));
+  }
+
+  function getAllCustomers() {
     const map = new Map();
     orders.forEach(o => {
       const phone = String(o.customerPhone || "").trim();
       const name = String(o.customerName || "Guest").trim();
-      if (!phone) return; // Skip orders without phone numbers
+      if (!phone) return;
 
       if (!map.has(phone)) {
         map.set(phone, {
-          phone,
-          name,
-          orders: [],
-          totalSpending: 0,
-          cancelledCount: 0
+          phone, name, orders: [], totalSpending: 0, cancelledCount: 0
         });
       }
       const c = map.get(phone);
       c.orders.push(o);
-      if (statusOf(o) !== "CANCELLED") {
-         c.totalSpending += Number(o.totalAmount || 0);
-      } else {
-         c.cancelledCount++;
-      }
-      // Keep the latest name used
+      if (statusOf(o) !== "CANCELLED") c.totalSpending += Number(o.totalAmount || 0);
+      else c.cancelledCount++;
       if (name !== "Guest") c.name = name;
     });
 
-    // Calculate derived fields
-    const list = Array.from(map.values());
-    list.forEach(c => {
+    // Merge manual data (Notes, Deleted flag)
+    crmManualData.forEach((d, phone) => {
+      if (!map.has(phone) && d.name) {
+        // Manually added customer with no orders yet
+        map.set(phone, { phone, name: d.name, orders: [], totalSpending: 0, cancelledCount: 0 });
+      }
+      const c = map.get(phone);
+      if (c) {
+        c.notes = d.notes || "";
+        c.manualDeleted = !!d.deleted;
+      }
+    });
+
+    // Process derived fields & Apply Auto-Delete Rule
+    const list = Array.from(map.values()).filter(c => !c.manualDeleted);
+    const threshold = Date.now() - (90 * 24 * 60 * 60 * 1000); // 90 days
+
+    return list.filter(c => {
+      if (c.orders.length === 0) return true; // Keep manually added with no orders
       c.orders.sort((a, b) => Number(a.createdAt) - Number(b.createdAt)); // Oldest first
       c.totalOrders = c.orders.length;
       c.firstOrder = Number(c.orders[0].createdAt);
       c.lastOrder = Number(c.orders[c.orders.length - 1].createdAt);
       
+      // Auto Delete Rule: 3 months (90 days) no revisit
+      if (c.lastOrder < threshold) return false; // Hide from CRM
+
       // Favourite items
       const itemCounts = {};
       c.orders.forEach(o => {
         if (statusOf(o) === "CANCELLED") return;
         parseItems(o).forEach(item => {
-          const n = item.name;
-          itemCounts[n] = (itemCounts[n] || 0) + Number(item.quantity || 1);
+          itemCounts[item.name] = (itemCounts[item.name] || 0) + Number(item.quantity || 1);
         });
       });
       let topItem = "-", maxQty = 0;
@@ -1933,12 +2021,12 @@
         if (qty > maxQty) { maxQty = qty; topItem = name; }
       }
       c.favouriteItem = topItem;
+      return true;
     });
-    return list;
   }
 
   function renderCRMList() {
-    const allCustomers = getCustomers();
+    const allCustomers = getAllCustomers();
     
     const filtered = allCustomers.filter(c => {
       if (crmSearch) {
@@ -1946,8 +2034,8 @@
         if (!c.name.toLowerCase().includes(term) && !c.phone.includes(term)) return false;
       }
       
-      // Check if customer has at least one order in the date range
       if (crmDateFrom || crmDateTo) {
+        if (c.orders.length === 0) return false;
         let inRange = false;
         for (const o of c.orders) {
           const oDate = new Date(Number(o.createdAt));
@@ -1973,24 +2061,20 @@
     }
 
     $("crmList").innerHTML = filtered.map(c => {
-      return `<div class="crm-card">
+      return `<div class="crm-card" data-crm-click="${esc(c.phone)}">
         <div class="crm-header">
           <div>
             <div class="crm-name">${esc(c.name)}</div>
             <div class="crm-phone">${esc(c.phone)}</div>
           </div>
-          <button class="icon-btn" style="padding: 6px 10px; font-size:13px;" data-crm-edit="${esc(c.phone)}">Edit</button>
         </div>
         <div class="crm-stats">
-          <div>Total Orders: <b>${c.totalOrders}</b></div>
-          <div>Total Spend: <b>${money(c.totalSpending)}</b></div>
-          <div>First Order: <b>${dateTimeStr(c.firstOrder).split(',')[0]}</b></div>
-          <div>Last Order: <b>${dateTimeStr(c.lastOrder).split(',')[0]}</b></div>
-          <div>Cancelled: <b>${c.cancelledCount}</b></div>
-          <div>Favourite: <b>${esc(c.favouriteItem)}</b></div>
-        </div>
-        <div class="crm-actions">
-          <button data-crm-hist="${esc(c.phone)}">Order History</button>
+          <div>Total Orders: <b>${c.totalOrders || 0}</b></div>
+          <div>Total Spend: <b>${money(c.totalSpending || 0)}</b></div>
+          <div>First Order: <b>${c.firstOrder ? dateTimeStr(c.firstOrder).split(',')[0] : '-'}</b></div>
+          <div>Last Order: <b>${c.lastOrder ? dateTimeStr(c.lastOrder).split(',')[0] : '-'}</b></div>
+          <div>Cancelled: <b>${c.cancelledCount || 0}</b></div>
+          <div>Favourite: <b>${esc(c.favouriteItem || '-')}</b></div>
         </div>
       </div>`;
     }).join("");
@@ -2005,11 +2089,72 @@
     renderCRMList(); 
   });
 
+  // Revisit Logic
+  $("crmRevBtn").addEventListener("click", () => {
+    const from = $("crmRevFrom").value;
+    const to = $("crmRevTo").value;
+    if (!from || !to) { toast("Please select From and To dates."); return; }
+
+    const fromDate = new Date(from); fromDate.setHours(0,0,0,0);
+    const toDate = new Date(to); toDate.setHours(23,59,59,999);
+
+    const customers = getAllCustomers();
+    let results = [];
+
+    customers.forEach(c => {
+      if (c.orders.length < 2) return;
+      
+      // Filter orders within range
+      const rangeOrders = c.orders.filter(o => {
+        const d = new Date(Number(o.createdAt));
+        return d >= fromDate && d <= toDate && statusOf(o) !== "CANCELLED";
+      });
+      if (rangeOrders.length === 0) return;
+
+      // Find previous visits
+      let revisitCount = 0;
+      let totalBill = 0;
+      rangeOrders.forEach(o => {
+        const oTime = Number(o.createdAt);
+        const prevOrder = c.orders.find(p => Number(p.createdAt) < oTime && statusOf(p) !== "CANCELLED");
+        if (prevOrder) revisitCount++;
+        totalBill += Number(o.totalAmount || 0);
+      });
+
+      if (revisitCount > 0) {
+        results.push({ name: c.name, phone: c.phone, revisits: revisitCount, totalBill });
+      }
+    });
+
+    results.sort((a, b) => b.revisits - a.revisits);
+
+    $("crmRevResults").style.display = "block";
+    if (results.length === 0) {
+      $("crmRevResults").innerHTML = `<div class="hint">No revisits found in this date range.</div>`;
+      return;
+    }
+
+    $("crmRevResults").innerHTML = `
+      <p style="font-weight: 600; margin-bottom: 8px;">Top Revisited Customers</p>
+      ${results.map(r => `
+        <div style="display:flex; justify-content:space-between; border-bottom: 1px solid var(--line); padding: 6px 0;">
+          <div>
+            <b>${esc(r.name)}</b> <span style="color:var(--muted); font-size:13px;">(${esc(r.phone)})</span>
+          </div>
+          <div style="text-align:right;">
+            <b>${r.revisits} revisits</b>
+            <div style="font-size: 12px; color:var(--muted);">${money(r.totalBill)}</div>
+          </div>
+        </div>
+      `).join("")}
+    `;
+  });
+
   $("crmExportBtn").addEventListener("click", () => {
-    const list = getCustomers();
-    let csv = "Name,Phone,Total Orders,Total Spending,First Order Date,Last Order Date,Cancelled Orders,Favourite Item\n";
+    const list = getAllCustomers();
+    let csv = "Name,Phone,Total Orders,Total Spending,First Order Date,Last Order Date,Cancelled Orders,Favourite Item,Notes\n";
     list.forEach(c => {
-      csv += `"${c.name.replace(/"/g, '""')}","${c.phone}",${c.totalOrders},${c.totalSpending},"${dateTimeStr(c.firstOrder)}","${dateTimeStr(c.lastOrder)}",${c.cancelledCount},"${c.favouriteItem.replace(/"/g, '""')}"\n`;
+      csv += `"${(c.name || "").replace(/"/g, '""')}","${c.phone}",${c.totalOrders || 0},${c.totalSpending || 0},"${c.firstOrder ? dateTimeStr(c.firstOrder) : ""}","${c.lastOrder ? dateTimeStr(c.lastOrder) : ""}",${c.cancelledCount || 0},"${(c.favouriteItem || "").replace(/"/g, '""')}","${(c.notes || "").replace(/"/g, '""')}"\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -2021,38 +2166,67 @@
   });
 
   $("crmList").addEventListener("click", (e) => {
-    const ed = e.target.closest("[data-crm-edit]");
-    const hist = e.target.closest("[data-crm-hist]");
-    if (ed) {
-      const list = getCustomers();
-      const c = list.find(x => x.phone === ed.dataset.crmEdit);
+    const card = e.target.closest("[data-crm-click]");
+    if (card) {
+      const phone = card.dataset.crmClick;
+      const list = getAllCustomers();
+      const c = list.find(x => x.phone === phone);
       if (c) {
-        crmCurrentEditId = c.phone;
+        crmCurrentEditPhone = c.phone;
         $("crmNameInput").value = c.name;
         $("crmPhoneInput").value = c.phone;
+        $("crmNotesInput").value = c.notes || "";
+        
+        // Populate Stats Box
+        $("crmStatsBox").innerHTML = `
+          <div style="display:flex; justify-content:space-between;"><span>Total Orders:</span><b>${c.totalOrders || 0}</b></div>
+          <div style="display:flex; justify-content:space-between;"><span>Total Spend:</span><b>${money(c.totalSpending || 0)}</b></div>
+          <div style="display:flex; justify-content:space-between;"><span>Last Order:</span><b>${c.lastOrder ? dateTimeStr(c.lastOrder).split(',')[0] : '-'}</b></div>
+          <button type="button" class="text-btn" id="crmViewHistBtn" style="margin-top: 8px; text-align: left;">View Order History</button>
+        `;
+        
         $("crmErr").classList.add("hidden");
-        $("crmEditTitle").textContent = "Edit Customer";
+        $("crmEditTitle").textContent = "Customer Details";
+        $("crmDeleteBtn").classList.remove("hidden");
+        $("crmDeleteHint").classList.remove("hidden");
+        
+        // Bind History button dynamically
+        setTimeout(() => {
+          const histBtn = document.getElementById("crmViewHistBtn");
+          if (histBtn) {
+            histBtn.onclick = () => {
+              crmCurrentHistOrders = c.orders;
+              $("crmHistBody").innerHTML = c.orders.slice().reverse().map(o => `
+                <div style="border-bottom:1px solid var(--line); padding-bottom:8px; margin-bottom:8px;">
+                  <div style="display:flex; justify-content:space-between; font-weight:600;">
+                    <span>${esc(o.tokenNumber || o.id)}</span>
+                    <span>${money(o.totalAmount)}</span>
+                  </div>
+                  <div style="font-size:13px; color:var(--muted); margin-bottom:4px;">${esc(dateTimeStr(o.createdAt))} &middot; ${esc(STATUS_LABEL[statusOf(o)] || statusOf(o))}</div>
+                  <div style="font-size:14px;">${parseItems(o).map(i => `${i.quantity}x ${esc(i.name)}`).join(", ")}</div>
+                </div>
+              `).join("");
+              $("crmHistScrim").classList.add("open"); $("crmHistSheet").classList.add("open");
+            };
+          }
+        }, 50);
+
         $("crmEditScrim").classList.add("open"); $("crmEditSheet").classList.add("open");
       }
     }
-    if (hist) {
-      const list = getCustomers();
-      const c = list.find(x => x.phone === hist.dataset.crmHist);
-      if (c) {
-        crmCurrentHistOrders = c.orders;
-        $("crmHistBody").innerHTML = c.orders.slice().reverse().map(o => `
-          <div style="border-bottom:1px solid var(--line); padding-bottom:8px; margin-bottom:8px;">
-            <div style="display:flex; justify-content:space-between; font-weight:600;">
-              <span>${esc(o.tokenNumber || o.id)}</span>
-              <span>${money(o.totalAmount)}</span>
-            </div>
-            <div style="font-size:13px; color:var(--muted); margin-bottom:4px;">${esc(dateTimeStr(o.createdAt))} &middot; ${esc(STATUS_LABEL[statusOf(o)] || statusOf(o))}</div>
-            <div style="font-size:14px;">${parseItems(o).map(i => `${i.quantity}x ${esc(i.name)}`).join(", ")}</div>
-          </div>
-        `).join("");
-        $("crmHistScrim").classList.add("open"); $("crmHistSheet").classList.add("open");
-      }
-    }
+  });
+
+  $("crmAddBtn").addEventListener("click", () => {
+    crmCurrentEditPhone = null;
+    $("crmEditTitle").textContent = "Add New Customer";
+    $("crmNameInput").value = "";
+    $("crmPhoneInput").value = "";
+    $("crmNotesInput").value = "";
+    $("crmStatsBox").innerHTML = `<div class="hint">New customer. No orders yet.</div>`;
+    $("crmErr").classList.add("hidden");
+    $("crmDeleteBtn").classList.add("hidden");
+    $("crmDeleteHint").classList.add("hidden");
+    $("crmEditScrim").classList.add("open"); $("crmEditSheet").classList.add("open");
   });
 
   const closeCrmEdit = () => { $("crmEditScrim").classList.remove("open"); $("crmEditSheet").classList.remove("open"); };
@@ -2065,9 +2239,11 @@
 
   $("crmEditForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const newName = $("crmNameInput").value.trim();
-    const newPhone = $("crmPhoneInput").value.trim();
-    if (!newName || !newPhone) {
+    const name = $("crmNameInput").value.trim();
+    const phone = $("crmPhoneInput").value.trim();
+    const notes = $("crmNotesInput").value.trim();
+    
+    if (!name || !phone) {
       $("crmErr").textContent = "Name and Phone are required.";
       $("crmErr").classList.remove("hidden");
       return;
@@ -2075,15 +2251,33 @@
 
     const btn = $("crmSaveBtn"); btn.disabled = true; btn.textContent = "Saving...";
     try {
-      // Update all orders with the old phone number
-      const list = getCustomers();
-      const customer = list.find(x => x.phone === crmCurrentEditId);
-      if (customer) {
-        const updates = customer.orders.map(async (o) => {
-          await updateDoc(doc(db, "orders", o.id), { customerName: newName, customerPhone: newPhone });
-        });
-        await Promise.all(updates);
+      // Save to dedicated customers collection
+      await setDoc(doc(db, "customers", phone), { name, notes, updatedAt: Date.now() }, { merge: true });
+
+      // If editing an existing customer and phone changed, we must update all their orders
+      if (crmCurrentEditPhone && crmCurrentEditPhone !== phone) {
+        const list = getAllCustomers();
+        const customer = list.find(x => x.phone === crmCurrentEditPhone);
+        if (customer) {
+          const updates = customer.orders.map(async (o) => {
+            await updateDoc(doc(db, "orders", o.id), { customerName: name, customerPhone: phone });
+          });
+          await Promise.all(updates);
+          // Delete old manual record if it exists
+          await deleteDoc(doc(db, "customers", crmCurrentEditPhone));
+        }
+      } else if (crmCurrentEditPhone === phone) {
+        // Update existing orders with new name
+        const list = getAllCustomers();
+        const customer = list.find(x => x.phone === phone);
+        if (customer) {
+          const updates = customer.orders.map(async (o) => {
+            if (o.customerName !== name) await updateDoc(doc(db, "orders", o.id), { customerName: name });
+          });
+          await Promise.all(updates);
+        }
       }
+      
       closeCrmEdit();
       toast("Customer details updated.");
     } catch (err) {
@@ -2091,6 +2285,19 @@
       $("crmErr").classList.remove("hidden");
     } finally {
       btn.disabled = false; btn.textContent = "Save Changes";
+    }
+  });
+
+  $("crmDeleteBtn").addEventListener("click", async () => {
+    if (!crmCurrentEditPhone || !confirm("Delete this customer? Past orders will remain in records.")) return;
+    try {
+      // Mark as deleted so they vanish from CRM
+      await setDoc(doc(db, "customers", crmCurrentEditPhone), { deleted: true }, { merge: true });
+      closeCrmEdit();
+      toast("Customer deleted.");
+    } catch (err) {
+      $("crmErr").textContent = "Delete failed: " + (err.code || err.message);
+      $("crmErr").classList.remove("hidden");
     }
   });
 </script>
