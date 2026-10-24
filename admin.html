@@ -1078,6 +1078,72 @@
       </div>
     </div>
 
+    <!-- Profit & Loss View -->
+    <div id="pnlView" class="hidden">
+      <div class="dash-header" style="align-items: flex-start; flex-direction: column; gap: 12px;">
+        <div style="display: flex; justify-content: space-between; width: 100%;">
+          <h2 style="font-family: var(--head); font-weight: 800; font-size: 24px;">Profit & Loss Reports</h2>
+          <button class="icon-btn" id="pnlExportBtn" style="background: var(--chili); color: #fff; border: none;">Export Report</button>
+        </div>
+        <div style="width: 100%; display: flex; gap: 8px; justify-content: flex-end;">
+          <button class="icon-btn" id="editPnlBtn" style="font-size:13px;">Edit Settings</button>
+        </div>
+      </div>
+
+      <div class="om-filters">
+        <div class="om-dates-row">
+          <div class="om-dates">
+            <span>From:</span><input type="date" id="pnlDateFrom">
+            <span>To:</span><input type="date" id="pnlDateTo">
+          </div>
+          <button class="icon-btn" id="pnlDateClear" style="width: 100%; padding: 8px; font-size: 13px;">Clear Dates</button>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="dash-card"><span class="dash-title">Total Sales Revenue</span><span class="dash-val" id="pnlRevenue">Rs 0</span></div>
+        <div class="dash-card"><span class="dash-title">Total Expenses</span><span class="dash-val" id="pnlTotalExp" style="color:var(--late)">Rs 0</span></div>
+        <div class="dash-card"><span class="dash-title">Gross Profit</span><span class="dash-val profit" id="pnlGrossProfit">Rs 0</span></div>
+        <div class="dash-card"><span class="dash-title">Net Profit / Loss</span><span class="dash-val" id="pnlNetProfit">Rs 0</span></div>
+        <div class="dash-card"><span class="dash-title">COGS</span><span class="dash-val" id="pnlCogs">Rs 0</span></div>
+        <div class="dash-card"><span class="dash-title">Operating Expenses</span><span class="dash-val" id="pnlOpEx">Rs 0</span></div>
+        <div class="dash-card"><span class="dash-title">Profit Margin (%)</span><span class="dash-val" id="pnlMargin">0%</span></div>
+      </div>
+
+      <div class="chart-box">
+        <div class="chart-title">Sales vs Expenses</div>
+        <div class="chart-container" id="pnlSalesVsExp"></div>
+      </div>
+
+      <div class="chart-box">
+        <div class="chart-title">Expense Breakdown by Category</div>
+        <div class="chart-container" id="pnlExpBreakdown"></div>
+      </div>
+
+      <div class="chart-box">
+        <div class="chart-title">Daily Profit & Loss</div>
+        <div class="chart-container" id="pnlDaily"></div>
+      </div>
+
+      <div class="chart-box">
+        <div class="chart-title">Month-to-Month Profit Comparison</div>
+        <div class="chart-container" id="pnlMonthly"></div>
+      </div>
+    </div>
+
+    <!-- P&L Settings Modal -->
+    <div class="scrim" id="pnlSettingsScrim"></div>
+    <div class="sheet" id="pnlSettingsSheet" role="dialog" aria-modal="true">
+      <div class="sheet-in">
+        <div class="sheet-head"><h2>P&L Settings</h2><button class="close" id="pnlSettingsClose" type="button" aria-label="Close">&times;</button></div>
+        <form id="pnlSettingsForm" novalidate>
+          <div class="field"><label for="pnlMarginInput">Target Profit Margin (%)</label><input id="pnlMarginInput" type="number" inputmode="decimal" required placeholder="e.g. 20"></div>
+          <div class="msg err hidden" id="pnlErr" role="alert"></div>
+          <button class="btn" id="pnlSettingsSave" type="submit">Save Settings</button>
+        </form>
+      </div>
+    </div>
+
     <!-- Placeholder View for New Modules -->
     <div id="placeholderView" class="hidden">
       <div class="pay-card" style="text-align: center; padding: 40px 20px;">
@@ -1243,6 +1309,7 @@
       startBillingListening();
       startTxListening();
       startExpListening();
+      startPnlListening();
     } else {
       if (unsub) { unsub(); unsub = null; }
       if (menuUnsub) { menuUnsub(); menuUnsub = null; }
@@ -1251,6 +1318,7 @@
       if (billingUnsub) { billingUnsub(); billingUnsub = null; }
       if (txUnsub) { txUnsub(); txUnsub = null; }
       if (expUnsub) { expUnsub(); expUnsub = null; }
+      if (pnlUnsub) { pnlUnsub(); pnlUnsub = null; }
       settingsUnsubs.forEach((u) => u()); settingsUnsubs = [];
       menuDocs = new Map(); view = "orders";
       orders = []; firstSnapshot = true;
@@ -1279,6 +1347,7 @@
       if (view === "billing") renderBillingList();
       if (view === "payments-tx") renderTxList();
       if (view === "finance-exp") renderExpList();
+      if (view === "pnl-reports") renderPnl();
       autoAcceptPending();
       autoPrintPending();
     }, (err) => {
@@ -1524,8 +1593,9 @@
     $("billingView").classList.toggle("hidden", v !== "billing");
     $("paymentsTxView").classList.toggle("hidden", v !== "payments-tx");
     $("financeExpView").classList.toggle("hidden", v !== "finance-exp");
+    $("pnlView").classList.toggle("hidden", v !== "pnl-reports");
     
-    if (!["orders","qr","pay","dashboard","order-manage","menu-manage","crm","billing","payments-tx","finance-exp"].includes(v)) {
+    if (!["orders","qr","pay","dashboard","order-manage","menu-manage","crm","billing","payments-tx","finance-exp","pnl-reports"].includes(v)) {
       $("placeholderView").classList.remove("hidden");
       const btn = document.querySelector(`#navList [data-view="${v}"]`);
       if (btn) $("placeholderTitle").textContent = btn.textContent.trim();
@@ -1544,13 +1614,13 @@
     $("viewTitle").textContent = title;
     
     closeNav();
-    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "dashboard") renderDashboard(); else if (v === "order-manage") renderOMList(); else if (v === "menu-manage") renderMMList(); else if (v === "crm") renderCRMList(); else if (v === "billing") renderBillingList(); else if (v === "payments-tx") renderTxList(); else if (v === "finance-exp") renderExpList();
+    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "dashboard") renderDashboard(); else if (v === "order-manage") renderOMList(); else if (v === "menu-manage") renderMMList(); else if (v === "crm") renderCRMList(); else if (v === "billing") renderBillingList(); else if (v === "payments-tx") renderTxList(); else if (v === "finance-exp") renderExpList(); else if (v === "pnl-reports") renderPnl();
     window.scrollTo(0, 0);
   }
   $("navList").addEventListener("click", (e) => { const b = e.target.closest("button[data-view]"); if (b) setView(b.dataset.view); });
   $("viewBack").addEventListener("click", () => setView("orders"));
 
-  const NAV_TITLES = { orders: "Orders", qr: "QR code", pay: "Settings", dashboard: "Dashboard Overview", "order-manage": "Order Management", "menu-manage": "Menu Management & Pricing", crm: "Customer Management (CRM)", billing: "Billing & Invoices", "payments-tx": "Payments & Transactions", "finance-exp": "Finance & Expenses" };
+  const NAV_TITLES = { orders: "Orders", qr: "QR code", pay: "Settings", dashboard: "Dashboard Overview", "order-manage": "Order Management", "menu-manage": "Menu Management & Pricing", crm: "Customer Management (CRM)", billing: "Billing & Invoices", "payments-tx": "Payments & Transactions", "finance-exp": "Finance & Expenses", "pnl-reports": "Profit & Loss Reports" };
   function openNav() {
     $("drawer").classList.add("open"); $("navScrim").classList.add("open");
     $("drawer").setAttribute("aria-hidden", "false"); $("menuBtn").setAttribute("aria-expanded", "true");
@@ -1929,7 +1999,9 @@
     
     const todayOrders = validOrders.filter(o => Number(o.createdAt) >= midnight.getTime());
     const todaySales = todayOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
-    const totalExpenses = Number(dashSettings.expenses) || 0;
+    
+    // SYNC: Use expenses data
+    const totalExpenses = expenses.filter(e => e.category !== "Cash In" && e.status === "PAID").reduce((s, e) => s + Number(e.amount || 0), 0);
     const profit = todaySales - totalExpenses;
 
     const pendingOrders = orders.filter(o => ["NEW", "PAYMENT_PENDING", "ACCEPTED", "PREPARING"].includes(statusOf(o))).length;
@@ -1947,7 +2019,7 @@
       <div class="dash-card"><span class="dash-title">Total Orders</span><span class="dash-val">${todayOrders.length}</span></div>
       <div class="dash-card"><span class="dash-title">Pending Orders</span><span class="dash-val" style="color:var(--yellow)">${pendingOrders}</span></div>
       <div class="dash-card"><span class="dash-title">Completed Orders</span><span class="dash-val" style="color:var(--green)">${completedOrders}</span></div>
-      <div class="dash-card"><span class="dash-title">Total Expenses (Manual)</span><span class="dash-val" style="color:var(--late)">${money(totalExpenses)}</span>${dashSettings.expenseReason ? `<small style="display:block; font-size:11px; color:var(--muted);">${esc(dashSettings.expenseReason)}</small>` : ""}</div>
+      <div class="dash-card"><span class="dash-title">Total Expenses (Auto)</span><span class="dash-val" style="color:var(--late)">${money(totalExpenses)}</span></div>
       <div class="dash-card"><span class="dash-title">Estimated Profit/Loss</span><span class="dash-val ${profit >= 0 ? 'profit' : 'loss'}">${money(profit)}</span></div>
     `;
 
@@ -3319,11 +3391,12 @@
     expUnsub = onSnapshot(collection(db, "expenses"), (snap) => {
       expenses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       if (view === "finance-exp") renderExpList();
+      if (view === "dashboard") renderDashboard();
+      if (view === "pnl-reports") renderPnl();
     }, (err) => toast("Expenses load hoy ni (" + (err.code || err.message) + ")"));
   }
 
   function renderExpList() {
-    // Summary Calculations
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
@@ -3332,7 +3405,6 @@
     const monthExp = expenses.filter(e => Number(e.date) >= monthStart && e.category !== "Cash In");
     const pendingExp = expenses.filter(e => e.status === "PENDING" && e.category !== "Cash In");
     
-    // Cash In / Out Logic
     const cashIn = expenses.filter(e => e.category === "Cash In").reduce((s, e) => s + Number(e.amount || 0), 0);
     const cashOut = expenses.filter(e => e.category !== "Cash In").reduce((s, e) => s + Number(e.amount || 0), 0);
 
@@ -3342,7 +3414,6 @@
     $("expCashIn").textContent = money(cashIn);
     $("expCashOut").textContent = money(cashOut);
 
-    // Filtered List
     const filtered = expenses.filter(e => {
       if (expFilter !== "ALL" && e.category !== expFilter) return false;
       
@@ -3538,6 +3609,207 @@
     const a = document.createElement("a");
     a.href = url;
     a.download = "MomoMama-Expenses.csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  });
+
+  /* ---------- Profit & Loss Reports ---------- */
+  let pnlSettings = { targetMargin: 20 }, pnlUnsub = null;
+  let pnlDateFrom = "", pnlDateTo = "";
+
+  function startPnlListening() {
+    if (pnlUnsub) pnlUnsub();
+    pnlUnsub = onSnapshot(doc(db, "settings", "pnl"), (snap) => {
+      if (snap.exists()) {
+        pnlSettings = { ...pnlSettings, ...snap.data() };
+      }
+      if (view === "pnl-reports") renderPnl();
+    }, () => {});
+  }
+
+  function renderPnl() {
+    // Filter by Date Range
+    const filterDate = (item) => {
+      const d = Number(item.createdAt || item.date);
+      if (pnlDateFrom) { const from = new Date(pnlDateFrom); from.setHours(0,0,0,0); if (d < from.getTime()) return false; }
+      if (pnlDateTo) { const to = new Date(pnlDateTo); to.setHours(23,59,59,999); if (d > to.getTime()) return false; }
+      return true;
+    };
+
+    const validOrders = orders.filter(o => statusOf(o) !== "CANCELLED" && statusOf(o) !== "PAYMENT_PENDING" && filterDate(o));
+    const validExpenses = expenses.filter(e => e.category !== "Cash In" && filterDate(e));
+
+    // 1. Total Sales Revenue (from Orders)
+    const revenue = validOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
+
+    // 2. Total Expenses (from Expenses)
+    const totalExp = validExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+
+    // 3. Gross Profit (Revenue - COGS)
+    const cogs = validExpenses.filter(e => ["Raw Materials", "Purchase"].includes(e.category)).reduce((s, e) => s + Number(e.amount || 0), 0);
+    const grossProfit = revenue - cogs;
+
+    // 4. Net Profit (Revenue - Total Expenses)
+    const netProfit = revenue - totalExp;
+
+    // 10 & 11. Operating Expenses
+    const opExCategories = ["Rent", "Salary", "Electricity", "Water", "Utility Bill", "Packaging", "Delivery", "Maintenance", "Staff Advance", "Supplier Payment", "Other"];
+    const opEx = validExpenses.filter(e => opExCategories.includes(e.category)).reduce((s, e) => s + Number(e.amount || 0), 0);
+
+    // 13. Profit Margin
+    const actualMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
+
+    // Render Cards
+    $("pnlRevenue").textContent = money(revenue);
+    $("pnlTotalExp").textContent = money(totalExp);
+    $("pnlGrossProfit").textContent = money(grossProfit);
+    $("pnlNetProfit").textContent = money(netProfit);
+    $("pnlNetProfit").className = `dash-val ${netProfit >= 0 ? 'profit' : 'loss'}`;
+    $("pnlCogs").textContent = money(cogs);
+    $("pnlOpEx").textContent = money(opEx);
+    $("pnlMargin").textContent = actualMargin.toFixed(1) + "%";
+
+    // 12. Sales vs Expenses Chart
+    const maxSE = Math.max(revenue, totalExp, 1);
+    $("pnlSalesVsExp").innerHTML = `
+      <div class="chart-bar-row">
+        <div class="chart-bar-label">Revenue</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill" style="width: ${(revenue/maxSE)*100}%; background: var(--green);"></div></div>
+        <div class="chart-bar-val" style="width:60px;">${money(revenue)}</div>
+      </div>
+      <div class="chart-bar-row">
+        <div class="chart-bar-label">Expenses</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill" style="width: ${(totalExp/maxSE)*100}%; background: var(--late);"></div></div>
+        <div class="chart-bar-val" style="width:60px;">${money(totalExp)}</div>
+      </div>
+    `;
+
+    // 14. Expense Breakdown by Category
+    const catTotals = {};
+    validExpenses.forEach(e => {
+      catTotals[e.category] = (catTotals[e.category] || 0) + Number(e.amount || 0);
+    });
+    const sortedCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const maxCat = sortedCats.length ? sortedCats[0][1] : 1;
+    $("pnlExpBreakdown").innerHTML = sortedCats.length ? sortedCats.map(([cat, amt]) => `
+      <div class="chart-bar-row">
+        <div class="chart-bar-label" title="${esc(cat)}">${esc(cat)}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill" style="width: ${(amt/maxCat)*100}%"></div></div>
+        <div class="chart-bar-val" style="width:60px;">${money(amt)}</div>
+      </div>
+    `).join("") : `<div style="text-align: center; color: var(--muted); padding: 10px;">No expense data.</div>`;
+
+    // 5. Daily P&L (Last 7 days)
+    const dailyMap = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i); d.setHours(0,0,0,0);
+      const key = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+      dailyMap[key] = { rev: 0, exp: 0 };
+    }
+    validOrders.forEach(o => {
+      const d = new Date(Number(o.createdAt));
+      const key = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+      if (dailyMap[key]) dailyMap[key].rev += Number(o.totalAmount || 0);
+    });
+    validExpenses.forEach(e => {
+      const d = new Date(Number(e.date));
+      const key = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+      if (dailyMap[key]) dailyMap[key].exp += Number(e.amount || 0);
+    });
+    const dailyKeys = Object.keys(dailyMap);
+    $("pnlDaily").innerHTML = dailyKeys.map(k => {
+      const p = dailyMap[k].rev - dailyMap[k].exp;
+      return `<div class="chart-row"><span>${k}</span><b style="color: ${p >= 0 ? 'var(--green)' : 'var(--late)'}">${p >= 0 ? '+' : ''}${money(p)}</b></div>`;
+    }).join("");
+
+    // 15. Month-to-Month Profit Comparison
+    const monthMap = {};
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(); d.setMonth(d.getMonth() - i);
+      const key = d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+      monthMap[key] = { rev: 0, exp: 0 };
+    }
+    validOrders.forEach(o => {
+      const d = new Date(Number(o.createdAt));
+      const key = d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+      if (monthMap[key]) monthMap[key].rev += Number(o.totalAmount || 0);
+    });
+    validExpenses.forEach(e => {
+      const d = new Date(Number(e.date));
+      const key = d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+      if (monthMap[key]) monthMap[key].exp += Number(e.amount || 0);
+    });
+    const monthKeys = Object.keys(monthMap);
+    const maxMonthProfit = Math.max(...monthKeys.map(k => Math.abs(monthMap[k].rev - monthMap[k].exp)), 1);
+    $("pnlMonthly").innerHTML = monthKeys.map(k => {
+      const p = monthMap[k].rev - monthMap[k].exp;
+      return `<div class="chart-bar-row">
+        <div class="chart-bar-label">${k}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill" style="width: ${(Math.abs(p)/maxMonthProfit)*100}%; background: ${p >= 0 ? 'var(--green)' : 'var(--late)'};"></div></div>
+        <div class="chart-bar-val" style="width:70px;">${p >= 0 ? '+' : ''}${money(p)}</div>
+      </div>`;
+    }).join("");
+  }
+
+  // P&L Settings Modal
+  function openPnlSettings() {
+    $("pnlMarginInput").value = pnlSettings.targetMargin || 20;
+    $("pnlErr").classList.add("hidden");
+    $("pnlSettingsScrim").classList.add("open"); $("pnlSettingsSheet").classList.add("open");
+  }
+  $("editPnlBtn").addEventListener("click", openPnlSettings);
+
+  const closePnlSettings = () => { $("pnlSettingsScrim").classList.remove("open"); $("pnlSettingsSheet").classList.remove("open"); };
+  $("pnlSettingsClose").addEventListener("click", closePnlSettings);
+  $("pnlSettingsScrim").addEventListener("click", closePnlSettings);
+
+  $("pnlSettingsForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const margin = parseFloat($("pnlMarginInput").value) || 0;
+    const btn = $("pnlSettingsSave"); btn.disabled = true; btn.textContent = "Saving...";
+    try {
+      await setDoc(doc(db, "settings", "pnl"), { targetMargin: margin, updatedAt: Date.now() });
+      pnlSettings.targetMargin = margin;
+      closePnlSettings();
+      toast("P&L Settings saved.");
+    } catch (err) {
+      $("pnlErr").textContent = "Save failed: " + (err.code || err.message);
+      $("pnlErr").classList.remove("hidden");
+    } finally {
+      btn.disabled = false; btn.textContent = "Save Settings";
+    }
+  });
+
+  $("pnlDateFrom").addEventListener("change", (e) => { pnlDateFrom = e.target.value; renderPnl(); });
+  $("pnlDateTo").addEventListener("change", (e) => { pnlDateTo = e.target.value; renderPnl(); });
+  $("pnlDateClear").addEventListener("click", () => {
+    $("pnlDateFrom").value = ""; $("pnlDateTo").value = "";
+    pnlDateFrom = ""; pnlDateTo = "";
+    renderPnl();
+  });
+
+  $("pnlExportBtn").addEventListener("click", () => {
+    const validOrders = orders.filter(o => statusOf(o) !== "CANCELLED" && statusOf(o) !== "PAYMENT_PENDING");
+    const validExpenses = expenses.filter(e => e.category !== "Cash In");
+    
+    const revenue = validOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
+    const totalExp = validExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+    const cogs = validExpenses.filter(e => ["Raw Materials", "Purchase"].includes(e.category)).reduce((s, e) => s + Number(e.amount || 0), 0);
+    const grossProfit = revenue - cogs;
+    const netProfit = revenue - totalExp;
+
+    let csv = "Metric,Amount (Rs)\n";
+    csv += `"Total Sales Revenue",${revenue}\n`;
+    csv += `"Total Expenses",${totalExp}\n`;
+    csv += `"COGS",${cogs}\n`;
+    csv += `"Gross Profit",${grossProfit}\n`;
+    csv += `"Net Profit",${netProfit}\n`;
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "MomoMama-PnL.csv";
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   });
