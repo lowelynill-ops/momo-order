@@ -332,6 +332,13 @@
   .chart-bar-track { flex: 1; background: var(--line); height: 16px; border-radius: 8px; overflow: hidden; }
   .chart-bar-fill { background: var(--chili); height: 100%; border-radius: 8px; transition: width 0.4s; }
   .chart-bar-val { width: 30px; text-align: right; font-weight: 600; flex: none; }
+
+  /* Transactions */
+  .tx-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 10px; }
+  .tx-info { display: flex; flex-direction: column; gap: 4px; }
+  .tx-id { font-family: var(--head); font-weight: 800; font-size: 16px; }
+  .tx-meta { font-size: 13px; color: var(--muted); }
+  .tx-amount { font-family: var(--head); font-weight: 800; font-size: 18px; text-align: right; }
 </style>
 </head>
 <body>
@@ -819,6 +826,114 @@
       </div>
     </div>
 
+    <!-- Payments & Transactions View -->
+    <div id="paymentsTxView" class="hidden">
+      <div class="dash-header" style="align-items: flex-start; flex-direction: column; gap: 12px;">
+        <div style="display: flex; justify-content: space-between; width: 100%;">
+          <h2 style="font-family: var(--head); font-weight: 800; font-size: 24px;">Payments & Transactions</h2>
+          <button class="icon-btn" id="createTxBtn" style="background: var(--chili); color: #fff; border: none;">+ Add Transaction</button>
+        </div>
+        <div style="width: 100%; display: flex; gap: 8px; justify-content: flex-end;">
+          <button class="icon-btn" id="txExportBtn" style="font-size:13px;">Export Data</button>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="dash-grid">
+        <div class="dash-card"><span class="dash-title">Total Received</span><span class="dash-val" id="txTotalReceived">Rs 0</span></div>
+        <div class="dash-card"><span class="dash-title">Cash Collection</span><span class="dash-val" id="txCashReceived">Rs 0</span></div>
+        <div class="dash-card"><span class="dash-title">UPI Collection</span><span class="dash-val" id="txUpiReceived">Rs 0</span></div>
+        <div class="dash-card"><span class="dash-title">Online Collection</span><span class="dash-val" id="txOnlineReceived">Rs 0</span></div>
+      </div>
+
+      <div class="om-filters">
+        <div class="om-search">
+          <input type="text" id="txSearchInput" placeholder="Search by Tx ID, Order ID, Invoice No...">
+        </div>
+        <div class="om-dates-row">
+          <div class="om-dates">
+            <span>From:</span><input type="date" id="txDateFrom">
+            <span>To:</span><input type="date" id="txDateTo">
+          </div>
+          <button class="icon-btn" id="txDateClear" style="width: 100%; padding: 8px; font-size: 13px;">Clear Dates</button>
+        </div>
+      </div>
+
+      <div class="om-tabs" id="txTabs">
+        <button data-txtab="ALL" aria-pressed="true">All Txns</button>
+        <button data-txtab="SUCCESS" aria-pressed="false">Successful</button>
+        <button data-txtab="PENDING" aria-pressed="false">Pending</button>
+        <button data-txtab="FAILED" aria-pressed="false">Failed</button>
+        <button data-txtab="REFUND" aria-pressed="false">Refunds</button>
+      </div>
+
+      <div class="pay-card" style="margin-bottom: 16px;">
+        <h3 style="font-size: 18px; margin-bottom: 8px;">Daily Payment Summary</h3>
+        <div id="txSummaryBox" style="font-size: 14px;">
+          <!-- Summary injected here -->
+        </div>
+      </div>
+
+      <div class="om-list" id="txList">
+        <!-- Transactions will be injected here -->
+      </div>
+    </div>
+
+    <!-- Create/Edit Transaction Modal -->
+    <div class="scrim" id="txEditScrim"></div>
+    <div class="sheet" id="txEditSheet" role="dialog" aria-modal="true">
+      <div class="sheet-in">
+        <div class="sheet-head"><h2 id="txEditTitle">Add Transaction</h2><button class="close" id="txEditClose" type="button" aria-label="Close">&times;</button></div>
+        <form id="txEditForm" novalidate>
+          <div class="two">
+            <div class="field"><label for="txOrderId">Order ID</label><input id="txOrderId" placeholder="Optional"></div>
+            <div class="field"><label for="txInvoiceNo">Invoice No</label><input id="txInvoiceNo" placeholder="Optional"></div>
+          </div>
+          <div class="field"><label for="txCustName">Customer Name</label><input id="txCustName" required></div>
+          <div class="field"><label for="txAmount">Amount (Rs)</label><input id="txAmount" type="number" inputmode="decimal" required></div>
+          
+          <div class="two">
+            <div class="field"><label for="txMethod">Payment Method</label>
+              <select id="txMethod">
+                <option value="Cash">Cash</option>
+                <option value="UPI">UPI</option>
+                <option value="Online">Online</option>
+              </select>
+            </div>
+            <div class="field"><label for="txStatus">Status</label>
+              <select id="txStatus">
+                <option value="SUCCESS">Successful</option>
+                <option value="PENDING">Pending</option>
+                <option value="FAILED">Failed</option>
+                <option value="REFUND">Refund</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field"><label for="txGatewayRef">Gateway Ref (Optional)</label><input id="txGatewayRef" placeholder="For online payments"></div>
+
+          <div class="msg err hidden" id="txErr" role="alert"></div>
+          <button class="btn" id="txSaveBtn" type="submit">Save Transaction</button>
+          <button class="danger hidden" id="txDeleteBtn" type="button" style="margin-top:10px;">Delete Transaction</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Transaction View Modal -->
+    <div class="scrim" id="txViewScrim"></div>
+    <div class="sheet" id="txViewSheet" role="dialog" aria-modal="true">
+      <div class="sheet-in">
+        <div class="sheet-head"><h2>Transaction Receipt</h2><button class="close" id="txViewClose" type="button" aria-label="Close">&times;</button></div>
+        <div class="bill-paper" id="txViewPaper" style="background: #fff; border: 1px solid var(--line); padding: 20px; border-radius: 12px; color: #000;">
+          <!-- Transaction receipt injected here -->
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 16px;">
+          <button class="btn" id="txViewPrintBtn" style="background: var(--ink); margin-top: 0;">Print</button>
+          <button class="btn" id="txViewDownloadBtn" style="margin-top: 0;">Download PDF</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Placeholder View for New Modules -->
     <div id="placeholderView" class="hidden">
       <div class="pay-card" style="text-align: center; padding: 40px 20px;">
@@ -982,12 +1097,14 @@
       startDashboardListening();
       startCrmListening();
       startBillingListening();
+      startTxListening();
     } else {
       if (unsub) { unsub(); unsub = null; }
       if (menuUnsub) { menuUnsub(); menuUnsub = null; }
       if (dashUnsub) { dashUnsub(); dashUnsub = null; }
       if (crmUnsub) { crmUnsub(); crmUnsub = null; }
       if (billingUnsub) { billingUnsub(); billingUnsub = null; }
+      if (txUnsub) { txUnsub(); txUnsub = null; }
       settingsUnsubs.forEach((u) => u()); settingsUnsubs = [];
       menuDocs = new Map(); view = "orders";
       orders = []; firstSnapshot = true;
@@ -1014,6 +1131,7 @@
       if (view === "menu-manage") renderMMList();
       if (view === "crm") renderCRMList();
       if (view === "billing") renderBillingList();
+      if (view === "payments-tx") renderTxList();
       autoAcceptPending();
       autoPrintPending();
     }, (err) => {
@@ -1232,8 +1350,9 @@
     $("menuManageView").classList.toggle("hidden", v !== "menu-manage");
     $("crmView").classList.toggle("hidden", v !== "crm");
     $("billingView").classList.toggle("hidden", v !== "billing");
+    $("paymentsTxView").classList.toggle("hidden", v !== "payments-tx");
     
-    if (!["orders","qr","pay","dashboard","order-manage","menu-manage","crm","billing"].includes(v)) {
+    if (!["orders","qr","pay","dashboard","order-manage","menu-manage","crm","billing","payments-tx"].includes(v)) {
       $("placeholderView").classList.remove("hidden");
       const btn = document.querySelector(`#navList [data-view="${v}"]`);
       if (btn) $("placeholderTitle").textContent = btn.textContent.trim();
@@ -1252,13 +1371,13 @@
     $("viewTitle").textContent = title;
     
     closeNav();
-    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "dashboard") renderDashboard(); else if (v === "order-manage") renderOMList(); else if (v === "menu-manage") renderMMList(); else if (v === "crm") renderCRMList(); else if (v === "billing") renderBillingList();
+    if (v === "orders") render(); else if (v === "qr") renderQr(); else if (v === "pay") renderPay(); else if (v === "dashboard") renderDashboard(); else if (v === "order-manage") renderOMList(); else if (v === "menu-manage") renderMMList(); else if (v === "crm") renderCRMList(); else if (v === "billing") renderBillingList(); else if (v === "payments-tx") renderTxList();
     window.scrollTo(0, 0);
   }
   $("navList").addEventListener("click", (e) => { const b = e.target.closest("button[data-view]"); if (b) setView(b.dataset.view); });
   $("viewBack").addEventListener("click", () => setView("orders"));
 
-  const NAV_TITLES = { orders: "Orders", qr: "QR code", pay: "Settings", dashboard: "Dashboard Overview", "order-manage": "Order Management", "menu-manage": "Menu Management & Pricing", crm: "Customer Management (CRM)", billing: "Billing & Invoices" };
+  const NAV_TITLES = { orders: "Orders", qr: "QR code", pay: "Settings", dashboard: "Dashboard Overview", "order-manage": "Order Management", "menu-manage": "Menu Management & Pricing", crm: "Customer Management (CRM)", billing: "Billing & Invoices", "payments-tx": "Payments & Transactions" };
   function openNav() {
     $("drawer").classList.add("open"); $("navScrim").classList.add("open");
     $("drawer").setAttribute("aria-hidden", "false"); $("menuBtn").setAttribute("aria-expanded", "true");
@@ -2444,7 +2563,6 @@
   function renderBillingList() {
     document.querySelectorAll("#invTabs button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.invtab === invFilter)));
 
-    // Daily Summary
     const todayStart = new Date(); todayStart.setHours(0,0,0,0);
     const todayInvoices = invoices.filter(i => Number(i.createdAt) >= todayStart.getTime() && i.status !== "CANCELLED");
     const todayTotal = todayInvoices.reduce((s, i) => s + Number(i.total || 0), 0);
@@ -2453,7 +2571,6 @@
       <div style="display:flex; justify-content:space-between;"><span>Today's Revenue:</span><b>${money(todayTotal)}</b></div>
     `;
 
-    // List
     const filtered = invoices.filter(i => {
       if (invFilter !== "ALL" && i.status !== invFilter) return false;
       
@@ -2691,10 +2808,47 @@
 
   $("invViewDownloadBtn").addEventListener("click", () => {
     if (!invViewCurrent) return;
-    toast("Downloading PDF...");
-    // Basic implementation: Reuse the PDF logic from bill if needed, or a simplified one
-    // For brevity, let's just use print to PDF as fallback.
-    window.print();
+    if (!(window.jspdf && window.jspdf.jsPDF)) { toast("PDF tool load hoyni. Internet check kore abar try koro."); return; }
+    const { jsPDF } = window.jspdf;
+    const doc_ = new jsPDF({ unit: "pt", format: "a5" });
+    const W = doc_.internal.pageSize.getWidth(), M = 36; let y = 46;
+    const line = (t, size, bold, align) => { doc_.setFont("courier", bold ? "bold" : "normal"); doc_.setFontSize(size); doc_.text(t, align === "center" ? W / 2 : M, y, { align: align || "left" }); y += size * 1.35; };
+    const row = (a, b) => { doc_.setFont("courier", "normal"); doc_.setFontSize(10); doc_.text(a, M, y); doc_.text(b, W - M, y, { align: "right" }); y += 15; };
+
+    line("MOMO MAMA", 16, true, "center"); line("Kolkata", 10, false, "center"); y += 4;
+    doc_.setLineDashPattern([2, 2], 0); doc_.line(M, y, W - M, y); y += 16;
+    row("Invoice No:", invViewCurrent.invoiceNo);
+    if (invViewCurrent.orderId) row("Order ID:", invViewCurrent.orderId);
+    row("Date:", dateTimeStr(invViewCurrent.createdAt));
+    row("Customer:", invViewCurrent.customerName);
+    row("Phone:", invViewCurrent.customerPhone);
+    doc_.line(M, y, W - M, y); y += 16;
+    doc_.setFont("courier", "bold"); doc_.setFontSize(10);
+    doc_.text("Item", M, y); doc_.text("Qty", W - 160, y, { align: "right" }); doc_.text("Rate", W - 90, y, { align: "right" }); doc_.text("Amt", W - M, y, { align: "right" }); y += 14;
+    doc_.setFont("courier", "normal");
+    invViewCurrent.items.forEach((it) => {
+      const nameLines = doc_.splitTextToSize(String(it.name || ""), W - M - 170);
+      nameLines.forEach((t, i) => {
+        doc_.text(t, M, y);
+        if (i === 0) {
+          doc_.text(String(it.qty), W - 160, y, { align: "right" });
+          doc_.text(money(it.price).replace("Rs ", ""), W - 90, y, { align: "right" });
+          doc_.text(money(Number(it.price) * Number(it.qty)).replace("Rs ", ""), W - M, y, { align: "right" });
+        }
+        y += 13;
+      });
+    });
+    doc_.line(M, y, W - M, y); y += 16;
+    row("Subtotal", money(invViewCurrent.subtotal));
+    if (invViewCurrent.discount > 0) row("Discount", "-" + money(invViewCurrent.discount));
+    row(`CGST (${invViewCurrent.gstRate/2}%)`, money(invViewCurrent.cgst));
+    row(`SGST (${invViewCurrent.gstRate/2}%)`, money(invViewCurrent.sgst));
+    doc_.setFont("courier", "bold"); doc_.setFontSize(13); doc_.text("TOTAL", M, y); doc_.text(money(invViewCurrent.total), W - M, y, { align: "right" }); y += 20;
+    doc_.setFont("courier", "normal"); doc_.setFontSize(10);
+    line(`${invViewCurrent.status} (${invViewCurrent.paymentMethod})`, 10, false);
+    y += 6; line("Thank you for visiting Momo Mama!", 9.5, false, "center"); line("Taxes as applicable. Computer-generated bill.", 8.5, false, "center");
+    const fname = "MomoMama-Invoice-" + String(invViewCurrent.invoiceNo).replace(/[^a-zA-Z0-9]/g, "") + ".pdf";
+    doc_.save(fname);
   });
 
   $("invTabs").addEventListener("click", (e) => {
@@ -2709,6 +2863,264 @@
     $("invDateFrom").value = ""; $("invDateTo").value = ""; 
     invDateFrom = ""; invDateTo = ""; 
     renderBillingList(); 
+  });
+
+  /* ---------- Payments & Transactions ---------- */
+  let transactions = [], txUnsub = null;
+  let txFilter = "ALL", txSearch = "", txDateFrom = "", txDateTo = "";
+  let txEditingId = null, txViewCurrent = null;
+
+  function startTxListening() {
+    if (txUnsub) txUnsub();
+    txUnsub = onSnapshot(collection(db, "transactions"), (snap) => {
+      transactions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (view === "payments-tx") renderTxList();
+    }, (err) => toast("Transactions load hoy ni (" + (err.code || err.message) + ")"));
+  }
+
+  function renderTxList() {
+    document.querySelectorAll("#txTabs button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.txtab === txFilter)));
+
+    // Summary Cards
+    const success = transactions.filter(t => t.status === "SUCCESS");
+    const total = success.reduce((s, t) => s + Number(t.amount || 0), 0);
+    const cash = success.filter(t => t.method === "Cash").reduce((s, t) => s + Number(t.amount || 0), 0);
+    const upi = success.filter(t => t.method === "UPI").reduce((s, t) => s + Number(t.amount || 0), 0);
+    const online = success.filter(t => t.method === "Online").reduce((s, t) => s + Number(t.amount || 0), 0);
+
+    $("txTotalReceived").textContent = money(total);
+    $("txCashReceived").textContent = money(cash);
+    $("txUpiReceived").textContent = money(upi);
+    $("txOnlineReceived").textContent = money(online);
+
+    // Summary
+    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+    const todayTx = transactions.filter(t => Number(t.createdAt) >= todayStart.getTime() && t.status === "SUCCESS");
+    const todayTotal = todayTx.reduce((s, t) => s + Number(t.amount || 0), 0);
+    $("txSummaryBox").innerHTML = `
+      <div style="display:flex; justify-content:space-between; margin-bottom: 4px;"><span>Today's Transactions:</span><b>${todayTx.length}</b></div>
+      <div style="display:flex; justify-content:space-between;"><span>Today's Collection:</span><b>${money(todayTotal)}</b></div>
+    `;
+
+    // List
+    const filtered = transactions.filter(t => {
+      if (txFilter !== "ALL" && t.status !== txFilter) return false;
+      
+      if (txSearch) {
+        const term = txSearch.toLowerCase();
+        const txId = String(t.txId || "").toLowerCase();
+        const ordId = String(t.orderId || "").toLowerCase();
+        const invNo = String(t.invoiceNo || "").toLowerCase();
+        if (!txId.includes(term) && !ordId.includes(term) && !invNo.includes(term)) return false;
+      }
+
+      const tDate = new Date(Number(t.createdAt));
+      if (txDateFrom) {
+        const from = new Date(txDateFrom); from.setHours(0,0,0,0);
+        if (tDate < from) return false;
+      }
+      if (txDateTo) {
+        const to = new Date(txDateTo); to.setHours(23,59,59,999);
+        if (tDate > to) return false;
+      }
+
+      return true;
+    });
+
+    filtered.sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
+
+    if (!filtered.length) {
+      $("txList").innerHTML = `<div class="empty" style="padding: 20px;">No transactions found.</div>`;
+      return;
+    }
+
+    $("txList").innerHTML = filtered.map(t => {
+      let stClass = "new", stText = "Unknown";
+      if (t.status === "SUCCESS") { stClass = "ready"; stText = "Success"; }
+      else if (t.status === "PENDING") { stClass = "accepted"; stText = "Pending"; }
+      else if (t.status === "FAILED") { stClass = "cancelled"; stText = "Failed"; }
+      else if (t.status === "REFUND") { stClass = "preparing"; stText = "Refunded"; }
+
+      return `<div class="tx-card" data-txid="${esc(t.id)}">
+        <div class="tx-info">
+          <span class="tx-id">${esc(t.txId)}</span>
+          <span class="tx-meta">${esc(t.customerName)} &middot; ${esc(t.method)}</span>
+          <div><span class="om-status ${stClass}">${stText}</span></div>
+        </div>
+        <div class="tx-amount">${money(t.amount)}</div>
+      </div>`;
+    }).join("");
+  }
+
+  function openTxEdit(id) {
+    txEditingId = id;
+    const isNew = !id;
+    const t = id ? transactions.find(x => x.id === id) : null;
+    
+    $("txEditTitle").textContent = isNew ? "Add Transaction" : "Edit Transaction";
+    $("txOrderId").value = t ? (t.orderId || "") : "";
+    $("txInvoiceNo").value = t ? (t.invoiceNo || "") : "";
+    $("txCustName").value = t ? t.customerName : "";
+    $("txAmount").value = t ? t.amount : "";
+    $("txMethod").value = t ? t.method : "Cash";
+    $("txStatus").value = t ? t.status : "SUCCESS";
+    $("txGatewayRef").value = t ? (t.gatewayRef || "") : "";
+    
+    $("txErr").classList.add("hidden");
+    $("txDeleteBtn").classList.toggle("hidden", isNew);
+    $("txEditScrim").classList.add("open"); $("txEditSheet").classList.add("open");
+  }
+
+  $("createTxBtn").addEventListener("click", () => openTxEdit(null));
+
+  $("txEditForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = $("txCustName").value.trim();
+    const amount = parseFloat($("txAmount").value);
+    if (!name || !(amount > 0)) { $("txErr").textContent = "Name and Amount are required."; $("txErr").classList.remove("hidden"); return; }
+
+    const btn = $("txSaveBtn"); btn.disabled = true; btn.textContent = "Saving...";
+    try {
+      const existing = txEditingId ? transactions.find(x => x.id === txEditingId) : null;
+      const txId = existing ? existing.txId : "TXN-" + Date.now().toString().slice(-6);
+      
+      const docData = {
+        txId,
+        orderId: $("txOrderId").value.trim(),
+        invoiceNo: $("txInvoiceNo").value.trim(),
+        customerName: name,
+        amount,
+        method: $("txMethod").value,
+        status: $("txStatus").value,
+        gatewayRef: $("txGatewayRef").value.trim(),
+        createdAt: existing ? existing.createdAt : Date.now(),
+        updatedAt: Date.now()
+      };
+
+      await setDoc(doc(db, "transactions", txEditingId || txId), docData);
+      closeTxEdit();
+      toast("Transaction saved.");
+    } catch (err) {
+      $("txErr").textContent = "Save failed: " + (err.code || err.message);
+      $("txErr").classList.remove("hidden");
+    } finally {
+      btn.disabled = false; btn.textContent = "Save Transaction";
+    }
+  });
+
+  $("txDeleteBtn").addEventListener("click", async () => {
+    if (!txEditingId || !confirm("Delete this transaction?")) return;
+    try {
+      await setDoc(doc(db, "transactions", txEditingId), { status: "REFUND" }, { merge: true });
+      closeTxEdit();
+      toast("Transaction marked as refund.");
+    } catch (err) {
+      $("txErr").textContent = "Delete failed: " + (err.code || err.message);
+      $("txErr").classList.remove("hidden");
+    }
+  });
+
+  const closeTxEdit = () => { $("txEditScrim").classList.remove("open"); $("txEditSheet").classList.remove("open"); };
+  $("txEditClose").addEventListener("click", closeTxEdit);
+  $("txEditScrim").addEventListener("click", closeTxEdit);
+
+  function renderTxHtml(t) {
+    return `
+      <div class="bill-brand"><b>Momo Mama</b><span>Kolkata</span></div>
+      <hr class="bill-dash">
+      <div class="bill-meta">
+        <div><span>Transaction ID</span><b>${esc(t.txId)}</b></div>
+        ${t.orderId ? `<div><span>Order ID</span><b>${esc(t.orderId)}</b></div>` : ""}
+        ${t.invoiceNo ? `<div><span>Invoice No</span><b>${esc(t.invoiceNo)}</b></div>` : ""}
+        <div><span>Date</span><b>${esc(dateTimeStr(t.createdAt))}</b></div>
+        <div><span>Customer</span><b>${esc(t.customerName)}</b></div>
+        <div><span>Method</span><b>${esc(t.method)}</b></div>
+        <div><span>Status</span><b>${esc(t.status)}</b></div>
+      </div>
+      <hr class="bill-dash">
+      <div class="bill-totals">
+        <div class="grand"><span>Amount</span><span>${money(t.amount)}</span></div>
+      </div>
+      ${t.gatewayRef ? `<div class="bill-pay">Gateway Ref: ${esc(t.gatewayRef)}</div>` : ""}
+      <p class="bill-thanks">Thank you for visiting Momo Mama!<br>Computer-generated receipt.</p>`;
+  }
+
+  $("txList").addEventListener("click", (e) => {
+    const card = e.target.closest("[data-txid]");
+    if (card) {
+      const t = transactions.find(x => x.id === card.dataset.txid);
+      if (t) {
+        txViewCurrent = t;
+        $("txViewPaper").innerHTML = renderTxHtml(t);
+        $("txViewScrim").classList.add("open"); $("txViewSheet").classList.add("open");
+      }
+    }
+  });
+
+  const closeTxView = () => { $("txViewScrim").classList.remove("open"); $("txViewSheet").classList.remove("open"); };
+  $("txViewClose").addEventListener("click", closeTxView);
+  $("txViewScrim").addEventListener("click", closeTxView);
+
+  $("txViewPrintBtn").addEventListener("click", () => {
+    if (!txViewCurrent) return;
+    const w = window.open("", "_blank");
+    w.document.write(`<html><head><title>Transaction Receipt</title><style>.bill-paper { font-family: monospace; max-width: 380px; margin: 0 auto; }</style></head><body onload="window.print()">${renderTxHtml(txViewCurrent)}</body></html>`);
+    w.document.close();
+  });
+
+  $("txViewDownloadBtn").addEventListener("click", () => {
+    if (!txViewCurrent) return;
+    if (!(window.jspdf && window.jspdf.jsPDF)) { toast("PDF tool load hoyni. Internet check kore abar try koro."); return; }
+    const { jsPDF } = window.jspdf;
+    const doc_ = new jsPDF({ unit: "pt", format: "a5" });
+    const W = doc_.internal.pageSize.getWidth(), M = 36; let y = 46;
+    const line = (t, size, bold, align) => { doc_.setFont("courier", bold ? "bold" : "normal"); doc_.setFontSize(size); doc_.text(t, align === "center" ? W / 2 : M, y, { align: align || "left" }); y += size * 1.35; };
+    const row = (a, b) => { doc_.setFont("courier", "normal"); doc_.setFontSize(10); doc_.text(a, M, y); doc_.text(b, W - M, y, { align: "right" }); y += 15; };
+
+    line("MOMO MAMA", 16, true, "center"); line("Kolkata", 10, false, "center"); y += 4;
+    doc_.setLineDashPattern([2, 2], 0); doc_.line(M, y, W - M, y); y += 16;
+    row("Transaction ID:", txViewCurrent.txId);
+    if (txViewCurrent.orderId) row("Order ID:", txViewCurrent.orderId);
+    if (txViewCurrent.invoiceNo) row("Invoice No:", txViewCurrent.invoiceNo);
+    row("Date:", dateTimeStr(txViewCurrent.createdAt));
+    row("Customer:", txViewCurrent.customerName);
+    row("Method:", txViewCurrent.method);
+    row("Status:", txViewCurrent.status);
+    doc_.line(M, y, W - M, y); y += 16;
+    doc_.setFont("courier", "bold"); doc_.setFontSize(13); doc_.text("AMOUNT", M, y); doc_.text(money(txViewCurrent.amount), W - M, y, { align: "right" }); y += 20;
+    doc_.setFont("courier", "normal"); doc_.setFontSize(10);
+    if (txViewCurrent.gatewayRef) line("Gateway Ref: " + txViewCurrent.gatewayRef, 10, false);
+    y += 6; line("Thank you for visiting Momo Mama!", 9.5, false, "center"); line("Computer-generated receipt.", 8.5, false, "center");
+    const fname = "MomoMama-Tx-" + String(txViewCurrent.txId).replace(/[^a-zA-Z0-9]/g, "") + ".pdf";
+    doc_.save(fname);
+  });
+
+  $("txTabs").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-txtab]");
+    if (b) { txFilter = b.dataset.txtab; renderTxList(); }
+  });
+
+  $("txSearchInput").addEventListener("input", (e) => { txSearch = e.target.value.trim(); renderTxList(); });
+  $("txDateFrom").addEventListener("change", (e) => { txDateFrom = e.target.value; renderTxList(); });
+  $("txDateTo").addEventListener("change", (e) => { txDateTo = e.target.value; renderTxList(); });
+  $("txDateClear").addEventListener("click", () => { 
+    $("txDateFrom").value = ""; $("txDateTo").value = ""; 
+    txDateFrom = ""; txDateTo = ""; 
+    renderTxList(); 
+  });
+
+  $("txExportBtn").addEventListener("click", () => {
+    let csv = "Tx ID,Order ID,Invoice No,Customer,Amount,Method,Status,Date\n";
+    transactions.forEach(t => {
+      csv += `"${t.txId}","${t.orderId || ""}","${t.invoiceNo || ""}","${(t.customerName || "").replace(/"/g, '""')}",${t.amount},"${t.method}","${t.status}","${dateTimeStr(t.createdAt)}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "MomoMama-Transactions.csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
   });
 </script>
 </body>
